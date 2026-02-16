@@ -1,0 +1,19 @@
+
+[project]
+name = "lompeosse"
+version = "0.0.0"
+description = "A tool for OSSEs based on Gamera and Lompe."
+authors = [
+    { name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+
+dependencies = [
+
+]
+
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
