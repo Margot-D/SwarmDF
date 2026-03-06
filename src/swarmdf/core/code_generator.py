@@ -1,4 +1,6 @@
-def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conductance_method, conductance_params, grid_params, regul_params, gif_speed, lompeosse):
+from pathlib import Path
+
+def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conductance_method, conductance_params, grid_params, regul_params, gif_speed, lompeosse, Gtimeoff, Gsnapshot):
     return {
         "satellite ID": sat_id,
         "start time": start_time,
@@ -11,6 +13,8 @@ def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conducta
         "regularization parameters": regul_params,
         "gif speed": gif_speed,
         "lompeOSSE analysis": lompeosse,
+        "time offset": Gtimeoff,
+        "Gamera snapshot": Gsnapshot
     }
 
 def generate_python_code(config):
@@ -27,11 +31,7 @@ def generate_python_code(config):
     import numpy as np
     from pathlib import Path
 
-    from swarm_orbit_and_grid import swarm_trajectory
-    from data_collect import DataManager
-    from lompe_analysis import run_lompe, lompe_output
-    from conductance import compute_conductances
-    from lompeOSSE_analysis import run_lompeOSSE, lompeOSSE_output
+    from swarmdf import *
 
     config = {repr(config)}
 
@@ -49,7 +49,7 @@ def generate_python_code(config):
     ######################
 
     # Path to sample datasets
-    package_root = Path(__file__).resolve().parents[1]
+    package_root = Path(__file__).resolve().parents[0]
     data_path = str(package_root / "data" / "sample_datasets") + "/" 
 
     # Fetch and load data
@@ -60,7 +60,7 @@ def generate_python_code(config):
     # Data distrubution and orbit trajectory
     ######################
 
-    grids, data_frames = swarm_trajectory(config["satellite ID"], start_time, end_time, timestep, grid_params, datasets, gif_speed, show_data=True)
+    center_times, grids, data_frames = swarm_trajectory(config["satellite ID"], start_time, end_time, timestep, grid_params, datasets, gif_speed, show_data=True)
 
     ######################
     # Lompe analysis
@@ -70,7 +70,7 @@ def generate_python_code(config):
 
     # Build model
     l1, l2 = config["regularization parameters"]['l1'], config["regularization parameters"]['l2']
-    lompe_models = run_lompe(start_time, end_time, timestep, grids, datasets, SHs, SPs, l1, l2)
+    lompe_models = run_lompe(center_times, timestep, grids, datasets, SHs, SPs, l1, l2)
     lompe_frames = lompe_output(lompe_models, gif_speed)    
     
 
@@ -94,13 +94,14 @@ def generate_python_code(config):
     
     dolompeosse = config["lompeOSSE analysis"]
     if dolompeosse:
-        lompeOSSE_models, gamera_models = run_lompeOSSE(lompe_models)
+        lompeOSSE_models, gamera_models = run_lompeOSSE(lompe_models, config["time offset"], config["Gamera snapshot"])
         lompeOSSE_frames, gamera_frames_pil = lompeOSSE_output(lompeOSSE_models, gamera_models, gif_speed)
 
 
     '''
-
-    filename = "SwarmDF_python_code.py" # output=lompe model
+    package_root = Path(__file__).resolve().parents[1]
+    data_path = str(package_root) + "/"
+    filename = data_path + "SwarmDF_python_code.py"
     with open(filename, "w") as f:
         f.write(code)
 

@@ -20,12 +20,10 @@ from pathlib import Path
 
 import webbrowser
 
-from swarm_orbit_and_grid import swarm_trajectory
-from data_collect import DataManager
-from lompe_analysis import run_lompe, lompe_output
-from conductance import compute_conductances
-from lompeOSSE_analysis import run_lompeOSSE, lompeOSSE_output
-from code_generator import build_config_dict, generate_python_code
+from swarmdf import *
+
+from ui_helpers.icons import Icons
+from ui_helpers.tooltip import CustomTooltip
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -33,27 +31,46 @@ customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "gr
 import warnings
 warnings.filterwarnings("ignore", message="Ignoring fixed y limits to fulfill fixed data aspect*")
 
+# TODO remember to fix citation (github)
+
 ##########
 # TODO:
 # add error messages for potential problems
-# block user if the swarm trajectoy/their grid goes equatorward of 50 deg lat
 # add info boxes when hovering mouse on top of for example "epoch" (short explanation of what this if for)
 
-# fix number of steps for sliders
+# class MyGUI(customtkinter.CTk):
+
+#     def __init__(self):
+#         super().__init__()
+
+#         self.master_state = {...}
+
+        # swarmdf_window_setup()
+
 
 # Main toolbox class
-class App(customtkinter.CTk):
+class SwarmDF_GUI(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
         # configure window
         self.title("SwarmDF.py") # TODO should be same name as final python module
-        self.geometry(f"{1660}x{950}") #{1660}x{870}
+        width, height = 1660, 950
+        self.aspect_ratio = width/height
+        self.geometry(f"{width}x{height}") #{1660}x{870}
+        self.minsize(1450, 775)
 
         # configure grid layout
-        self.grid_columnconfigure((1,2), weight=4)
-        self.grid_columnconfigure(3, weight=1)
-        self.grid_rowconfigure((0, 1, 2), weight=1)
+        self.grid_columnconfigure(1, weight=0, minsize=365)
+        self.grid_columnconfigure(2, weight=4)
+        # self.grid_columnconfigure((1,2), weight=4)
+        # self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(3, weight=0, minsize=300)
+        self.grid_rowconfigure((0, 1), weight=1)
+
+
+
+
 
         #############
         # SIDEBAR
@@ -66,7 +83,7 @@ class App(customtkinter.CTk):
         self.title_sidebar = customtkinter.CTkLabel(self.frame_sidebar, text="SwarmDF \n User interface", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.title_sidebar.grid(row=0, column=0, padx=20, pady=(20, 50))
 
-        # "Show data coverage" checkbox
+        # "Show data coverage" checkbox #TODO remove? 
         self.checkbox_showdata = customtkinter.CTkCheckBox(self.frame_sidebar, text='Show data coverage')
         self.checkbox_showdata.grid(row=2, column=0, padx=20, pady=20)
         self.checkbox_showdata.select()
@@ -75,6 +92,7 @@ class App(customtkinter.CTk):
         self.checkbox_runlompe = customtkinter.CTkCheckBox(master=self.frame_sidebar, text=f"Run Lompe analysis")
         self.checkbox_runlompe.grid(row=3, column=0, padx=20, pady=20)
         self.checkbox_runlompe.select()
+        # CustomTooltip(self.checkbox_runlompe, text="When not selected, SwarmDF collects the requested data and show the data coverage around Swarm.")      
 
         # "Run LompeOSSE validation" checkbox
         self.checkbox_lompeosse = customtkinter.CTkCheckBox(self.frame_sidebar, text='Run LompeOSSE validation')
@@ -130,11 +148,15 @@ class App(customtkinter.CTk):
         self.tabview.tab(tab3).grid_columnconfigure(0, weight=2)
         self.tabview.grid_propagate(False)
 
+        self.tabview.tab(tab1).grid_rowconfigure(7, weight=1)
+
+        # self.tabview.grid_rowconfigure(0, weight=1)
+        # self.tabview.grid_rowconfigure(1, weight=1)
+
         #######
-        # TAB 1 
+        # TAB 1 - Main input
         
-        # TODO add suggestion on okay time range (somwhere between a few minutes and..?) --> test (min time is frame step!)
-        # TODO depending on when/where, the gif does not really work... --> test many different options 
+        # TODO add suggestion on okay time range (somwhere between 1min and..?) --> test (min time is timestep!)
         # also, interval can't be too long! (8 hours does not work)
 
         # Satellite ID
@@ -143,26 +165,6 @@ class App(customtkinter.CTk):
         self.optmenu_satellite.grid(row=0, column=0, padx=(10,10), pady=(20, 10))
         self.optmenu_satellite.set("Satellite ID")
 
-        # self.label_swarmsat = customtkinter.CTkLabel(self.tabview.tab(tab1), text="Swarm satellite(s):")
-        # self.label_swarmsat.grid(row=0, column=0, padx=20, pady=15, sticky="w")  
-
-        # # Frame for checkboxes
-        # self.checkbox_frame = customtkinter.CTkFrame(self.tabview.tab(tab1), fg_color="transparent")  # transparent to blend with background
-        # self.checkbox_frame.grid(row=0, column=0, padx=(150,0), pady=15, sticky="w")
-
-        # # Variables for checkbox states
-        # self.checkbox_swarmA_var = tk.BooleanVar()
-        # self.checkbox_swarmB_var = tk.BooleanVar()
-        # self.checkbox_swarmC_var = tk.BooleanVar()
-
-        # # Checkboxes inside the frame
-        # self.checkbox_swarmA = customtkinter.CTkCheckBox(master=self.checkbox_frame, text="A", variable=self.checkbox_swarmA_var, width=30)
-        # self.checkbox_swarmA.grid(row=0, column=0, padx=(0,10))
-        # self.checkbox_swarmB = customtkinter.CTkCheckBox(master=self.checkbox_frame, text="B", variable=self.checkbox_swarmB_var, width=30)
-        # self.checkbox_swarmB.grid(row=0, column=1, padx=(0,10))
-        # self.checkbox_swarmC = customtkinter.CTkCheckBox(master=self.checkbox_frame, text="C", variable=self.checkbox_swarmC_var, width=30)
-        # self.checkbox_swarmC.grid(row=0, column=2, padx=(0,10))      
-            
         # Start time entry
         self.entry_start_time = DateTimeEntry(self.tabview.tab(tab1), label="Start time:")
         self.entry_start_time.grid(row=1, column=0, padx=20, pady=10, sticky="w")
@@ -176,47 +178,41 @@ class App(customtkinter.CTk):
         self.label_timestep = customtkinter.CTkLabel(self.tabview.tab(tab1), text="Time steps (s):")
         self.label_timestep.grid(row=3, column=0, padx=20, pady=3, sticky="w")
         self.entry_timestep = customtkinter.CTkEntry(self.tabview.tab(tab1), width=40)
-        self.entry_timestep.grid(row=3, column=0, pady=15)        
+        self.entry_timestep.grid(row=3, column=0, pady=20)        
         self.entry_timestep.insert(0, 30) # default: 30s #TODO looks like 10s make things bug. What should be the min? maybe because the swarm data resolution is 10s
         # check if true. if so add info box that syas min = 10
 
         # "Set example date" button         
-        customtkinter.CTkButton(
-            self.tabview.tab(tab1),
-            text="Use example event",
-            command=self.load_example_date,
-            width=40,
-            height=8,
-            fg_color="#888888",      # medium grey background
-            hover_color="#AAAAAA",   # slightly lighter on hover
-            font=customtkinter.CTkFont(size=13)
-        ).grid(row=5, column=0, pady=(15, 10))
+        customtkinter.CTkButton(self.tabview.tab(tab1),
+                                text="Use example event",
+                                command=self.load_example_date,
+                                width=40,
+                                height=8,
+                                fg_color="#888888",      # medium grey background
+                                hover_color="#AAAAAA",   # slightly lighter on hover
+                                font=customtkinter.CTkFont(size=13)).grid(row=5, column=0, pady=(15, 10))
 
         # "Reset date to placeholders" button
-        customtkinter.CTkButton(
-            self.tabview.tab(tab1),
-            text="Reset to placeholders",
-            command=self.reset_dates, 
-            width=40,
-            height=8,
-            fg_color="#888888",      # medium grey background
-            hover_color="#AAAAAA",   # slightly lighter on hover
-            font=customtkinter.CTkFont(size=13)
-        ).grid(row=6, column=0, pady=(0, 15))
+        customtkinter.CTkButton(self.tabview.tab(tab1),
+                                text="Reset to placeholders",
+                                command=self.reset_dates, 
+                                width=40,
+                                height=8,
+                                fg_color="#888888",      # medium grey background
+                                hover_color="#AAAAAA",   # slightly lighter on hover
+                                font=customtkinter.CTkFont(size=13)).grid(row=6, column=0, pady=(0, 15))
 
         # Link to Swarm aurora website
-        self.link_find_conjunction = customtkinter.CTkLabel(
-            self.tabview.tab(tab1),
-            text="Find conjunction with Swarm-Aurora",
-            text_color="green",      
-            cursor="hand2")
-        self.link_find_conjunction.grid(row=7, column=0, padx=35, pady=(5, 5), sticky="nsew") #pady=(25, 5)
+        self.link_find_conjunction = customtkinter.CTkLabel(self.tabview.tab(tab1),
+                                                            text="Find conjunction with Swarm-Aurora",
+                                                            text_color="green",      
+                                                            cursor="hand2")
+        self.link_find_conjunction.grid(row=7, column=0, padx=35, pady=(5, 0), sticky='n') #pady=(25, 5)
         self.link_find_conjunction.bind("<Button-1>", lambda e: webbrowser.open("https://swarm-aurora.com/"))
 
         #######
-        # TAB 2
+        # TAB 2 - Datasets 
 
-        # Datasets 
         # TODO add dmsp datasets
         # TODO get the correct electric field data (ask Spencer), this is along-track track, meaning i need a los component (which should simply be the direction of the satellite). kalle said this should be available on viresclient. 
 
@@ -235,6 +231,12 @@ class App(customtkinter.CTk):
         self.checkbox_iridium_ampere = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Iridium/AMPERE')
         self.checkbox_iridium_ampere.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="n")
 
+        self.checkbox_dmsp_ssies17 = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='DMSP/SSIES 17')
+        self.checkbox_dmsp_ssies17.grid(row=6, column=0, pady=(20, 20), padx=10, sticky="n")
+
+        self.checkbox_dmsp_ssies18 = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='DMSP/SSIES 18')
+        self.checkbox_dmsp_ssies18.grid(row=6, column=1, pady=(20, 20), padx=10, sticky="n")
+
         # self.entry_data = customtkinter.CTkEntry(self.tabview.tab(tab2), placeholder_text="myfile.cdf") # TODO remove if not fixed
         # self.entry_data.grid(row=5, column=1, columnspan=1, pady=(20, 20), padx=10, sticky="n")
 
@@ -244,11 +246,12 @@ class App(customtkinter.CTk):
         self.checkbox_supermag.select()
         self.checkbox_superdarn.select()
         self.checkbox_iridium_ampere.select()
+        # self.checkbox_dmsp_ssies17.select() #TODO MAKE DMSP data download work
+        # self.checkbox_dmsp_ssies18.select()
 
         #######
-        # TAB 3
+        # TAB 3 - Conductance method
 
-        # Conductance method
         self.label_conductance_optmenu = customtkinter.CTkLabel(self.tabview.tab(tab3), text="Conductance estimates:", wraplength=150)
         self.label_conductance_optmenu.grid(row=1, column=0, columnspan=3, padx=10, pady=(30, 5), sticky="n")
         self.optmenu_conductance = customtkinter.CTkOptionMenu(self.tabview.tab(tab3), dynamic_resizing=True,
@@ -256,9 +259,8 @@ class App(customtkinter.CTk):
         self.optmenu_conductance.grid(row=2, column=0, columnspan=3, padx=10, pady=(5, 20))
         self.optmenu_conductance.set("Zang & Paxton model")
 
-        # Make sure the parent grid columns expand nicely
         for i in range(3):
-            self.tabview.tab(tab3).grid_columnconfigure(i, weight=1)
+            self.tabview.tab(tab3).grid_columnconfigure(i, weight=1) # Make columns expand nicely
 
         # Kp index (useful for Hardy model)
         self.label_kp = customtkinter.CTkLabel(self.tabview.tab(tab3), text="Kp:")
@@ -282,27 +284,16 @@ class App(customtkinter.CTk):
         self.entry_background.insert(0, "2")
 
         #############
-        # COLUMN1/ BOTTOM ROW 
+        # COLUMN1/ BOTTOM ROW (Grid parameters)
         #############
 
-        #######
-        # Grid parameters
-
         self.frame_gridparam = customtkinter.CTkFrame(self, corner_radius=10, width=col1_width)
-        self.frame_gridparam.grid(row=1, column=1, padx=(20, 0), pady=(20,0), sticky="nsew")
+        self.frame_gridparam.grid(row=1, column=1, padx=(20, 0), pady=(20, 20), sticky="nsew")
         self.frame_gridparam.grid_columnconfigure((0,1), weight=1)
         self.frame_gridparam.grid_propagate(False)
 
         self.label_grid_param = customtkinter.CTkLabel(self.frame_gridparam, text="Grid parameters", font=customtkinter.CTkFont(size=14, weight="bold"))
         self.label_grid_param.grid(row=0, column=0, columnspan=2, pady=(0, 10))
-
-        self.grid_input_mode = customtkinter.StringVar(value="manual")
-
-        self.grid_mode_toggle = customtkinter.CTkSegmentedButton(self.frame_gridparam,
-                                                                 values=["manual", "sliders"],
-                                                                 variable=self.grid_input_mode,
-                                                                 command=self.toggle_grid_input_mode)
-        self.grid_mode_toggle.grid(row=1, column=0, columnspan=2, pady=10)
 
         self.label_L = customtkinter.CTkLabel(self.frame_gridparam, text="Length (km):", anchor='center') # cross-track dimension of analysis grid
         self.label_W = customtkinter.CTkLabel(self.frame_gridparam, text="Width (km):", anchor='center') # along-track dimension of analysis grid
@@ -313,41 +304,37 @@ class App(customtkinter.CTk):
         self.label_Lres.grid(row=4, column=0, padx=10, pady=10, sticky="n")
         self.label_Wres.grid(row=4, column=1, padx=10, pady=10, sticky="n")
 
-        self.entry_L = customtkinter.CTkEntry(self.frame_gridparam, placeholder_text="L", width=70)
-        self.entry_W = customtkinter.CTkEntry(self.frame_gridparam, placeholder_text="W", width=70)
-        self.entry_Lres = customtkinter.CTkEntry(self.frame_gridparam, placeholder_text="Lres", width=70)
-        self.entry_Wres = customtkinter.CTkEntry(self.frame_gridparam, placeholder_text="Wres", width=70)
+        self.var_L = customtkinter.IntVar(value=1500)
+        self.var_W = customtkinter.IntVar(value=2000)
+        self.var_Lres = customtkinter.IntVar(value=200)
+        self.var_Wres = customtkinter.IntVar(value=200)
+
+        self.entry_L = customtkinter.CTkEntry(self.frame_gridparam, textvariable=self.var_L, width=70)
+        self.entry_W = customtkinter.CTkEntry(self.frame_gridparam, textvariable=self.var_W, width=70)
+        self.entry_Lres = customtkinter.CTkEntry(self.frame_gridparam, textvariable=self.var_Lres, width=70)
+        self.entry_Wres = customtkinter.CTkEntry(self.frame_gridparam, textvariable=self.var_Wres, width=70)
         self.entry_L.grid(row=3, column=0, padx=10, pady=3)
         self.entry_W.grid(row=3, column=1, padx=10, pady=3)
         self.entry_Lres.grid(row=5, column=0, padx=10, pady=3)
-        self.entry_Wres.grid(row=5, column=1, padx=10, pady=3)
+        self.entry_Wres.grid(row=5, column=1, padx= 10, pady=3)
 
-        self.var_L = customtkinter.IntVar()
-        self.var_W = customtkinter.IntVar()
-        self.var_Lres = customtkinter.IntVar()
-        self.var_Wres = customtkinter.IntVar()
+        # # mirror entries
+        # self.link_grid_entries(self.entry_L, self.entry_W)
+        # self.link_grid_entries(self.entry_Lres, self.entry_Wres)
 
-        # TODO find good max number and good number of steps
-        self.slider_L = customtkinter.CTkSlider(self.frame_gridparam, from_=10, to=4000, number_of_steps=200, variable=self.var_L, command=self.update_entry_L)
-        self.slider_W = customtkinter.CTkSlider(self.frame_gridparam, from_=10, to=4000, number_of_steps=200, variable=self.var_W, command=self.update_entry_W)
-        self.slider_Lres = customtkinter.CTkSlider(self.frame_gridparam, from_=10, to=1000, number_of_steps=10, variable=self.var_Lres, command=self.update_entry_Lres)
-        self.slider_Wres = customtkinter.CTkSlider(self.frame_gridparam, from_=10, to=1000, number_of_steps=10, variable=self.var_Wres, command=self.update_entry_Wres)
-        self.slider_L.grid(row=3, column=0, padx=(10,10), pady=3)
-        self.slider_W.grid(row=3, column=1, padx=(10,10), pady=3)
-        self.slider_Lres.grid(row=5, column=0, padx=(10,10), pady=3)
-        self.slider_Wres.grid(row=5, column=1, padx=(10,10), pady=3)
+        # shift the grid center wres km in cross-track direction
+        # positive sign: center shifted towards the left
+        # what is the unit of R?
+        self.label_wshift = customtkinter.CTkLabel(self.frame_gridparam, text="Shift center (km):", anchor='center')
+        self.label_wshift.grid(row=6, column=0, padx=(10,0), pady=15, sticky='e')
+        self.var_wshift = customtkinter.IntVar(value=0)
+        self.entry_wshift = customtkinter.CTkEntry(self.frame_gridparam, textvariable=self.var_wshift, width=55)
+        self.entry_wshift.grid(row=6, column=1, padx=(7,0), pady=15, sticky='w')
 
-        self.toggle_grid_input_mode("manual")
 
-        self.var_L.set(1000)
-        self.var_W.set(1000)
-        self.var_Lres.set(200)
-        self.var_Wres.set(200)
-
-        self.update_entry_L(self.var_L.get())
-        self.update_entry_W(self.var_W.get())
-        self.update_entry_Lres(self.var_Lres.get())
-        self.update_entry_Wres(self.var_Wres.get())
+        # TODO what is the diff?
+        # self.var_wshift = customtkinter.IntVar(value=0)     
+        # self.entry_timestep.insert(0, 30)
 
         #########
         # COLUMN2 (OUTPUTS)
@@ -356,42 +343,24 @@ class App(customtkinter.CTk):
         self.col2_width = 450
         self.output_height = 400
 
-        ######
-        # Create icons for GIFs
 
-        # TODO should this have its own class?
-        # see if i can avoid repetition between the 2 outputs (data and lompe)
-        # see if maybe it's a good idea to link the play/pause and next/previous buttons (if the user pauses one gif, the other one pauses as well)
-         
-        # Play icon
-        play_img = Image.new("RGBA", (25, 25), (0, 0, 0, 0)) # tranparent background
-        draw = ImageDraw.Draw(play_img)
-        draw.polygon([(6, 5), (20, 12), (6, 19)], fill="black")  # triangle
-        self.play_icon = ImageTk.PhotoImage(play_img)
+        self.output_container = customtkinter.CTkFrame(self,  fg_color="transparent")
+        self.output_container.grid(row=0, column=2, rowspan=2, padx=(20,0), pady=(20,20), sticky="nsew")
 
-        # Pause icon
-        pause_img = Image.new("RGBA", (25, 25), (0, 0, 0, 0)) # tranparent background
-        draw = ImageDraw.Draw(pause_img)
-        draw.rectangle([5, 5, 10, 20], fill="black")   # left bar
-        draw.rectangle([15, 5, 20, 20], fill="black")  # right bar
-        self.pause_icon = ImageTk.PhotoImage(pause_img)
+        self.output_container.grid_rowconfigure(0, weight=1)
+        self.output_container.grid_rowconfigure(1, weight=1)
+        self.output_container.grid_columnconfigure(0, weight=1)
 
-        # Previous icon (triangle pointing left)
-        prev_img = Image.new("RGBA", (15, 15), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(prev_img)
-        draw.polygon([(12, 3), (3, 7), (12, 12)], fill="black")
-        self.prev_icon = ImageTk.PhotoImage(prev_img)
-
-        # Next icon (triangle pointing right)
-        next_img = Image.new("RGBA", (15, 15), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(next_img)
-        draw.polygon([(3, 3), (12, 7), (3, 12)], fill="black")
-        self.next_icon = ImageTk.PhotoImage(next_img)
+        self.output_container.bind("<Configure>", self.keep_ratio)
 
         ######
         # Satellite track + grid + data distribution
-        self.frame_data = customtkinter.CTkFrame(self, width=self.col2_width, height=self.output_height)
-        self.frame_data.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        # self.frame_data = customtkinter.CTkFrame(self, width=self.col2_width, height=self.output_height)
+        # self.frame_data.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+
+        self.frame_data = customtkinter.CTkFrame(self.output_container)
+        self.frame_data.grid(row=0, column=0, sticky="nsew", pady=(0,10))
+
         self.frame_data.grid_propagate(False)
         self.frame_data.grid_columnconfigure((0), weight=1)
         self.frame_data.grid_rowconfigure((0), weight=0)
@@ -402,65 +371,69 @@ class App(customtkinter.CTk):
         self.header_frame.grid_columnconfigure(0, weight=0)
         self.header_frame.grid_columnconfigure(1, weight=0)
 
-        self.label_data_frame = customtkinter.CTkLabel(
-            self.header_frame,
-            text="Grid along satellite track + data distribution",
-            font=customtkinter.CTkFont(size=14, weight="bold"))
+        self.label_data_frame = customtkinter.CTkLabel(self.header_frame, text="Grid along satellite track + data distribution", font=customtkinter.CTkFont(size=14, weight="bold"))
         self.label_data_frame.grid(row=0, column=0, sticky="w")
 
         self.info_icon = customtkinter.CTkLabel(self.header_frame, text="ⓘ", width=40, height=40, padx=4, pady=2)
         self.info_icon.grid(row=0, column=1, padx=(6, 0), sticky="w")
-        CustomTooltip(self.info_icon, "SuperDARN (green) \n SuperMAG (orange) \n Iridium/AMPERE (blue) \n Swarm efield (black) \n Swarm bfield (purple)")
+        CustomTooltip(self.info_icon, "SuperDARN (green) \n SuperMAG (orange) \n Iridium/AMPERE (blue) \n Swarm efield (black) \n Swarm bfield (purple)") #TODO add dmsp here
 
         self.label_data_gif = customtkinter.CTkLabel(self.frame_data, text="Waiting for trajectory animation...")
-        self.label_data_gif.grid(row=1, column=0, pady=(0, 20), sticky='nsew')
+        self.label_data_gif.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
+
+        # Add output gif controls
+        self.icons = Icons()
+
+        self.data_frame_controls = customtkinter.CTkFrame(self.frame_data, fg_color="transparent") #"#FFFFFF"
+        self.data_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
 
         # Play/pause button
-        self.btn_play_pause_data = customtkinter.CTkButton(self.frame_data,
-                                                           image=self.pause_icon,
+        self.btn_play_pause_data = customtkinter.CTkButton(self.data_frame_controls,
+                                                           image=self.icons.pause,
                                                            text="",
                                                            width=30,
                                                            height=30,
-                                                           fg_color="#FFFFFF",
+                                                           fg_color="transparent",
                                                            border_width=0,
                                                            corner_radius=0,
                                                            command=self.toggle_play_pause)
 
-        self.btn_posy = 0.91
-        self.btn_play_pause_data.place(x=0.5, y=self.btn_posy, anchor="center")
-        self.btn_play_pause_data.place_forget()  # hide initially
-
         # Previous/next buttons
-        self.btn_next_data = customtkinter.CTkButton(self.frame_data,
-                                                     image=self.next_icon,
+        self.btn_next_data = customtkinter.CTkButton(self.data_frame_controls,
+                                                     image=self.icons.next,
                                                      text="",
                                                      width=20,
                                                      height=20,
-                                                     fg_color="#FFFFFF",
+                                                     fg_color="transparent",
                                                      border_width=0,
                                                      corner_radius=0,
                                                      command=self.next_frame)
 
-        self.btn_prev_data = customtkinter.CTkButton(self.frame_data,
-                                                     image=self.prev_icon,
+        self.btn_prev_data = customtkinter.CTkButton(self.data_frame_controls,
+                                                     image=self.icons.previous,
                                                      text="",
                                                      width=20,
                                                      height=20,
-                                                     fg_color="#FFFFFF",
+                                                     fg_color="transparent",
                                                      border_width=0,
                                                      corner_radius=0,
                                                     command=self.prev_frame)
         
-        self.prev_posx, self.next_posx = 0.08, 0.92
-        self.btn_prev_data.place(x=self.prev_posx, y=self.btn_posy, anchor="center") # left side
-        self.btn_next_data.place(x=self.next_posx, y=self.btn_posy, anchor="center") # right side
-        self.btn_prev_data.place_forget() # hide initially
-        self.btn_next_data.place_forget() # hide initially
-        
+
+        self.btn_prev_data.pack(side="left", padx=5)
+        self.btn_play_pause_data.pack(side="left", padx=8)
+        self.btn_next_data.pack(side="left", padx=5)
+
+        self.data_frame_controls.place_forget() # hide initially
+
         ######
         # Lompe output
-        self.lompe_frame = customtkinter.CTkFrame(self, width=self.col2_width, height=self.output_height)
-        self.lompe_frame.grid(row=1, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        # self.lompe_frame = customtkinter.CTkFrame(self, width=self.col2_width, height=self.output_height)
+        # self.lompe_frame.grid(row=1, column=2, padx=(20, 0), pady=(20, 20), sticky="nsew")
+
+        self.lompe_frame = customtkinter.CTkFrame(self.output_container)
+        self.lompe_frame.grid(row=1, column=0, sticky="nsew")
+
         self.lompe_frame.grid_propagate(False)
         self.lompe_frame.grid_columnconfigure((0), weight=1)
         self.lompe_frame.grid_rowconfigure(0, weight=0) # title
@@ -474,48 +447,49 @@ class App(customtkinter.CTk):
 
 
         self.label_lompe_gif = customtkinter.CTkLabel(self.lompe_frame, text="Waiting for Lompe plot...")
-        self.label_lompe_gif.grid(row=1, column=0, pady=(0, 20), sticky='nsew')
+        self.label_lompe_gif.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
+
+        self.lompe_frame_controls = customtkinter.CTkFrame(self.lompe_frame, fg_color="transparent") #"#FFFFFF"
+        self.lompe_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
 
         # Play/pause button
-        self.btn_play_pause_lompe = customtkinter.CTkButton(self.lompe_frame,                                               image=self.pause_icon, 
+        self.btn_play_pause_lompe = customtkinter.CTkButton(self.lompe_frame_controls,                                               
+                                                            image=self.icons.pause, 
                                                             text="",
                                                             width=30,                  # button width
                                                             height=30,                 # button height
-                                                            fg_color="#FFFFFF",    # foreground (button face) - CTk supports 'transparent'
+                                                            fg_color="transparent",    # foreground (button face) - CTk supports 'transparent'
                                                             #   hover_color="#67d76e92",   # very light overlay when hovering (optional)
                                                             border_width=0,
                                                             corner_radius=0, 
                                                             command=self.toggle_play_pause)
-        self.btn_posy = 0.91
-        self.btn_play_pause_lompe.place(relx=0.5, rely=self.btn_posy, anchor="center")
-        self.btn_play_pause_lompe.place_forget()  # hide initially
-
+        
         # Previous/next buttons
-        self.btn_next_lompe = customtkinter.CTkButton(self.lompe_frame,
-                                                image=self.next_icon,
+        self.btn_next_lompe = customtkinter.CTkButton(self.lompe_frame_controls,
+                                                image=self.icons.next,
                                                 text="",
                                                 width=20,
                                                 height=20,
-                                                fg_color="#FFFFFF",
+                                                fg_color="transparent",
                                                 border_width=0,
                                                 corner_radius=0,
                                                 command=self.next_frame)
 
-        self.btn_prev_lompe = customtkinter.CTkButton(self.lompe_frame,
-                                                image=self.prev_icon,
+        self.btn_prev_lompe = customtkinter.CTkButton(self.lompe_frame_controls,
+                                                image=self.icons.previous,
                                                 text="",
                                                 width=20,
                                                 height=20,
-                                                fg_color="#FFFFFF",
+                                                fg_color="transparent",
                                                 border_width=0,
                                                 corner_radius=0,
                                                 command=self.prev_frame)
         
-        self.prev_posx, self.next_posx = 0.08, 0.92
-        self.btn_prev_lompe.place(relx=self.prev_posx, rely=self.btn_posy, anchor="center") # left side
-        self.btn_next_lompe.place(relx=self.next_posx, rely=self.btn_posy, anchor="center") # right side
-        self.btn_prev_lompe.place_forget() # hide initially
-        self.btn_next_lompe.place_forget() # hide initially
+        self.btn_prev_lompe.pack(side="left", padx=5)
+        self.btn_play_pause_lompe.pack(side="left", padx=8)
+        self.btn_next_lompe.pack(side="left", padx=5)
+
+        self.lompe_frame_controls.place_forget() # hide initially
 
         # Make sure main window limits column 3's stretch
         self.grid_columnconfigure(4, weight=0)
@@ -524,21 +498,19 @@ class App(customtkinter.CTk):
         # COLUMN3
         #########       
 
-        ######
-        # GIF parameters #TODO reorganise
-     
         col3_width = 200
 
-        self.col3_frame = customtkinter.CTkFrame(self, width=col3_width, corner_radius=10)
-        self.col3_frame.grid(row=0, column=3, rowspan=3, padx=(20, 10), pady=(20, 20), sticky="nsew")
+        self.col3_frame = customtkinter.CTkFrame(self, width=col3_width, corner_radius=10, fg_color="transparent")
+        self.col3_frame.grid(row=0, column=3, rowspan=2, padx=(20, 10), pady=(20, 20), sticky="nsew")
         self.col3_frame.grid_propagate(False)
 
         self.col3_frame.grid_columnconfigure(0, weight=1)
         self.col3_frame.grid_rowconfigure((0, 1, 2), weight=1)
 
+        ######
         # GIF speed parameter
         self.gif_section = customtkinter.CTkFrame(self.col3_frame, corner_radius=8)
-        self.gif_section.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew")
+        self.gif_section.grid(row=0, column=0, pady=(0, 5), sticky="nsew")
         self.gif_section.grid_columnconfigure(0, weight=1)
 
         self.gif_section_title = customtkinter.CTkLabel(self.gif_section, text="GIF", font=customtkinter.CTkFont(size=14, weight="bold"))
@@ -551,10 +523,11 @@ class App(customtkinter.CTk):
         self.default_speed = 550 # ms
         self.entry_gifspeed.insert(0, self.default_speed)  
         # CustomTooltip(self.label_gifspeed, text="Time in milliseconds between each frame.\nLower = faster animation.")      
+        #TODO idea: could have a slider instead
 
         # Apply button
         self.button_apply = customtkinter.CTkButton(self.gif_section, text="Apply", command=self.apply_gif_parameters)
-        self.button_apply.grid(row=3, column=0, pady=(50,20))
+        self.button_apply.grid(row=3, column=0, pady=(50,10))
 
         # # Synchronize outputs checkbox
         # self.checkbox_sync = customtkinter.CTkCheckBox(self.gifparam_frame, text='Sync outputs')
@@ -564,10 +537,10 @@ class App(customtkinter.CTk):
         ######
         # Regularization parameters
         self.regul_section = customtkinter.CTkFrame(self.col3_frame, corner_radius=8)
-        self.regul_section.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
+        self.regul_section.grid(row=1, column=0, pady=5, sticky="nsew")
 
         self.regul_section.grid_columnconfigure(0, weight=0)  # labels (fixed)
-        self.regul_section.grid_columnconfigure(1, weight=1)  # sliders (expand!)
+        self.regul_section.grid_columnconfigure(1, weight=1)  # sliders (expand)
         self.regul_section.grid_columnconfigure(2, weight=0)  # values (fixed)
 
         self.regul_section_title = customtkinter.CTkLabel(self.regul_section, text="Regularization \n parameters", font=customtkinter.CTkFont(size=14, weight="bold"))
@@ -612,27 +585,74 @@ class App(customtkinter.CTk):
         # Apply button (re-run SwarmDF)
         self.lompe_button2 = customtkinter.CTkButton(master=self.regul_section, text="Apply", command=self.apply_new_regularization)
         CustomTooltip(self.lompe_button2, "This will re-run Lompe \n with the new regularizaton parameters")
-        self.lompe_button2.grid(row=3, column=1, pady=(50,20), sticky='ew')
+        self.lompe_button2.grid(row=3, column=1, pady=(50,10), sticky='ew')
 
         ######
         # Validation
         self.validation_section = customtkinter.CTkFrame(self.col3_frame, corner_radius=8)
-        self.validation_section.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="nsew")
+        self.validation_section.grid(row=2, column=0, pady=(5, 0), sticky="nsew")
         self.validation_section.grid_columnconfigure(0, weight=1)
 
         self.validation_section_title = customtkinter.CTkLabel(self.validation_section, text="Output \n validation", font=customtkinter.CTkFont(size=14, weight="bold"))
-        self.validation_section_title.grid(row=4, column=0, pady=(5, 5))
+        self.validation_section_title.grid(row=0, column=0, pady=(5, 5))
 
+        # Gamera time offset
+        self.label_Gtimeoff = customtkinter.CTkLabel(self.validation_section, text="Time offset (hours):")
+        self.label_Gtimeoff.grid(row=1, column=0, padx=(40,0), pady=(35, 0), sticky="w")
+        self.entry_Gtimeoff = customtkinter.CTkEntry(self.validation_section, width=30)
+        self.entry_Gtimeoff.grid(row=1, column=0, padx=(0,25), pady=(38, 0), sticky='e')        
+        self.default_Gtimeoff = 0 # hours
+        self.entry_Gtimeoff.insert(0, self.default_Gtimeoff)  
+        # TODO add info on what this does
+        # CustomTooltip(self.lompe_button2, "This will re-run Lompe \n with the new regularizaton parameters")
+        # self.lompe_button2.grid(row=2, column=1, pady=(50,20), sticky='ew')
+
+        # Gamera snapshot
+        self.label_Gsnapshot = customtkinter.CTkLabel(self.validation_section, text="Gamera snapshot number:")
+        self.label_Gsnapshot.grid(row=3, column=0, padx=(27,0), pady=(15, 0), sticky="w")
+        self.entry_Gsnapshot = customtkinter.CTkEntry(self.validation_section, width=30)
+        self.entry_Gsnapshot.grid(row=3, column=0, padx=(0,25), pady=(18, 0), sticky='e')        
+        self.default_Gsnapshot = 0
+        self.entry_Gsnapshot.insert(0, self.default_Gsnapshot)        
+        # CustomTooltip(self.lompe_button2, "This will re-run Lompe \n with the new regularizaton parameters")
+        # self.lompe_button2.grid(row=3, column=1, pady=(50,20), sticky='ew')
+
+        # Run validation button
         self.button_validate = customtkinter.CTkButton(self.validation_section, text="Validation", command=self.open_validation_window)
-        self.button_validate.grid(row=5, column=0, pady=50)       
+        self.button_validate.grid(row=4, column=0, pady=(50, 0))       
         CustomTooltip(self.button_validate, "This will run LompeOSSE \n (validation routine for experiment setup)")
 
 
 # -------------------------------------------------------
 # -------------------------------------------------------
 # -------------------------------------------------------
+# Helper functions 
 
-    # Helper functions TODO maybe have them all in a dedicated script?)
+# TODO move runswarmdf before the helper functions ?
+
+    # def enforce_aspect(self, event):
+
+    #     if self._resizing:
+    #         return
+
+    #     self._resizing = True
+
+    #     w = self.winfo_width()
+    #     h = int(w / self.aspect_ratio)
+
+    #     self.geometry(f"{w}x{h}")
+
+    #     self._resizing = False
+
+    def keep_ratio(self, event):
+
+        w = event.width
+        aspect_ratio = 1660 / 950
+
+        h = int(w / aspect_ratio)
+
+        self.output_container.configure(height=h)
+
     #################
     # Sidebar options
 
@@ -643,16 +663,6 @@ class App(customtkinter.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
 
-    #################
-    # Swarm satellite(s)
-
-    def swarm_selection(self):
-        selected = []
-        if self.checkbox_swarmA_var.get(): selected.append("A")
-        if self.checkbox_swarmB_var.get(): selected.append("B")
-        if self.checkbox_swarmC_var.get(): selected.append("C")
-        return selected
-        
     #################
     # Start/end input times
 
@@ -680,7 +690,7 @@ class App(customtkinter.CTk):
         # example_start = datetime(2014, 12, 15, 1, 12, 0)
         # example_end   = datetime(2014, 12, 15, 1, 27, 0)
         example_start = datetime(2014, 12, 15, 1, 15, 0)
-        example_end   = datetime(2014, 12, 15, 1, 19, 0)      
+        example_end   = datetime(2014, 12, 15, 1, 16, 0)      
         self.entry_start_time.set_datetime(example_start)
         self.entry_end_time.set_datetime(example_end)
 
@@ -690,120 +700,40 @@ class App(customtkinter.CTk):
 
     #################
     # Grid parameters
-    def toggle_grid_input_mode(self, mode):
-        if mode == "manual":
-            self.entry_L.grid()
-            self.entry_W.grid()
-            self.entry_Lres.grid()
-            self.entry_Wres.grid()
 
-            self.slider_L.grid_remove()
-            self.slider_W.grid_remove()
-            self.slider_Lres.grid_remove()
-            self.slider_Wres.grid_remove()
+    def link_grid_entries(self, entry_L, entry_W):
+        def mirror(event):
 
-        else:
-            self.entry_L.grid_remove()
-            self.entry_W.grid_remove()
-            self.entry_Lres.grid_remove()
-            self.entry_Wres.grid_remove()
+            val = entry_L.get()
 
-            self.slider_L.grid()
-            self.slider_W.grid()
-            self.slider_Lres.grid()
-            self.slider_Wres.grid()
+            # Ignore empty / placeholder-like states
+            if val.strip():
 
-    def update_entry_L(self, value):
-        self.entry_L.delete(0, "end")
-        self.entry_L.insert(0, str(int(float(value))))
-
-    def update_entry_W(self, value):
-        self.entry_W.delete(0, "end")
-        self.entry_W.insert(0, str(int(float(value))))
-
-    def update_entry_Lres(self, value):
-        self.entry_Lres.delete(0, "end")
-        self.entry_Lres.insert(0, str(int(float(value))))
-
-    def update_entry_Wres(self, value):
-        self.entry_Wres.delete(0, "end")
-        self.entry_Wres.insert(0, str(int(float(value))))
+                entry_W.delete(0, "end")
+                entry_W.insert(0, val)
+            
+        entry_L.bind("<KeyRelease>", mirror)
 
     def get_grid_parameters(self):
-        if self.grid_input_mode.get() == "manual":
-            try:
-                L = float(self.entry_L.get())
-                W = float(self.entry_W.get())
-                Lres = float(self.entry_Lres.get())
-                Wres = float(self.entry_Wres.get())
-            except ValueError: 
-                L, W, Lres, Wres = None, None, None, None
-                print("Invalid manual input")
-        else:
-            L = self.var_L.get()
-            W = self.var_W.get()
-            Lres = self.var_Lres.get()
-            Wres = self.var_Wres.get()
+        try:
+            L = float(self.entry_L.get())
+            W = float(self.entry_W.get())
+            Lres = float(self.entry_Lres.get())
+            Wres = float(self.entry_Wres.get())
+            wshift = float(self.entry_wshift.get())
+        except ValueError: 
+            L, W, Lres, Wres, wshift = None, None, None, None, None
+            print("Invalid manual input")
         
-        return L, W, Lres, Wres
+        return L, W, Lres, Wres, wshift
 
     ################# 
-    # GIFS (Swarm orbit and lompe plots) 
+    # GIF functions
 
-    def register_animation(self, frames, target_label):
-        """ 
-        Register a GIF animation as a passive object.
-        It does not start animation; it only stores frames and target label.
-        """
-        state = {"frames": frames, "label": target_label}
-
-        return state
-    
-    def play(self):
-        """
-        Advance global frame counter and update all animations.
-        This is the single timing loop for the whole GUI (both GIFs).
-        """
-        if not self.master_state["playing"]:
-            return
-
-        self.master_state["current_frame"] = (self.master_state["current_frame"] + 1) % len(self.data_state["frames"])
-
-        self.update_all_gifs()
-        self.master_state["job"] = self.after(self.master_state["delay"], self.play)
-
-    def update_all_gifs(self):
-        """
-        Draw current frame for all registered animations.
-        """
-        i = self.master_state["current_frame"]
-
-        # Data GIF (always exists)
-        frame = self.data_state["frames"][i]
-        self.data_state["label"].configure(image=frame, text="")
-        # self.data_state["label"].image = frame
-
-        # Lompe GIF
-        if hasattr(self, "lompe_state") and self.lompe_state is not None:
-            frame = self.lompe_state["frames"][i]
-            self.lompe_state["label"].configure(image=frame, text="")
-            # self.lompe_state["label"].image = frame
-
-        # LompeOSSE GIF
-        if hasattr(self, "lompeosse_state") and self.lompeosse_state is not None:
-            frame = self.lompeosse_state["frames"][i]
-            self.lompeosse_state["label"].configure(image=frame, text="")
-
-        # Gamera GIF (optional)
-        if hasattr(self, "gamera_state") and self.gamera_state is not None:
-            frame = self.gamera_state["frames"][i]
-            self.gamera_state["label"].configure(image=frame, text="")
-
-    # TODO remove? 
     def apply_gif_parameters(self):
         try:
             new_speed = int(self.entry_gifspeed.get())
-            if new_speed <= 0: # handle invalid input
+            if new_speed <= 0:
                 raise ValueError
         except ValueError:
             new_speed = self.default_speed  # fallback to default if input is invalid
@@ -813,105 +743,104 @@ class App(customtkinter.CTk):
         print(f"Animation update: applied speed = {new_speed} ms")
 
         # Update the animation with new speed
-        self.start_animation(self.lompe_frames_tk, new_speed, self.label_lompe_gif)
-        self.start_animation(self.data_frames_tk, new_speed, self.label_data_gif)
+        self.master_state["delay"] = new_speed
+        validation = getattr(self, "validation_state", None)
+        if validation is not None:
+            validation["delay"] = new_speed
+
+    def play(self):
+        self.anim_mgr.play_generic(state=self.master_state)
+    def play_validation(self):
+        self.anim_mgr.play_generic(state=self.validation_state)
 
     def toggle_play_pause(self):
-        self.master_state["playing"] = not self.master_state["playing"]
-
-        icon = self.pause_icon if self.master_state["playing"] else self.play_icon
-        self.btn_play_pause_data.configure(image=icon)
+        """
+        Run the play/pause function + change the play/pause the icon for the outputs
+        """
+        buttons = [self.btn_play_pause_data]
         if hasattr(self, "btn_play_pause_lompe"):
-            self.btn_play_pause_lompe.configure(image=icon)
+            buttons.append(self.btn_play_pause_lompe)
 
-        if self.master_state["playing"]:
-            self.play()
-        else:
-            if self.master_state["job"]:
-                self.after_cancel(self.master_state["job"])
-                self.master_state["job"] = None
+        playing = self.anim_mgr.toggle_play_pause_generic(state=self.master_state, buttons=buttons)
 
-    def next_frame(self):
-        self.master_state["playing"] = False
-        if self.master_state["job"]:
-            self.after_cancel(self.master_state["job"])
-            self.master_state["job"] = None
+        icon = self.icons.pause if playing else self.icons.play
+        for btn in buttons:
+            btn.configure(image=icon)
 
-        self.master_state["current_frame"] = (
-            self.master_state["current_frame"] + 1
-        ) % len(self.data_state["frames"])
+    def toggle_play_pause_validation(self):
+        buttons=[self.btn_play_pause_validation]
+        
+        playing = self.anim_mgr.toggle_play_pause_generic(state=self.validation_state, buttons=buttons)
 
-        self.update_all_gifs()
+        icon = self.icons.pause if playing else self.icons.play
+        for btn in buttons:
+            btn.configure(image=icon)
 
     def prev_frame(self):
-        self.master_state["playing"] = False
-        if self.master_state["job"]:
-            self.after_cancel(self.master_state["job"])
-            self.master_state["job"] = None
+        self.anim_mgr.step_frame_generic(state=self.master_state, step=-1)
+    def next_frame(self):
+        self.anim_mgr.step_frame_generic(state=self.master_state, step=+1)
 
-        self.master_state["current_frame"] = (
-            self.master_state["current_frame"] - 1
-        ) % len(self.data_state["frames"])
-
-        self.update_all_gifs()
+    def prev_frame_validation(self):
+        self.anim_mgr.step_frame_generic(state=self.validation_state, step=-1)
+    def next_frame_validation(self):
+        self.anim_mgr.step_frame_generic(state=self.validation_state, step=+1)
 
     #################
     # Swarm trajectory output
 
-    # TODO fix relative position (currently, pos changes with gui size)
-    def show_data_controls(self):
-        self.btn_play_pause_data.place(relx=0.5, rely=self.btn_posy, anchor="center")
-        self.btn_prev_data.place(relx=self.prev_posx, rely=self.btn_posy, anchor="center")
-        self.btn_next_data.place(relx=self.next_posx, rely=self.btn_posy, anchor="center")
-
     def swarm_trajectory_UI(self):
 
         # Extract PIL images and individual grids
-        self.grids, frames_pil = swarm_trajectory(self.sat_id, self.start_time, self.end_time, self.timestep, self.grid_params, self.datasets, self.speed, self.show_data)
+        self.times, self.grids, frames_pil = swarm_trajectory(self.sat_id, self.start_time, self.end_time, self.timestep, self.grid_params, self.datasets, self.speed, self.show_data)
                 
         # Convert PIL → Tkinter images
-        w = max(self.label_data_gif.winfo_width() - 40, 1)  # 10px margin each side
+        self.label_data_gif.update_idletasks()
+        w = max(self.label_data_gif.winfo_width() - 40, 1) 
         h = max(self.label_data_gif.winfo_height(), 1)
         self.data_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w, h), Image.LANCZOS),
                            size=(w, h)) for f in frames_pil]
 
+        # Initialize common "clock" for swarm_trajectory and lompe outputs (controls the timeline for both GIFs i.e, synchronize them)
+        self.master_state = {"tracks": [],
+                            "current_frame": 0,
+                            "playing": True,
+                            "job": None,
+                            "delay": self.speed, 
+                            "scheduler": self.after, 
+                            "cancel": self.after_cancel}
+        
         # Register/prepare frames for animated GIF
-        self.data_state = self.register_animation(self.data_frames_tk, self.label_data_gif)
-        print("Trajectory animation frames generated and registered.")
+        self.master_state["tracks"].clear()
+        self.anim_mgr.register_track(self.data_frames_tk,  self.label_data_gif, self.master_state)
 
-        # UI updates
-        self.show_data_controls()
+        # Place frame controls
+        self.data_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
 
     #################
     # Lompe output
 
-    def show_lompe_controls(self):
-        self.btn_play_pause_lompe.place(relx=0.5, rely=self.btn_posy, anchor="center")
-        self.btn_prev_lompe.place(relx=self.prev_posx, rely=self.btn_posy, anchor="center")
-        self.btn_next_lompe.place(relx=self.next_posx, rely=self.btn_posy, anchor="center")
-
     def run_lompe_UI(self):
-        
-        print(f"Running Lompe again  with l1={self.l1:.2f}, l2={self.l2:.2f}") 
 
-        # Run Lompe, get PIL images
-        lompe_models = run_lompe(self.start_time, self.end_time, self.timestep, self.grids, 
+        # Run Lompe analysis, get PIL images
+        lompe_models = run_lompe(self.times, self.timestep, self.grids, 
                                  self.datasets, self.SHs, self.SPs, self.l1, self.l2)
         lompe_frames_pil = lompe_output(lompe_models, self.speed)
 
         # Convert PIL → Tkinter images
+        self.label_lompe_gif.update_idletasks()
         w = max(self.label_lompe_gif.winfo_width() - 40, 1)  # 10px margin each side
         h = max(self.label_lompe_gif.winfo_height(), 1)
         self.lompe_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w, h), Image.LANCZOS),
                            size=(w, h)) for f in lompe_frames_pil]
         
-        # Start animation
-        self.lompe_state = self.register_animation(self.lompe_frames_tk, self.label_lompe_gif)
+        # Register/prepare frames for animated GIF
+        self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
         print("Lompe output animation frames generated and registered.")
-
-        # UI updates
-        self.show_lompe_controls()
         
+        # Place frame controls
+        self.lompe_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
+
         if self.lompe_button:
             self.lompe_button.grid_forget()
         
@@ -937,33 +866,25 @@ class App(customtkinter.CTk):
         slider_l2_value = self.slider_l2.get()
         self.l2 = 10 ** slider_l2_value
 
-        print(f"Running Lompe with l1={self.l1:.2f}, l2={self.l2:.2f}") 
-
         # Run lompe with new parameters
         self.run_lompe_UI()
 
     #################
     # Validation (LompeOSSE)
-
+    
+    # TODO clean up this function
     def open_validation_window(self):
         self.validation_window = customtkinter.CTkToplevel(self)
         self.validation_window.title("LompeOSSE validation output")
-        self.validation_window.geometry(f"{1000}x{500}")   # large window
-
-        self.validation_state = {"frames_lompe": None,
-                                 "frames_gamera": None,
-                                 "current_frame": 0,
-                                 "playing": True,
-                                 "job": None,
-                                 "delay": self.speed}
+        self.validation_window.geometry(f"{1200}x{500}") #1000x400   # large window
         
         # Container for both plots
         self.plots_container = customtkinter.CTkFrame(self.validation_window, 
-                                                      width=self.col2_width + self.col2_width/2, 
-                                                      height=self.output_height)
+                                                      width=self.col2_width + self.col2_width/1.5, 
+                                                      height=self.output_height-100)
         self.plots_container.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.plots_container.grid_columnconfigure(0, weight=3)  # big
+        self.plots_container.grid_columnconfigure(0, weight=2)  # big
         self.plots_container.grid_columnconfigure(1, weight=2)  # small
         self.plots_container.grid_rowconfigure(0, weight=1)
 
@@ -987,15 +908,15 @@ class App(customtkinter.CTk):
         self.validation_controls.pack(side="bottom", pady=5)
 
         self.btn_prev_validation = customtkinter.CTkButton(self.validation_controls,
-                                                           image=self.prev_icon,
+                                                           image=self.icons.previous,
                                                            text="",
-                                                           width=30,
-                                                           height=30,
+                                                           width=20,
+                                                           height=20,
                                                            fg_color="transparent",
-                                                           command=self.prev_validation_frame)
+                                                           command=self.prev_frame_validation)
 
         self.btn_play_pause_validation = customtkinter.CTkButton(self.validation_controls,
-                                                                 image=self.pause_icon,
+                                                                 image=self.icons.pause,
                                                                  text="",
                                                                  width=30,
                                                                  height=30,
@@ -1003,12 +924,12 @@ class App(customtkinter.CTk):
                                                                  command=self.toggle_play_pause_validation)
 
         self.btn_next_validation = customtkinter.CTkButton(self.validation_controls,
-                                                           image=self.next_icon,
+                                                           image=self.icons.next,
                                                            text="",
-                                                           width=30,
-                                                           height=30,
+                                                           width=20,
+                                                           height=20,
                                                            fg_color="transparent",
-                                                           command=self.next_validation_frame)
+                                                           command=self.next_frame_validation)
 
         self.btn_prev_validation.pack(side="left", padx=10)
         self.btn_play_pause_validation.pack(side="left", padx=10)
@@ -1020,16 +941,10 @@ class App(customtkinter.CTk):
                                                    font=customtkinter.CTkFont(size=14, weight="bold"))
         self.status_label.pack(pady=2)
 
-        #############
-
-        # Now run the OSSE and display output in this window
-        self.run_lompeOSSE_UI()
-
     def run_lompeOSSE_UI(self):
-      
-        #TODO fix hemisphere in run_lompeOSSE
 
-        lompeOSSE_models, gamera_models = run_lompeOSSE(self.lompe_models)
+        # Run LompeOSSE and create output (PIL images)
+        lompeOSSE_models, gamera_models = run_lompeOSSE(self.lompe_models, self.timeoff, self.snapshot)
         lompeOSSE_frames_pil, gamera_frames_pil = lompeOSSE_output(lompeOSSE_models, gamera_models, self.speed)
 
         # Convert PIL → Tkinter images
@@ -1039,91 +954,32 @@ class App(customtkinter.CTk):
         h1 = self.lompe_plot_frame.winfo_height()
         self.lompeOSSE_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w1, h1), Image.LANCZOS),
                            size=(w1, h1)) for f in lompeOSSE_frames_pil]
-        
                 
         w2 = self.gamera_plot_frame.winfo_width()
         h2 = self.gamera_plot_frame.winfo_height()
         self.gamera_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w2, h2), Image.LANCZOS),
                     size=(w2, h2)) for f in gamera_frames_pil]
 
-        # self.lompeOSSE_label.configure(image=self.lompeOSSE_frames_tk[0])
+        # Initialize animation
+        self.validation_state = {"tracks": [],
+                                "current_frame": 0,
+                                "playing": True,
+                                "job": None,
+                                "delay": self.speed,
+                                "scheduler": self.validation_window.after, 
+                                "cancel": self.validation_window.after_cancel}
+
+        # Register/prepare Tkinter images for animation
+        self.anim_mgr.register_track(self.lompeOSSE_frames_tk, self.lompe_label,  self.validation_state)
+        self.anim_mgr.register_track(self.gamera_frames_tk,    self.gamera_label, self.validation_state)
+
+        # Update validation window label
         self.status_label.configure(text="")
 
-        self.validation_state["frames_lompe"] = self.lompeOSSE_frames_tk
-        self.validation_state["frames_gamera"] = self.gamera_frames_tk
-        self.validation_state["current_frame"] = 0
-        self.update_validation_gifs()
+        # Play animation
+        # self.anim_mgr.update_tracks(self.validation_state)
         self.play_validation()
 
-
-        # # Start animation
-        # self.lompeosse_state = self.register_animation(self.lompeOSSE_frames_tk, self.lompe_label)
-        # self.gamera_state = self.register_animation(self.gamera_frames_tk, self.gamera_label)
-        # print("LompeOSSE output animation frames generated and registered.")
-
-        # self.show_lompeosse_controls()
-
-    def update_validation_gifs(self):
-        i = self.validation_state["current_frame"]
-
-        self.lompe_label.configure(image=self.validation_state["frames_lompe"][i])
-        self.gamera_label.configure(image=self.validation_state["frames_gamera"][i])
-    
-    def play_validation(self):
-        state = self.validation_state
-
-        if not state["playing"]:
-            return
-
-        state["current_frame"] = (state["current_frame"] + 1) % len(state["frames_lompe"])
-
-        self.update_validation_gifs()
-
-        state["job"] = self.validation_window.after(state["delay"], self.play_validation)
-    
-    def toggle_play_pause_validation(self):
-        state = self.validation_state
-        state["playing"] = not state["playing"]
-
-        icon = self.pause_icon if state["playing"] else self.play_icon
-        self.btn_play_pause_validation.configure(image=icon)
-
-        if state["playing"]:
-            self.play_validation()
-        else:
-            if state["job"]:
-                self.validation_window.after_cancel(state["job"])
-                state["job"] = None
-
-    def next_validation_frame(self):
-        state = self.validation_state
-        state["playing"] = False
-
-        if state["job"]:
-            self.validation_window.after_cancel(state["job"])
-            state["job"] = None
-
-        state["current_frame"] = (
-            state["current_frame"] + 1
-        ) % len(state["frames_lompe"])
-
-        self.update_validation_gifs()
-
-    def prev_validation_frame(self):
-        state = self.validation_state
-        state["playing"] = False
-
-        if state["job"]:
-            self.validation_window.after_cancel(state["job"])
-            state["job"] = None
-
-        state["current_frame"] = (
-            state["current_frame"] - 1
-        ) % len(state["frames_lompe"])
-
-        self.update_validation_gifs()
-
-        # + plot gamera quantities in the format of a Lompe figure
 # -------------------------------------------------------
 # -------------------------------------------------------
 # -------------------------------------------------------
@@ -1131,6 +987,12 @@ class App(customtkinter.CTk):
     #################
     # Run toolbox! TODO make keep this only in this script + the user selections and organize the rest differently (all the stuff to make a nice layout etc should be somewhere else because not relevant to user)
     def run_swarm_df(self):
+
+        print("--- Running SwarmDF --- ")
+
+        self.anim_mgr = AnimationManager()
+
+        # self.button_runSwarmDF.configure(state="disabled")
 
         # set up progressbar (satellite track animation)
         self.progressbar1 = customtkinter.CTkProgressBar(self.frame_data, mode="indeterminate")
@@ -1148,229 +1010,165 @@ class App(customtkinter.CTk):
     def _do_swarm_df(self):
         """Heavy work here!"""
 
-        ###############
-        # Get all input (GUI) info
-        ###############
+        try: 
 
-        # satellite ID
-        self.sat_id = self.optmenu_satellite.get()
-        if self.sat_id == "Satellite ID": #TODO change that to error if empty
-            messagebox.showerror("Error", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
-            return
-    
-        # time interval
-        self.start_time, self.end_time = self.get_start_end_times()
-        self.timestep = int(self.entry_timestep.get()) # frame_length = 60 # frame interval in sec (how much of the orbit is captured in one frame) # HOW TO PICK THAT NUMBER??
+            ###############
+            # Get all input (GUI) info
+            ###############
 
-        # datasets
-        self.datasets2download = []
-        if self.checkbox_swarm_efield.get():
-            self.datasets2download.append('swarm_efield')
-        if self.checkbox_swarm_bfield.get():
-            self.datasets2download.append('swarm_mag')
-        if self.checkbox_superdarn.get():
-            self.datasets2download.append('superdarn')
-        if self.checkbox_supermag.get():
-            self.datasets2download.append('supermag')
-        if self.checkbox_iridium_ampere.get():
-            self.datasets2download.append('iridium_ampere')
-        # if self.checkbox_dmspssies.isChecked():
-        #     selected_sources.append('ssies')
-        # TODO add dmsp ssies
-
-        if len(self.datasets2download) == 0: 
-            if self.checkbox_runlompe.get():
-                self.checkbox_runlompe.deselect()
-                messagebox.showwarning("Lompe unavailable", "No valid datasets available for Lompe inversion.")
-
-        # conductance
-        kp_value = float(self.entry_kp.get()) 
-        f107_value = float(self.entry_f107.get())
-        background_value = float(self.entry_background.get())
-
-        self.conductance_params = {"kp": kp_value, "f107": f107_value, "background": background_value}
-        self.conductance_method = self.optmenu_conductance.get()
-
-        # grid 
-        self.grid_params = self.get_grid_parameters() # Store L,W,Lres,Wres in grid variable TODO add dictionnary
-                
-        # GIF
-        self.speed = int(self.entry_gifspeed.get()) # ms/frame #TODO remove
-        self.show_data = self.checkbox_showdata.get() # Returns True if checked, False if unchecked
-
-        # regularization #TODO Ok kalle?
-        slider_l1_value = self.slider_l1.get()
-        self.l1 = 10 ** slider_l1_value
-        slider_l2_value = self.slider_l2.get()
-        self.l2 = 10 ** slider_l2_value
-        self.regul_params = {'l1': self.l1, 'l2': self.l2}
-
-        # hemisphere
-        # TODO find where hemisphere info is decided! Make it an option for the user?
-        # hem = grid.lat
-        # print('hemisphere', hem)
-
-        # Collect parameters from GUI for generating Python code
-        self.config = build_config_dict(self.sat_id, self.start_time, self.end_time, self.timestep,
-            self.datasets2download, self.conductance_method, self.conductance_params, self.grid_params, self.regul_params, self.speed, lompeosse=self.checkbox_lompeosse.get())
-
-        ######################
-        # Collect data
-        ######################
-
-        package_root = Path(__file__).resolve().parents[1]
-        data_path = str(package_root / "data" / "sample_datasets") + "/"
-
-        # Fetch and load data
-        datahandler = DataManager(self.start_time, data_path, self.datasets2download)
-        self.datasets = datahandler.datasets
-
-        ######################
-        # Swarm orbit animation
-        ######################
-
-        self.swarm_trajectory_UI()
-
-        self.progressbar1.stop()
-        self.progressbar1.grid_forget() # hide progressbar
-
-        ######################
-        # Define conductances (TODO come back to that --- do it in a different script)
-        ######################
-
-        self.SHs, self.SPs = compute_conductances(self.conductance_method, self.start_time, self.end_time, self.timestep, self.grids, self.conductance_params)
-                
-        ######################
-        # Lompe analysis 
-        ######################
-
-        self.lompe_button = None
-
-        # If "Run Lompe analysis" was NOT selected, show button that triggers Lompe analysis
-        if not self.checkbox_runlompe.get():
-
-            self.lompe_button = customtkinter.CTkButton(master=self.lompe_frame,
-                                                        text="Run Lompe analysis",
-                                                        command=self.run_lompe_UI,
-                                                        width=170,
-                                                        height=40)
-
-            self.lompe_button.grid(row=1, column=0, pady=(0, 20))
-       
-        else: # Run Lompe analysis automatically
-
-            self.lompe_models = self.run_lompe_UI()
-
-            self.progressbar2.stop()
-            self.progressbar2.grid_forget() # hide progressbar
+            # satellite ID
+            self.sat_id = self.optmenu_satellite.get()
+            if self.sat_id == "Satellite ID": #TODO change that to error if empty
+                messagebox.showerror("Error", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
+                return
         
-        ######################
-        # GUI-specific: Master animation clock. 
-        # Controls the timeline for all GIFs.
+            # time interval
+            self.start_time, self.end_time = self.get_start_end_times()
+            self.timestep = int(self.entry_timestep.get()) # frame_length = 60 # frame interval in sec (how much of the orbit is captured in one frame) # HOW TO PICK THAT NUMBER??
 
-        self.master_state = {"current_frame": 0,
-                                 "playing": True,
-                                 "job": None,
-                                 "delay": self.speed}
-        self.play()
+            # datasets
+            self.datasets2download = []
+            if self.checkbox_swarm_efield.get():
+                self.datasets2download.append('swarm_efield')
+            if self.checkbox_swarm_bfield.get():
+                self.datasets2download.append('swarm_mag')
+            if self.checkbox_superdarn.get():
+                self.datasets2download.append('superdarn')
+            if self.checkbox_supermag.get():
+                self.datasets2download.append('supermag')
+            if self.checkbox_iridium_ampere.get():
+                self.datasets2download.append('iridium_ampere')
+            if self.checkbox_dmsp_ssies17.get():
+                self.datasets2download.append('dmsp_ssies17')
+            if self.checkbox_dmsp_ssies18.get():
+                self.datasets2download.append('dmsp_ssies18')
+
+            if len(self.datasets2download) == 0: 
+                if self.checkbox_runlompe.get():
+                    self.checkbox_runlompe.deselect()
+                    messagebox.showwarning("Lompe unavailable", "No valid datasets available for Lompe inversion.")
+
+            # conductance
+            kp_value = float(self.entry_kp.get()) 
+            f107_value = float(self.entry_f107.get())
+            background_value = float(self.entry_background.get())
+
+            self.conductance_params = {"kp": kp_value, "f107": f107_value, "background": background_value}
+            self.conductance_method = self.optmenu_conductance.get()
+
+            # grid 
+            self.grid_params = self.get_grid_parameters() # Store L,W,Lres,Wres in grid variable TODO add dictionnary
+                    
+            # GIF
+            self.speed = int(self.entry_gifspeed.get()) # ms/frame #TODO remove
+            self.show_data = self.checkbox_showdata.get() # Returns True if checked, False if unchecked
+
+            # regularization #TODO Ok kalle?
+            slider_l1_value = self.slider_l1.get()
+            self.l1 = 10 ** slider_l1_value
+            slider_l2_value = self.slider_l2.get()
+            self.l2 = 10 ** slider_l2_value
+            self.regul_params = {'l1': self.l1, 'l2': self.l2}
+
+            # validation (LompeOSSE)
+            self.timeoff = int(self.entry_Gtimeoff.get())
+            self.snapshot = int(self.entry_Gsnapshot.get())
+
+            # Collect parameters from GUI for generating Python code
+            self.config = build_config_dict(self.sat_id, self.start_time, self.end_time, self.timestep,
+                self.datasets2download, self.conductance_method, self.conductance_params, self.grid_params, self.regul_params, self.speed, self.checkbox_lompeosse.get(), self.timeoff, self.snapshot)
+
+            ######################
+            # Collect data
+            ######################
+
+            package_root = Path(__file__).resolve().parents[1]
+            data_path = str(package_root / "data" / "sample_datasets") + "/"
+
+            # Fetch and load data
+            datahandler = DataManager(self.start_time, data_path, self.datasets2download)
+            self.datasets = datahandler.datasets
+            
+            ######################
+            # Swarm orbit animation
+            ######################
+            
+            self.swarm_trajectory_UI()
+
+            ######################
+            # Define conductances (TODO come back to that --- do it in a different script)
+            ######################
+
+            self.SHs, self.SPs = compute_conductances(self.conductance_method, self.start_time, self.end_time, self.timestep, self.grids, self.conductance_params)
+                    
+            ######################
+            # Lompe analysis 
+            ######################
+
+            self.lompe_button = None
+
+            # If "Run Lompe analysis" was NOT selected, show button that triggers Lompe analysis
+            if not self.checkbox_runlompe.get():
+
+                self.lompe_button = customtkinter.CTkButton(master=self.lompe_frame,
+                                                            text="Run Lompe analysis",
+                                                            command=self.run_lompe_UI,
+                                                            width=170,
+                                                            height=40)
+
+                self.lompe_button.grid(row=1, column=0, pady=(0, 20))
+        
+            else: # Run Lompe analysis automatically
+
+                self.lompe_models = self.run_lompe_UI()
+
+            ######################
+            # Show output animations (gifs) 
+            ######################
+
+            self.play()
+            #TODO see if there's a way to show swarm trajectory before lompe output is ready
+
+            ######################
+            # Lompe_OSSE validation 
+            ######################
+
+            # TODO it opens the validatio window once everything else is done, I would like things to show one after another 
+            if self.checkbox_lompeosse.get():
+                
+                # Create pop-up window
+                self.open_validation_window()
+                
+                # Run LompeOSSE analysis and display output in the validation window
+                self.run_lompeOSSE_UI()
+
+            ######################
+            # Generate Python code
+            ######################
+
+            if self.var_generate_code.get():
+                generate_python_code(self.config)
+
+        except Exception as e:
+            print(e)
+            print("Coudln't run SwarmDF, the following exception occured:", e) #TODO fix this
+
+        finally: # ALWAYS executed (success OR error)
+
+            if hasattr(self, "progressbar1"):
+                self.progressbar1.stop()
+                self.progressbar1.destroy()
+
+            if hasattr(self, "progressbar2"):
+                self.progressbar2.stop()
+                self.progressbar2.destroy()
+
+            # self.button_runSwarmDF.configure(state="enabled")
 
 
-        ######################
-        # Lompe_OSSE validation 
-        ######################
-
-        # TODO it opens the validatio window once everything else is done, I would like things to show one after another 
-        if self.checkbox_lompeosse.get():
-            self.open_validation_window()
-
-        #TODO ALSO ADD POSSIBILITY TO TRIGGER lompeosse when clicking the validation button afterwards
-        #TODO check why I don't have access to control buttons once the validation windows shows up. fix that 
-        # add lompeosse stuff here
-        # Idea: when clicking "validation" button, the lompeOSSE module is triggered. 
-        # That means that LompeOSSE runs in the background, reads which data was given to the initial SwarmDF run, and fetches the corresponding gamera data. 
-        # With this simulation data, LompeOSSE then renders a new Lompe analysis.
-        # We want a pop up window with this new lompe outputs + a plot with the same layout as the lompe figure with the corresponding gamera quantities. 
-
-        ######################
-        # Generate Python code
-        ######################
-
-        if self.var_generate_code.get():
-            generate_python_code(self.config)
 
 
 
-# Small info box pops up when hovering widget 
-class CustomTooltip:
-    def __init__(self, widget, text, delay=500):
-        self.widget = widget
-        self.text = text
-        self.delay = delay  # delay in ms before showing
-        self.tooltip_label = None
-        self.after_id = None
-
-        widget.bind("<Enter>", self.schedule_show)
-        widget.bind("<Leave>", self.hide_tooltip)
-        widget.bind("<Motion>", self.move_tooltip)
-
-    def schedule_show(self, event=None):
-        self.after_id = self.widget.after(self.delay, self.show_tooltip)
-
-    def show_tooltip(self, event=None):
-        if self.tooltip_label is not None:
-            return  # already showing
-
-        root = self.widget.winfo_toplevel()  # top-level window
-
-        self.tooltip_label = customtkinter.CTkLabel(
-            root,  # parent is the top-level window
-            text=self.text,
-            fg_color="grey90", # background
-            text_color="black",
-            corner_radius=5,
-            font=customtkinter.CTkFont(size=11),
-        )
-
-        self.place_tooltip()
-
-    def place_tooltip(self):
-        if self.tooltip_label is None:
-            return
-
-        # Get widget position relative to root window
-        root = self.widget.winfo_toplevel()
-        x = self.widget.winfo_rootx() - root.winfo_rootx() + 20
-        y = self.widget.winfo_rooty() - root.winfo_rooty() + self.widget.winfo_height() + 5
-
-        # Keep inside root bounds
-        root_width = root.winfo_width()
-        root_height = root.winfo_height()
-
-        self.tooltip_label.update_idletasks()
-        tip_width = self.tooltip_label.winfo_width()
-        tip_height = self.tooltip_label.winfo_height()
-
-        if x + tip_width > root_width:
-            x = root_width - tip_width - 5
-        if y + tip_height > root_height:
-            y = root_height - tip_height - 5
-
-        self.tooltip_label.place(x=x, y=y)
-
-    def move_tooltip(self, event=None):
-        if self.tooltip_label is not None:
-            self.place_tooltip()
-
-    def hide_tooltip(self, event=None):
-        if self.after_id:
-            self.widget.after_cancel(self.after_id)
-            self.after_id = None
-        if self.tooltip_label:
-            self.tooltip_label.destroy()
-            self.tooltip_label = None
-
-
-# TODO make this its own script? or put everything similar into a utils script
 class DateTimeEntry(customtkinter.CTkFrame):
     def __init__(self, master, label="Select time", default=None):
         super().__init__(master)
@@ -1463,14 +1261,21 @@ class DateTimeEntry(customtkinter.CTkFrame):
         top.title("Select date")
 
         # Initialize calendar at the provided date
-        cal = Calendar(
-            top,
-            selectmode="day",
-            date_pattern="yyyy-mm-dd",
-            year=y,
-            month=m,
-            day=d
-        )
+        cal = Calendar(top,
+                       selectmode="day",
+                       date_pattern="yyyy-mm-dd",
+                       year=y,
+                       month=m,
+                       day=d, 
+                       mindate=datetime(2013, 11, 25),
+                       maxdate=date.today(),
+                       showothermonthdays=False,
+                       headersforeground='darkgrey',
+                       selectforeground='green',
+                       normalforeground='white', 
+                       weekendforeground='white',
+                       disableddayforeground='grey',
+                       )
         cal.pack(padx=10, pady=10)
 
         def set_date():
@@ -1510,10 +1315,6 @@ class DateTimeEntry(customtkinter.CTkFrame):
 
 
 
-            # TODO add 00 00 automatically if not written down by user in start and end times
-            # TODO add error message if start and end times are the same
-            # TODO fix color issue
-            # TODO is it possible to change calendar color (very dark right now) 
 
     def set_datetime(self, dt):
         """Fill all fields with a given datetime object."""
@@ -1537,8 +1338,83 @@ class DateTimeEntry(customtkinter.CTkFrame):
             # entry.configure(text_color="gray70")  # optional if you re-enable color handling
 
 
+class AnimationManager:
+
+    def register_track(self, frames, widget, state):
+        """ 
+        Register a GIF animation as a passive object.
+        It does not start animation; it only stores frames and target label.
+        (Swarm orbit and lompe plots) only
+        """
+        track = {"frames": frames, "widget": widget}
+        state['tracks'].append(track)
+        
+        return track
+
+    def update_tracks(self, state):
+        """
+        Draw current frame for all registered animations.
+        """
+        i = state["current_frame"]
+
+        for track in state['tracks']:
+            frames = track["frames"]
+            widget = track["widget"]
+
+            frame = frames[i % len(frames)]
+            widget.configure(image=frame, text="")
+
+    def play_generic(self, state):
+        """
+        Advance global frame counter and update all animations.
+        This is the single timing loop for the whole GUI (both GIFs).
+        Timing loop
+        """
+        if not state["playing"]:
+            return
+
+        state["current_frame"] = (state["current_frame"] + 1) #) % len(state["frames"])
+        self.update_tracks(state)
+
+        state["job"] = state["scheduler"](state["delay"], lambda: self.play_generic(state))
+    
+    def toggle_play_pause_generic(self, state, buttons):
+        """
+        Play/pause animation
+        #TODO switch to pause icon when prev/next is hit 
+        """
+        state["playing"] = not state["playing"]
+
+        # icon = self.icons.pause if state["playing"] else self.icons.play
+        # for btn in buttons:
+        #     btn.configure(image=icon)
+
+        if state["playing"]:
+            self.play_generic(state)
+        else:
+            if state["job"]:
+                state["cancel"](state["job"])
+                state["job"] = None
+        
+        return state["playing"]
+
+    def step_frame_generic(self, state, step):
+        """
+        Manual stepping
+        """
+        state["playing"] = False
+
+        if state["job"]:
+            state["cancel"](state["job"])
+            state["job"] = None
+
+        state["current_frame"] = state["current_frame"] + step
+
+        self.update_tracks(state)
+
+
 if __name__ == "__main__":
-    app = App()
+    app = SwarmDF_GUI()
     app.mainloop()
 
 

@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 
 import imageio.v2 as imageio
-from PIL import Image
+from PIL import Image, ImageOps
 
 # Earth and ionospheric radii
 RE = 6371.2 # Earth radius (km)
@@ -39,6 +39,7 @@ d2r = np.pi / 180
 # TODO fix temporary directory
 # TODO find better name for swarm_fn
 # TODO fix documentation 
+# TODO ok to add a few seconds before and after selected time interval? 
 
 package_root = Path(__file__).resolve().parents[1]  
 src_root = package_root.parent  
@@ -69,18 +70,21 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
 
     all_swarm_data = datasets['swarm'] 
 
-    # Keep data within time range of interest
-    start = pd.to_datetime(start_time)
-    end = pd.to_datetime(end_time)
+    # Keep data within time range of interest +/- few seconds #TODO ok if always 10 seconds??
+    start = pd.to_datetime(start_time) - pd.to_timedelta(10, unit='s')
+    end = pd.to_datetime(end_time) + pd.to_timedelta(10, unit='s')
     df_all = all_swarm_data.loc[start:end, :]
 
+    # central_time = start_time
+    # i = pd.to_datetime(central_time) - pd.to_timedelta(120, unit='s')
+    # f = pd.to_datetime(central_time) + pd.to_timedelta(120, unit='s')
+    # df_all = all_swarm_data.loc[i:f, :]
+
     df_all.rename(columns={"Latitude": "swarm_lat", "Longitude": "swarm_lon"}, inplace=True) # TODO is that the geographic geodetic coords?
-    # df.rename(columns={"QDLat": "swarm_lat", "QDLon": "swarm_lon"}, inplace=True) # TODO is that the geographic geodetic coords?
     # print(df.head())
 
     # Hemisphere
     hem = 'north' if df_all['swarm_lat'].all() > 0 else 'south'
-    print('hemisphere:', hem)
     hemi = True if hem == 'north' else False
 
     # Selected satellite
@@ -101,10 +105,13 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
 
     # Time step edges of analysis interval
     times = pd.date_range(start=start_time, end=end_time, freq=f'{DT}S', tz=None)
+    print('times',times)
 
     # Central times for each time step
     center_times = times[:-1] + pd.to_timedelta(DT/2, unit='s')
+    print('center times',center_times)
 
+    valid_times = [] 
     grids = []
     frames_pil = []
 
@@ -114,39 +121,43 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
     # Loop through each time step
     for ct in center_times: 
 
-        # Index of central point of analysis interval in dataset (df)
+        # New center time based on existing data points in Swarm dataset
         idx = df.index.get_loc(ct, method='nearest')
-        ct_data = df.index[idx]
+        ct_swarm = df.index[idx]
+        print('this ct_swarm is',ct_swarm)
         
         # Spacecraft position and velocity at central point
-        sc_ve0, sc_vn0 = np.array((df.loc[ct_data, 've'], df.loc[ct_data, 'vn']))
-        sc_lat0 = df.loc[ct_data, 'swarm_lat'] 
-        sc_lon0 = df.loc[ct_data, 'swarm_lon']
+        sc_ve0, sc_vn0 = np.array((df.loc[ct_swarm, 've'], df.loc[ct_swarm, 'vn']))
+        sc_lat0 = df.loc[ct_swarm, 'swarm_lat'] 
+        sc_lon0 = df.loc[ct_swarm, 'swarm_lon']
 
         # Limits of analysis interval
-        t0 = df.index[df.index.get_loc(ct - dt.timedelta(seconds = DT/2), method = 'nearest')]
-        t1 = df.index[df.index.get_loc(ct + dt.timedelta(seconds = DT/2), method = 'nearest')]
-        
-        # print('ct', ct)
-        # print('ct_data', ct_data)
-        # print('t0, t1', t0, t1)
+        t0 = df.index[df.index.get_loc(ct_swarm - dt.timedelta(seconds = DT/2), method = 'nearest')]
+        t1 = df.index[df.index.get_loc(ct_swarm + dt.timedelta(seconds = DT/2), method = 'nearest')]
+        print('t0, t1', t0, t1)
 
-        #TODO potentially: fix the fact that, here, i'm using both ct_data AND ct which are not exactly the same. In Lompe I'm using ct
+        if (t0 == t1) | (t0 == ct_swarm):
+            continue
 
         # Unit vectors pointing at satellite (Cartesian vectors)
         rs = []
-        for t in [t0, ct_data, t1]:
-            # print('t',t)
+        for t in [t0, ct_swarm, t1]:
             rs.append(np.array([np.cos(df.loc[t, 'swarm_lat'] * d2r) * np.cos(df.loc[t, 'swarm_lon'] * d2r),
                                 np.cos(df.loc[t, 'swarm_lat'] * d2r) * np.sin(df.loc[t, 'swarm_lon'] * d2r),
                                 np.sin(df.loc[t, 'swarm_lat'] * d2r)]))
 
-        # Slice of the satellite trajectory for this time step
-        segment = df.loc[t0:t1] # not doing that means plotting the whole trajectory (betwen start and end times)
-
+        # # Slice of the satellite trajectory for this time step
+        # segment = df.loc[t0:t1] # not doing that means plotting the whole trajectory (betwen start and end times)
+        
         # Grid object
-        grid = get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_parameters, rs)
+        grid = get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_parameters)
+        
+        if np.abs(grid.lat.min()) < 48:
+            continue
         grids.append(grid)
+
+        # Append times for appended grids only
+        valid_times.append(ct_swarm)
 
         # xi0, eta0 = grid.projection.geo2cube(sc_lon0, sc_lat0)
         # print(xi0, eta0) # if 0,0: the grid is EXACTLY centered on the satellite
@@ -275,8 +286,19 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
 
                         swmag = datasets['swarm_mag'].loc[t0:t1, :] # magnetic field data from all three Swarm satellites
 
-                        axs['polar'].scatter(swmag.Latitude.values, swmag.Longitude.values/15, c = 'purple', s = 10, marker = '.')
+                        axs['polar'].plotpins(np.abs(swmag.Latitude.values), swmag.Longitude.values/15, swmag.B_n.values, swmag.B_e.values, 
+                                    SCALE = 200, markersize = 10, markercolor ='violet', linewidths = .5, colors ='violet', unit = 'nT')
+                        csax0.scatter(swmag.Longitude.values, swmag.Latitude.values, c='violet', s=200, marker='.')
+                        csax0.quiver(swmag.B_e.values, swmag.B_n.values, swmag.Longitude.values, swmag.Latitude.values, width=0.002, color='violet', scale=600) 
+                        
+                        # selected satellite only (darker purple)
+                        swmag = swmag[swmag['Spacecraft'] == swarm_sat]
+                        axs['polar'].plotpins(np.abs(swmag.Latitude.values), swmag.Longitude.values/15, swmag.B_n.values, swmag.B_e.values, 
+                                    SCALE = 200, markersize = 10, markercolor ='purple', linewidths = .5, colors ='purple', unit = 'nT')
                         csax0.scatter(swmag.Longitude.values, swmag.Latitude.values, c='purple', s=200, marker='.')
+                        csax0.quiver(swmag.B_e.values, swmag.B_n.values, swmag.Longitude.values, swmag.Latitude.values, width=0.002, color='purple', scale=600) 
+                        
+                        csax0.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
 
                         # mlat, mlon = apx.qd2apex(sw.QDLat.values, sw.QDLon.values, h)
                         # mlt = apx.mlon2mlt(mlon, time)
@@ -285,7 +307,7 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
                     if dataset == 'swarm_efield': # plot Swarm elec in cyan
 
                         swelec = datasets['swarm_efield'].loc[t0:t1, :] # electric field data from all three Swarm satellites
-                        print(swelec)
+                        print("fix swarm electric field file! \n", swelec)
 
                         axs['polar'].scatter(swelec.Latitude.values, swelec.Longitude.values/15, c = 'k', s = 10, marker = '.')
                         csax0.scatter(swelec.Longitude.values, swelec.Latitude.values, c='violet', s=200, marker='p')
@@ -294,6 +316,9 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
                         # mlt = apx.mlon2mlt(mlon, time)
                         # axs['polar'].scatter(mlat, mlt, c = 'k', s = 10, marker = '.')
 
+                    #TODO add dmsp data 17 and 18!!
+                    # if dataset == 'dmsp_ssies17':
+                        
                 except Exception as e:
                     print(f"Failed to show {dataset} data distribution:", e)
 
@@ -307,6 +332,7 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
         width, height = fig.canvas.get_width_height()
         buf = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))[:, :, 1:4]  # reorder to RGB
         pil_img = Image.fromarray(buf)
+        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil.append(pil_img.copy())
 
         plt.show() #TODO remove eventually
@@ -323,10 +349,10 @@ def swarm_trajectory(sat_id, start_time, end_time, DT, grid_parameters, datasets
 
     print(f"GIF saved in outputs directory: {output}") 
 
-    return grids, frames_pil # returns PIL image
+    return valid_times, grids, frames_pil # returns PIL image
 
 
-def get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_params, rs):
+def get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_params):
     """
     Function that returns a grid object aligned with satellite trajectory in the center
     
@@ -336,11 +362,7 @@ def get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_params, rs):
     position = (sc_lon0, sc_lat0) # center of the grid
     orientation = (sc_vn0, -sc_ve0) # aligns coordinate system such that xi axis points right wrt satellite velocity vector, and eta along velocity
     projection = CSprojection(position, orientation)
-    L, W, Lres, Wres = grid_params # user-defined [km]
+    L, W, Lres, Wres, wshift = grid_params # user-defined [km]
+    grid = CSgrid(projection, L*1e3, W*1e3, Lres*1e3, Wres*1e3, wshift = wshift*1e3, R = RI*1e3) # Lompe takes things in SI units (i.e., meters in this case)
 
-    # TODO ask kalle what wshift and W are for
-    wshift = 0 # shift the grid center wres km in cross-track direction
-    # W = W + RI * np.arccos(np.sum(rs[0]*rs[-1])) * 1e-3 # dimensions across analysis region/grid (km)
-    grid = CSgrid(projection, L*1e3, W*1e3, Lres*1e3, Wres*1e3, wshift = wshift, R = RI*1e3) # Lompe takes things in SI units (i.e., meters in this case)
-    
     return grid

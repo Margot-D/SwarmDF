@@ -1,8 +1,8 @@
 
 [project]
-name = "lompeosse"
+name = "swarmdf"
 version = "0.0.0"
-description = "A tool for OSSEs based on Gamera and Lompe."
+description = "Data Fusion toolbox designed to analyse the local high-latitude ionosphere electrodynamics "
 authors = [
     { name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }
 ]

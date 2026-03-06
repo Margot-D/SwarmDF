@@ -17,7 +17,7 @@ import lompe
 from lompe.utils.time import yearfrac_to_datetime 
 
 import imageio.v2 as imageio
-from PIL import Image
+from PIL import Image, ImageOps
 
 package_root = Path(__file__).resolve().parents[1]  
 src_root = package_root.parent  
@@ -29,7 +29,7 @@ tmpdir = outputs_path + '/tmp/' #TODO fix
 # TODO find better name for lompe_fn
 # TODO fix docu 
 
-def run_lompe(start_time, end_time, DT, grids, datasets, SHs, SPs, l1=1, l2=1):
+def run_lompe(center_times, DT, grids, datasets, SHs, SPs, l1=1, l2=1):
     """
     Run Lompe analysis for all grids and return Tkinter PhotoImage frames for GIF animation.
 
@@ -39,27 +39,34 @@ def run_lompe(start_time, end_time, DT, grids, datasets, SHs, SPs, l1=1, l2=1):
         Dictionnary of Lompe models with time and apex parameters, as well as regularization parameters
     """
 
-    epoch = start_time.year
+    epoch = center_times[0].year
+    # epoch = start_time.year
     time = yearfrac_to_datetime([epoch])
     apx = apexpy.Apex(time[0].year)
 
-    # Time step edges of analysis interval
-    times = pd.date_range(start=start_time, end=end_time, freq=f'{DT}S', tz=None)
+    # # Time step edges of analysis interval
+    # times = pd.date_range(start=start_time, end=end_time, freq=f'{DT}S', tz=None)
 
-    # Central times for each time step
-    center_times = times[:-1] + pd.to_timedelta(DT/2, unit='s')
+    # # Central times for each time step
+    # center_times = times[:-1] + pd.to_timedelta(DT/2, unit='s')
+
+    # Extract Swarm dataset (used to define the limits of the analysis interval)
+    df = datasets['swarm']
+    df = df[df['Spacecraft'] == 'A']
 
     models = []
 
-    print("Running Lompe analysis...")
+    print(f"Running Lompe analysis (l1={l1:.2f}, l2={l2:.2f})") 
+
     for grid, SH, SP, ct in zip(grids, SHs, SPs, center_times):
 
-        # Limits of analysis interval
-        t0 = ct - dt.timedelta(seconds = DT/2)
-        t1 = ct + dt.timedelta(seconds = DT/2)
-        # print('t0', t0)
-        # print('ct', ct)
-        # print('t1', t1)
+        # New center time based on Swarm dataset (to match with swarm_orbit_and_grid script)
+        idx = df.index.get_loc(ct, method='nearest')
+        ct_swarm = df.index[idx]
+
+        # Limits of analysis interval (based on Swarm dataset)
+        t0 = df.index[df.index.get_loc(ct_swarm - dt.timedelta(seconds = DT/2), method = 'nearest')]
+        t1 = df.index[df.index.get_loc(ct_swarm + dt.timedelta(seconds = DT/2), method = 'nearest')]
 
         # Build model
         user_model = lompe.Emodel(grid, Hall_Pedersen_conductance = (SH, SP))
@@ -80,7 +87,7 @@ def run_lompe(start_time, end_time, DT, grids, datasets, SHs, SPs, l1=1, l2=1):
         models.append({"model": copy.deepcopy(user_model),
                         "t0": t0,
                         "t1": t1,
-                        "ct": ct,
+                        "ct": ct_swarm,
                         "apex": apx,
                         "l1":l1,
                         "l2":l2})
@@ -137,6 +144,7 @@ def lompe_output(models, gif_speed):
         width, height = fig.canvas.get_width_height()
         buf = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))[:, :, 1:4]  # reorder to RGB
         pil_img = Image.fromarray(buf)
+        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil.append(pil_img.copy())
 
         # plt.show()
@@ -191,7 +199,7 @@ def prepare_data(datasets, window_start, window_end):
             iweight = 0.5 #1.0
             error = 30e-9
 
-        elif key in ['swarm_efield']: #TODO check everything
+        elif key in ['swarm_efield']: #TODO check/fix everything
 
             print('! need to fix Swarm elec function in prepare_data')
 
@@ -230,6 +238,12 @@ def prepare_data(datasets, window_start, window_end):
         # DMSP/SSIES 17
         elif key in ['dmsp_ssies17']: #TODO fix
             sub = df.loc[t0:t1, :].dropna()
+            sub = sub[np.abs(sub.gdlat) > 50]
+
+            if sub.empty:
+                # print(f'{key} is empty')
+                continue
+        
             values = np.abs(sub.hor_ion_v).values
             coords = np.vstack((sub.glon.values, sub.gdlat.values)) 
             LOS = np.vstack((sub['le'].values, sub['ln'].values))
@@ -240,6 +254,12 @@ def prepare_data(datasets, window_start, window_end):
         # DMSP/SSIES 18
         elif key in ['dmsp_ssies18']: #TODO fix
             sub = df.loc[t0:t1,:].dropna()
+            sub = sub[np.abs(sub.glat) > 50]
+
+            if sub.empty:
+                # print(f'{key} is empty')
+                continue
+            
             values = np.abs(sub.hor_ion_v).values
             coords = np.vstack((sub.glon.values, sub.glat.values)) #glat or gdlat??
             LOS = np.vstack((sub['le'].values, sub['ln'].values))
