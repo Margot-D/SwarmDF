@@ -474,9 +474,6 @@ class LompeInput:
         # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
         # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
 
-        # date = datetime.datetime(ct.year, ct.month, ct.day) # Event date
-        # axs['polar'].coastlines(time=date, mag=apexpy.Apex(time, 0), resolution='110m', color='darkgrey', zorder=2, north=hemi) # coastlines in magnetic coordinates
-        # axs['polar'].plot_terminator(datetime.datetime(ct), north=hemi)
         nh = True if hem == 'north' else False
         axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh) # coastlines in geographic coordinates
 
@@ -485,10 +482,6 @@ class LompeInput:
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
         for i, (lon,lat) in enumerate(zip(xs, ys)):
             axs['polar'].plot(lat, lon/15, linewidth = 3 if i == 0 else 1, **outlineargs) # geographic
-            
-            # mlat, mlon = apx.geo2apex(lat, lon, h) # h* 1e-3 # to MLAT/MLT coordinates
-            # mlt = apx.mlon2mlt(mlon, time)
-            # axs['polar'].plot(mlat, mlt, linewidth = 3 if i == 0 else 1, **outlineargs) # magnetic
 
         # --------------- # 
         # CUBED SPHERE (grid outline)
@@ -562,10 +555,6 @@ class LompeInput:
             polar_ax.plotpins(np.abs(lat), lon/15, Vn*hemisign, Ve, SCALE = 1800, markersize = 1, markercolor =c, linewidths = .5, colors =c) 
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
 
-            # mlat, mlon = apx.geo2apex(sd.glat.values, sd.glon.values, h)
-            # mlt = apx.mlon2mlt(mlon, time)
-            # polar_ax.scatter(mlat, mlt, c = 'C2', s = 10, marker = '.')
-
             # Add to legend once
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='^', color=c, lw=0, markersize=8, label='SuperDARN'))
@@ -591,11 +580,6 @@ class LompeInput:
             polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 150*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c) #, unit = 'nT'
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag']) #, scale_units='inches'
 
-            # mlat, mlon = apx.geo2apex(smag.lat.values, smag.lon.values, h)
-            # mlt = apx.mlon2mlt(mlon, time)
-            # polar_ax.plotpins(mlat, mlt, smag.Be.values, smag.Bn.values, 
-            #             SCALE = 100, markersize = 10, markercolor = 'C1', linewidths = .5, colors = 'C1', unit = 'nT')
-            
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='^', color=c, lw=0, markersize=8, label='SuperMAG'))
                 added.add(dataset)
@@ -648,10 +632,6 @@ class LompeInput:
             # sc_lat0 = self.one_swarm.loc[ct, 'Latitude'] 
             # sc_lon0 = self.one_swarm.loc[ct, 'Longitude']
             # cs_ax.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
-
-            # mlat, mlon = apx.qd2apex(sw.QDLat.values, sw.QDLon.values, h)
-            # mlt = apx.mlon2mlt(mlon, time)
-            # polar_ax.scatter(mlat, mlt, c = 'purple', s = 10, marker = '.')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='Swarm mag'))
