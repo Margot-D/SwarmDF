@@ -16,6 +16,7 @@ import lompe
 from lompe.model.visualization import *
 from lompeosse import LompeOSSE, Gamera_output
 
+import time as tt
 # TODO documentation
 # TODO check gamera quantities with Kalle, and the grid used to plot stuff
 # TODO check radius stuff in get_B with Kalle
@@ -43,13 +44,26 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
         hemi = 'NORTH' if model.grid_E.lat.all() > 0 else 'SOUTH'
 
         # Extract Gamera data
+
+        t0 = tt.perf_counter()
+
         gamera_output = Gamera_output(ct, timestep = snapshot, hemisphere = hemi)
         gamera_outputs.append({"gamera_output": copy.deepcopy(gamera_output)})
 
+        t1 = tt.perf_counter()
+        print("Gamera_output", t1 - t0)
+
         # Derive synthetic (OSSE) model
         osse_object = LompeOSSE(model, gamera_output)
+
+        t2 = tt.perf_counter()
+        print("LompeOSSE", t2 - t1)
+
         osse_Emodel = osse_object.make_OSSE_model(time_offset = time_offset) #TODO what is the point of adding time offset here rather thsn in the class directly? 
 
+        t3 = tt.perf_counter()
+        print("make_osse_model", t3 - t2)
+        
         # Run inversion
         osse_Emodel.run_inversion(l1 = l1, l2 = l2)
         
@@ -66,14 +80,14 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
     return osse_models, gamera_outputs
 
 
-def lompeOSSE_output(osse_models, gamera_outputs, gif_speed):
+def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550, show_plot=False):
     """ 
     input: osse models
     output: lompe plot
     explain that the plot of the origianl gamera electrodynamics is considered as ground truth. The lompeOSSE plot can be compared to that ground truth
     """
 
-    temp_filenames = []
+    # temp_filenames = []
     frames_pil_lompeosse = []
     frames_pil_gamera = []
 
@@ -92,8 +106,16 @@ def lompeOSSE_output(osse_models, gamera_outputs, gif_speed):
 
         ntime = ct + dt.timedelta(hours=toff)
         
+        t11 = tt.perf_counter()
+
         print("\n Generating LompeOSSE output...")
         print("##", ntime, "##")
+
+        # Save to PNG
+        lompeosse_fn = f'lompeOSSE_electrodynamics'
+        fn = os.path.join(tmpdir, f"{lompeosse_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png") 
+        savekw = None if show_plot else {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
+
         fig_lompeosse = lompe.lompeplot(osse_model,
                                         include_data=True,
                                         time=ntime,
@@ -105,27 +127,25 @@ def lompeOSSE_output(osse_models, gamera_outputs, gif_speed):
                                         quiverscales={"ground_mag":       600e-9,
                                                     "space_mag_fac":    600e-9,
                                                     "space_mag_full":   600e-9,
-                                                    "electric_current": 1})
+                                                    "electric_current": 1}, 
+                                        savekw=savekw)
 
         fig_lompeosse.suptitle(f"LompeOSSE-reconstructed electrodynamics (GAMERA data) \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                 fontsize=19, color="black", y=0.98)
         # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
         
-        # Save to PNG
-        lompeosse_fn = f'lompeOSSE_electrodynamics'
-        fn = os.path.join(tmpdir, f"{lompeosse_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png")
-        fig_lompeosse.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
-        temp_filenames.append(fn)
+        t22 = tt.perf_counter()
+        print("lompeosseplot:", t22 - t11)
 
         # Convert figure to PIL (chatGPT) (used for the UI GIF)
         fig_lompeosse.canvas.draw()
-        width, height = fig_lompeosse.canvas.get_width_height()
-        buf = np.frombuffer(fig_lompeosse.canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))[:, :, 1:4]  # reorder to RGB
+        buf = np.asarray(fig_lompeosse.canvas.buffer_rgba())[:, :, :3]
         pil_img = Image.fromarray(buf)
         frames_pil_lompeosse.append(pil_img.copy())
 
-        plt.show() # TODO remove eventually
-        plt.close(fig_lompeosse)
+        if show_plot:
+            fig_lompeosse.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
+            plt.show(block=False) 
 
         #################
         # GAMERA plot 
@@ -140,10 +160,10 @@ def lompeOSSE_output(osse_models, gamera_outputs, gif_speed):
         sh = np.array(grid.shape)
         NN = 12 # number of data points 
         sh = sh // sh.min() * NN 
-        ximin  = grid.xi .min() + grid.dxi  / 3
-        ximax  = grid.xi .max() - grid.dxi  / 3
-        etamin = grid.eta.min() + grid.deta / 3
-        etamax = grid.eta.max() - grid.deta / 3
+        ximin  = grid.xi .min() #+ grid.dxi  / 3
+        ximax  = grid.xi .max() #- grid.dxi  / 3
+        etamin = grid.eta.min() #+ grid.deta / 3
+        etamax = grid.eta.max() #- grid.deta / 3
         xi, eta = np.meshgrid(np.linspace(ximin, ximax, sh[1]), np.linspace(etamin, etamax, sh[1]))
         lo, la = grid.projection.cube2geo(xi, eta)
 
@@ -280,16 +300,14 @@ def lompeOSSE_output(osse_models, gamera_outputs, gif_speed):
         gamera_fn = f'GAMERA_electrodynamics'
         fn = os.path.join(tmpdir, f"{gamera_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png")
         fig_gamera.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
-        temp_filenames.append(fn)
 
         fig_gamera.canvas.draw()
-        width, height = fig_gamera.canvas.get_width_height()
-        buf = np.frombuffer(fig_gamera.canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))[:, :, 1:4]  # reorder to RGB
+        buf = np.asarray(fig_gamera.canvas.buffer_rgba())[:, :, :3]
         pil_img = Image.fromarray(buf)
         frames_pil_gamera.append(pil_img.copy())
 
-        plt.show() # TODO remove eventually
-        plt.close(fig_gamera)
+        if show_plot:
+            plt.show(block=False)
 
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 

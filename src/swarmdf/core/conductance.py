@@ -1,10 +1,9 @@
 import pandas as pd 
 import lompe
 
-# TODO fix documentation 
 # TODO add new auroral conductance estimation method!! 
 
-def compute_conductances(conductance_method, start_time, end_time, DT, grids, conductance_params):
+def compute_conductances(conductance_method, tbounds, grids, conductance_params):
     """
     Docstring for compute_conductances
     
@@ -15,19 +14,20 @@ def compute_conductances(conductance_method, start_time, end_time, DT, grids, co
     :param grids: Description
     :param conductance_params: kp, f107 and background values (user-defined)
     """
-    print('Conductance method:', conductance_method)
+    # print('Conductance method:', conductance_method)
 
     kp_value, f107_value, background_value = conductance_params['kp'], conductance_params['f107'], conductance_params['background']
 
-    # Define time step edges of analysis interval
-    times = pd.date_range(start=start_time, end=end_time, freq=f'{DT}S', tz=None)
+    # # Define time step edges of analysis interval
+    # times = pd.date_range(start=start_time, end=end_time, freq=f'{DT}S', tz=None)
 
-    # Compute central times for each time step (each grid)
-    center_times = times[:-1] + pd.to_timedelta(DT/2, unit='s')
+    # # Compute central times for each time step (each grid)
+    # center_times = times[:-1] + pd.to_timedelta(DT/2, unit='s')
 
     SHs, SPs = [], [] 
 
-    for grid, ct in zip(grids, center_times):
+    # for grid, ct in zip(grids, center_times):
+    for grid, ct in zip(grids, tbounds['ct']):
 
         # time = tm.replace(tzinfo=None) if tm.tzinfo else tm
 
