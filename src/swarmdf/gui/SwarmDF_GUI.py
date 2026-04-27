@@ -98,9 +98,9 @@ class SwarmDFGUI(customtkinter.CTk):
         self.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=(100,10))
 
         # Demo mode switch
-        self.switch_demo = customtkinter.CTkSwitch(master=self.frame_sidebar, text=f"Demo mode") 
+        self.switch_demo = customtkinter.CTkSwitch(master=self.frame_sidebar, text=f"Demo mode", command=self.load_example_date) 
         self.switch_demo.grid(row=8, column=0, padx=20, pady=(10,100))
-        CustomTooltip(self.switch_demo, "Use sample dataset and skip data collection")
+        CustomTooltip(self.switch_demo, "Use sample datasets for example event and skip data collection")
 
         # Apparence mode
         self.frame_sidebar.grid_rowconfigure(9, weight=1)
@@ -620,8 +620,8 @@ class SwarmDFGUI(customtkinter.CTk):
                            (self.entry_kp, "Kp index", 4, 0, 9), 
                            (self.entry_f107, "F107 value", 100, 30, 400), #TODO ok? 
                            (self.entry_background, "Background value", 2, 0, None), # TODO what's a good range?
-                           (self.entry_L, "Grid length", 2000, None, None),
-                           (self.entry_W, "Grid width", 1500, None, None),
+                           (self.entry_L, "Grid length", 1500, None, None),
+                           (self.entry_W, "Grid width", 2000, None, None),
                            (self.entry_Lres, "Grid length resolution", 200, None, None),
                            (self.entry_Wres, "Grid width resolution", 200, None, None),
                            (self.entry_wshift, "wshift value", 0, None, None),
@@ -1153,7 +1153,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
             # demo?
             demo = True if self.switch_demo.get() else False
-            print('demo',demo)
 
             # satellite ID
             self.sat_id = self.optmenu_satellite.get()
