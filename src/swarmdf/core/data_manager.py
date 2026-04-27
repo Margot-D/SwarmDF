@@ -24,10 +24,10 @@ class DataManager:
     end_time : datetime-like
         End of the user-defined time interval.
     data_path : str
-        Path to the folder where data files are stored.
     selected_sources : list
         List of dataset names to download.
-    TODO add demo
+    demo : bool, optional
+     If True, uses built-in sample datasets for the example event (2014-12-15).
     """
         
     def __init__(self, start_time, end_time, selected_sources, demo=False):
@@ -36,7 +36,6 @@ class DataManager:
 
         if demo: 
             self.data_path = str(package_root / "data" / "sample_datasets") + "/"
-        
         else:
             self.data_path = str(package_root / "data") + "/"
         
