@@ -7,8 +7,8 @@ and reconstruction of ionospheric electrodynamics.
 """
 
 import pandas as pd
-import numpy as np
 import os
+from pathlib import Path
 from lompe.data_tools import dataloader, datadownloader
 
 # TODO how to deal with user id? does the user have to log into each database? 
@@ -27,9 +27,20 @@ class DataManager:
         Path to the folder where data files are stored.
     selected_sources : list
         List of dataset names to download.
+    TODO add demo
     """
         
-    def __init__(self, start_time, end_time, data_path, selected_sources):
+    def __init__(self, start_time, end_time, selected_sources, demo=False):
+
+        package_root = Path(__file__).resolve().parents[1]
+
+        if demo: 
+            self.data_path = str(package_root / "data" / "sample_datasets") + "/"
+        
+        else:
+            self.data_path = str(package_root / "data") + "/"
+        
+        print(self.data_path)
         
         # List of dates covering the full time interval
         self.event_dates = pd.date_range(start=start_time, end=end_time, freq="D")
@@ -38,7 +49,6 @@ class DataManager:
         # self.event_date = start_time.strftime("%Y%m%d") #TODO change to next line when Fasil has final version of datadownloader 
         # # self.event_date = start_time.strftime("%Y-%m-%d")
 
-        self.data_path = data_path
         self.datasets = {}
 
         # Loop over each day

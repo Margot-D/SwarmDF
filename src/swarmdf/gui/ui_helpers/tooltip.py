@@ -25,14 +25,12 @@ class CustomTooltip:
 
         root = self.widget.winfo_toplevel()  # top-level window
 
-        self.tooltip_label = customtkinter.CTkLabel(
-            root,  # parent is the top-level window
-            text=self.text,
-            fg_color="grey90", # background
-            text_color="black",
-            corner_radius=5,
-            font=customtkinter.CTkFont(size=11),
-        )
+        self.tooltip_label = customtkinter.CTkLabel(root,  # parent is the top-level window
+                                                    text=self.text,
+                                                    fg_color="grey90", # background
+                                                    text_color="black",
+                                                    corner_radius=5,
+                                                    font=customtkinter.CTkFont(size=11))
 
         self.place_tooltip()
 

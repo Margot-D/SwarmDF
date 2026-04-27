@@ -2,7 +2,9 @@ __pycache__/
 *.pyc
 .DS_Store
 
-data/
+data/*
+!sample_datasets/
+
 outputs/
 
 SwarmDF_python_code.py

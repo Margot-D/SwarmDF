@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: swarmdf
+Version: 0.0.0
+Summary: Data Fusion toolbox designed to analyse the local high-latitude ionosphere electrodynamics 
+Author-email: "Margot Decotte, Karl Laundal" <margot.decotte@uib.no>
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# SwarmDF
+Swarm Data Fusion toolbox 

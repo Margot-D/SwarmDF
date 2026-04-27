@@ -702,7 +702,7 @@ class LompeInput:
         For each analysis grid, this function:
             - plots the Swarm satellite tracks for the current pass
             - overlays data from all available datasets
-            - shows both global data (within the analysis interval) and data inside the grid
+            - shows data inside the grid and optionally all available data within analysis interval
             - saves each frame as a PNG and compiles them into a GIF animation
 
         Parameters
@@ -769,6 +769,8 @@ class LompeInput:
             fig.legend(handles=legend_stuff['legend_handles'], markerfirst=True, columnspacing=.7, loc="lower left", ncol=6, fontsize=15)    
 
             # TODO fix size of arrow and scales! 
+            #TODO how to know if correct? (took this from lompe.visualization)
+            # TODO add legend for both plots (polar and cs)
             arrowax = fig.add_axes([0.43, 0.1, 0.25, 0.08])  # position in figure
             arrowax.set_axis_off()
             arrowax.quiver(.1, .5, 1, 0, scale = 2, scale_units = 'inches', color='black',  width=0.004)

@@ -16,7 +16,6 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 from datetime import datetime, date
 import os
-from pathlib import Path
 
 import webbrowser
 
@@ -62,7 +61,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.frame_sidebar = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.frame_sidebar.grid(row=0, column=0, rowspan=2, sticky="nsew")
-        self.frame_sidebar.grid_rowconfigure(7, weight=1)
 
         self.title_sidebar = customtkinter.CTkLabel(self.frame_sidebar, text="SwarmDF \n User interface", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.title_sidebar.grid(row=0, column=0, padx=20, pady=(20, 50))
@@ -97,24 +95,30 @@ class SwarmDFGUI(customtkinter.CTk):
                                                          command=self.run_swarm_df, 
                                                          text='Run SwarmDF',
                                                          width=160, height=80, font=("Arial", 18))
-        self.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=20)
-       
-        # Apparence mode 
+        self.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=(100,10))
+
+        # Demo mode switch
+        self.switch_demo = customtkinter.CTkSwitch(master=self.frame_sidebar, text=f"Demo mode") 
+        self.switch_demo.grid(row=8, column=0, padx=20, pady=(10,100))
+        CustomTooltip(self.switch_demo, "Use sample dataset and skip data collection")
+
+        # Apparence mode
+        self.frame_sidebar.grid_rowconfigure(9, weight=1)
         self.label_appearance_mode = customtkinter.CTkLabel(self.frame_sidebar, text="Appearance Mode:", anchor="w")
-        self.label_appearance_mode.grid(row=8, column=0, padx=20, pady=(10, 0))
+        self.label_appearance_mode.grid(row=10, column=0, padx=20, pady=(10, 0))
         self.optmenu_appearance_mode = customtkinter.CTkOptionMenu(self.frame_sidebar, 
                                                                    values=["Light", "Dark", "System"],
                                                                    command=self.change_appearance_mode)
-        self.optmenu_appearance_mode.grid(row=9, column=0, padx=20, pady=(10, 10))
+        self.optmenu_appearance_mode.grid(row=11, column=0, padx=20, pady=(10, 10))
         self.optmenu_appearance_mode.set("Dark")
 
         # Scaling option
         self.label_scaling = customtkinter.CTkLabel(self.frame_sidebar, text="UI Scaling:", anchor="w")
-        self.label_scaling.grid(row=10, column=0, padx=20, pady=(10, 0))
+        self.label_scaling.grid(row=12, column=0, padx=20, pady=(10, 0))
         self.optmenu_scaling = customtkinter.CTkOptionMenu(self.frame_sidebar, 
                                                            values=["80%", "90%", "100%", "110%", "120%"],
                                                            command=self.change_scaling)
-        self.optmenu_scaling.grid(row=11, column=0, padx=20, pady=(10, 20))
+        self.optmenu_scaling.grid(row=13, column=0, padx=20, pady=(10, 20))
         self.optmenu_scaling.set("100%")
 
         #############
@@ -1147,6 +1151,10 @@ class SwarmDFGUI(customtkinter.CTk):
             # Get all input (GUI) info
             ###############
 
+            # demo?
+            demo = True if self.switch_demo.get() else False
+            print('demo',demo)
+
             # satellite ID
             self.sat_id = self.optmenu_satellite.get()
             if self.sat_id == "Satellite ID":
@@ -1235,13 +1243,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
             ######################
             # Collect data
-            ######################
+            ######################            
 
-            package_root = Path(__file__).resolve().parents[1]
-            data_path = str(package_root / "data" / "sample_datasets") + "/"
-
-            # Fetch and load data
-            datahandler = DataManager(self.start_time, self.end_time, data_path, self.datasets2download)
+            datahandler = DataManager(self.start_time, self.end_time, self.datasets2download, demo = demo)
             self.datasets = datahandler.datasets
             
             ######################
