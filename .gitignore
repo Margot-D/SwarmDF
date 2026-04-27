@@ -3,7 +3,8 @@ __pycache__/
 .DS_Store
 
 data/*
-!sample_datasets/
+!data/sample_datasets/
+!data/sample_datasets/**
 
 outputs/
 
