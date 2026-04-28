@@ -452,9 +452,9 @@ class LompeInput:
     def _init_figure(self, t0, t1):
         """Create figure and base axes."""
 
-        fig = plt.figure(figsize = (22,12), constrained_layout=True)
+        fig = plt.figure(figsize = (12.2,9), constrained_layout=True) #(22,12) 12,9
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-                        fontsize=28, color="black", y=0.98)
+                        fontsize=22, color="black", y=0.98)
         
         axs = {"polar": fig.add_subplot(121), "zoom": fig.add_subplot(122)}
         
@@ -463,25 +463,28 @@ class LompeInput:
     def _setup_plot_frames(self, axs, grid, hem): #TODO decide if I want to keep magnetic coordinate stuff, if not remove comments
         """Configure polar and cubed-sphere axes. Write labels. Plot coastlines and grid outline."""
 
-        textargs = {'fontsize':26, 'color':'grey'}
+        textargs = {'fontsize':18, 'color':'grey'}
         outlineargs = {'color':'black', 'zorder':8}
 
         # --------------- # 
         # POLAR PLOT
 
-        axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=1.5, color='grey')
-        axs['polar'].writeLTlabels(lat=49, degrees=True, **textargs)
-        # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
-        # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
+        if self.mag:
+            pass
+        else:
+            axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8, color='grey')
+            axs['polar'].writeLTlabels(lat=49, degrees=True, **textargs)
+            # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
+            # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
 
-        nh = True if hem == 'north' else False
-        axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh) # coastlines in geographic coordinates
+            nh = True if hem == 'north' else False
+            axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh) # coastlines in geographic coordinates
 
-        # Grid outline (in black)
-        xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
-        ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
-        for i, (lon,lat) in enumerate(zip(xs, ys)):
-            axs['polar'].plot(lat, lon/15, linewidth = 3 if i == 0 else 1, **outlineargs) # geographic
+            # Grid outline (in black)
+            xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
+            ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
+            for i, (lon,lat) in enumerate(zip(xs, ys)):
+                axs['polar'].plot(lat, lon/15, linewidth = 3 if i == 0 else 1, **outlineargs) # geographic
 
         # --------------- # 
         # CUBED SPHERE (grid outline)
@@ -505,11 +508,17 @@ class LompeInput:
         for satid in ['A', 'B', 'C']:
             sw = all_swarm_pass[all_swarm_pass['Spacecraft'] == satid]
 
-            polar_ax.plot(sw.Latitude, (sw.Longitude/15) % 24, color='lightcoral', alpha=0.4, linewidth=1.5, zorder=1) # geographic
+            if self.mag:
+                pass
+            else:
+                polar_ax.plot(sw.Latitude, (sw.Longitude/15) % 24, color='lightcoral', alpha=0.4, linewidth=1.5, zorder=1) # geographic
             cs_ax.plot(sw.Longitude, sw.Latitude, color='lightcoral', alpha=0.4, linewidth=1.5) 
 
         # Selected Swarm satellite track (thicker red line) -- current pass only
-        polar_ax.plot(one_swarm_pass.Latitude, (one_swarm_pass.Longitude/15), color='coral', linewidth=2, zorder=1) # geographic
+        if self.mag:
+            pass
+        else:
+            polar_ax.plot(one_swarm_pass.Latitude, (one_swarm_pass.Longitude/15), color='coral', linewidth=2, zorder=1) # geographic
         cs_ax.plot(one_swarm_pass.Longitude, one_swarm_pass.Latitude, color='coral', linewidth=2) 
 
         # Legend
@@ -544,7 +553,10 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1, :]
                 sub = sub[sub.glat >0] if hem=='north' else sub[sub.glat <0]
-                polar_ax.scatter(sub.glat, sub.glon/15, color=c, s=8, marker='^')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.glat, sub.glon/15, color=c, s=3, marker='^')
 
             # Data in grid only
             lat = data_object.coords['lat'] #actually glat
@@ -552,7 +564,10 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
             
-            polar_ax.plotpins(np.abs(lat), lon/15, Vn*hemisign, Ve, SCALE = 1800, markersize = 1, markercolor =c, linewidths = .5, colors =c) 
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, Vn*hemisign, Ve, SCALE = 1800, markersize = 1, markercolor =c, linewidths = .5, colors =c) 
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
 
             # Add to legend once
@@ -570,14 +585,20 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1, :]
                 sub = sub[sub.lat >0] if hem=='north' else sub[sub.lat <0]
-                polar_ax.scatter(sub.lat, sub.lon/15, color=c, s=8, marker='^')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.lat, sub.lon/15, color=c, s=3, marker='^')
 
             lat = data_object.coords['lat']
             lon = data_object.coords['lon']
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 150*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c) #, unit = 'nT'
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 150*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c) #, unit = 'nT'
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag']) #, scale_units='inches'
 
             if dataset not in added:
@@ -594,14 +615,20 @@ class LompeInput:
             if show_global_data:
                 sub = ds[(ds.time >= t0) & (ds.time <= t1)]
                 sub = sub[sub.lat >0] if hem=='north' else sub[sub.lat <0]
-                polar_ax.scatter(sub.lat, sub.lon/15, color =c, s=8, marker='o')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.lat, sub.lon/15, color =c, s=3, marker='o')
 
             lat = data_object.coords['lat']
             lon = data_object.coords['lon']
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 250*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c)
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 250*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c)
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
             
             if dataset not in added:
@@ -618,14 +645,20 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1]
                 sub = sub[sub.Latitude >0] if hem=='north' else sub[sub.Latitude <0]
-                polar_ax.scatter(sub.Latitude, sub.Longitude/15, color =c, s=8, marker='o')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.Latitude, sub.Longitude/15, color =c, s=3, marker='o')
 
             lat = data_object.coords['lat']
             lon = data_object.coords['lon']
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
             
-            polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 300*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c)
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, Bn*hemisign, Be, SCALE = 300*1e-9, markersize = 1, markercolor =c, linewidths = .5, colors =c)
             cs_ax.quiver(Be, Bn, lon, lat, width=0.004, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
 
             # # highlight central point
@@ -649,7 +682,10 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1]
                 sub = sub[sub.Latitude >0] if hem=='north' else sub[sub.Latitude <0]
-                polar_ax.scatter(sub.Latitude, sub.Longitude/15, color =c, s=8, marker='o')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.Latitude, sub.Longitude/15, color =c, s=3, marker='o')
 
             # electric field data from all three Swarm satellites
             lat = data_object.coords['lat']
@@ -657,7 +693,10 @@ class LompeInput:
             Ee = data_object.values[0]
             En = data_object.values[1]
 
-            polar_ax.plotpins(np.abs(lat), lon/15, En*hemisign, Be, SCALE = 300, markersize = 1, markercolor =c, linewidths = .5, colors =c)
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, En*hemisign, Be, SCALE = 300, markersize = 1, markercolor =c, linewidths = .5, colors =c)
             cs_ax.quiver(Ee, En, lon, lat, width=0.004, color=c, scale=quiverscales['efield'], scale_units='inches') 
 
             if dataset not in added:
@@ -679,14 +718,20 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1]
                 sub = sub[sub.gdlat > 0] if hem == 'north' else sub[sub.gdlat < 0]
-                polar_ax.scatter(sub.gdlat, sub.glon/15, color=c, s=8, marker='o')
+                if self.mag:
+                    pass
+                else:
+                    polar_ax.scatter(sub.gdlat, sub.glon/15, color=c, s=3, marker='o')
 
             lat = data_object.coords['lat'] #actually gdlat
             lon = data_object.coords['lon'] #actually glon
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
 
-            polar_ax.plotpins(np.abs(lat), lon/15, Vn * hemisign, Ve, SCALE=1800, markersize=1, markercolor=c, linewidths=.5, colors=c)
+            if self.mag:
+                pass
+            else:
+                polar_ax.plotpins(np.abs(lat), lon/15, Vn * hemisign, Ve, SCALE=1800, markersize=1, markercolor=c, linewidths=.5, colors=c)
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
 
             if dataset not in added:
@@ -695,7 +740,7 @@ class LompeInput:
 
             # quiver_info[dataset] = (c, quiverscales['convection'], 'm/s')
             
-    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, gif_speed = 550, show_global_data=True, show_plot=False):
+    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, gif_speed = 550, show_global_data=True, mag_coords=False):
         """
         Visualize Lompe input data along a Swarm satellite trajectory.
 
@@ -720,8 +765,6 @@ class LompeInput:
             Duration of each frame in the output GIF (in milliseconds).
         show_global_data : bool, optional
             If True, plot all available data within [t0, t1] in addition to grid-filtered data.
-        show_plot : bool, optional
-            If True, display each figure interactively during generation.
 
         Returns
         -------
@@ -734,6 +777,8 @@ class LompeInput:
         - A GIF animation summarizing the data coverage is saved to disk.
         """
 
+        self.mag = mag_coords
+        
         frames_pil = []
 
         legend_stuff = {"legend_handles": [], # matplotlib legend entries
@@ -771,7 +816,7 @@ class LompeInput:
             # TODO fix size of arrow and scales! 
             #TODO how to know if correct? (took this from lompe.visualization)
             # TODO add legend for both plots (polar and cs)
-            arrowax = fig.add_axes([0.43, 0.1, 0.25, 0.08])  # position in figure
+            arrowax = fig.add_axes([0.35, 0.1, 0.25, 0.08])  # position in figure
             arrowax.set_axis_off()
             arrowax.quiver(.1, .5, 1, 0, scale = 2, scale_units = 'inches', color='black',  width=0.004)
             arrowax.set_ylim(0, 1)
@@ -779,7 +824,7 @@ class LompeInput:
             # arrowax.text(3, 0.8, f"{sm_scale:.0f} nT (SuperMAG)\n" f"{sd_scale:.0f} m/s (SuperDARN)\n" f"{amp_scale:.0f} nT (AMPERE)", fontsize=15, va='top')
             y = 0.8
             for key, (color, scale, unit) in legend_stuff['quiver_info'].items():
-                arrowax.text(3, y, f"{scale:.0f} {unit}", color=color, fontsize=15, va='top')
+                arrowax.text(4, y, f"{scale:.0f} {unit}", color=color, fontsize=15, va='top')
                 y -= 0.25
 
             # --------------- # 
@@ -796,10 +841,9 @@ class LompeInput:
             pil_img = Image.fromarray(buf)
             pil_img = ImageOps.expand(pil_img, border=15, fill="white")
             frames_pil.append(pil_img.copy())
-
-            if show_plot:
-                plt.show(block=False)
             
+            plt.close(fig)
+
             # plt.show(block=False)
             # plt.pause(0.2)
             # plt.close(fig)
