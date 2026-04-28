@@ -430,10 +430,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.data_frame_controls.place_forget() # hide initially
         
-        # # Option to switch between geographic and magnetic coords (polar plot)
-        # self.checkbox_magcoords = customtkinter.CTkCheckBox(master=self.frame_data, text='Magnetic coordinates (polar plot)')
-        # self.checkbox_magcoords.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="w")
-        # CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
+        # Option to switch between geographic and magnetic coords (polar plot)
+        self.checkbox_magcoords = customtkinter.CTkCheckBox(master=self.frame_data, text='Polar plot in magnetic coordinates')
+        self.checkbox_magcoords.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="w")
+        CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
 
         # Option to open interactive plots
         self.interactive_wdw_data = customtkinter.CTkFrame(self.frame_data, fg_color="transparent") #"#FFFFFF"
@@ -968,7 +968,7 @@ class SwarmDFGUI(customtkinter.CTk):
             lompe_input = LompeInput(self.sat_id, self.start_time, self.end_time, self.datasets)
             self.grids, self.analysis_times = lompe_input.build_grids_around_swarm(self.timestep, self.grid_params)
             self.data_objects_per_grid = lompe_input.prepare_lompe_input(self.grids, self.analysis_times) 
-            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data)
+            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data, self.mag)
 
             # # Convert PIL → Tkinter images
             # self.label_data_gif.update_idletasks()
@@ -1332,6 +1332,8 @@ class SwarmDFGUI(customtkinter.CTk):
             # GIF
             self.speed = self.apply_gif_parameters(update_state=False) # ms/frame
             self.show_data = self.checkbox_showdata.get()
+
+            self.mag = self.checkbox_magcoords.get()
 
             # regularization #TODO Ok kalle?
             slider_l1_value = self.slider_l1.get()
