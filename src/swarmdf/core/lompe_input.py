@@ -15,7 +15,8 @@ from secsy import spherical, CSgrid, CSprojection, CSplot
 import pandas as pd
 import os 
 from pathlib import Path
-
+import apexpy
+import dipole # github.com/klaundal/dipole
 import warnings
 # warnings.simplefilter("always")
 
@@ -28,6 +29,7 @@ import lompe
 
 # Earth radius
 RE = 6371.2 # [km] 
+HEIGHT = 110 # ionosphere height # TODO: Check that it is consistent throughout
 
 # Path for saving output files
 package_root = Path(__file__).resolve().parents[1]  
@@ -73,7 +75,11 @@ class LompeInput:
         self.sat_id = sat_id
         self.start_time = start_time
         self.end_time = end_time
+        self.mid_time = self.start_time + (self.end_time - self.start_time) / 2 # interpreting this as the time of the current snapshot
         self.datasets = datasets
+
+        self.apx = apexpy.Apex(self.start_time.year, refh = HEIGHT)
+        self.dpl = dipole.Dipole(self.start_time.year)
 
         # Select Swarm data within an extended time window (ensures full satellite pass is captured) and assign pass IDs per spacecraft
         window_start = pd.to_datetime(start_time) - pd.to_timedelta(45, 'm')
@@ -251,7 +257,7 @@ class LompeInput:
         
         return grids, analysis_times
     
-    def get_grid(self, sc_lon, sc_lat, sc_ve, sc_vn, grid_params, RI=RE+110): #TODO RI OK?
+    def get_grid(self, sc_lon, sc_lat, sc_ve, sc_vn, grid_params, RI=RE+HEIGHT): #TODO RI OK?
         """
         Create a cubed-sphere grid aligned with satellite motion.
 
@@ -462,29 +468,29 @@ class LompeInput:
     
     def _setup_plot_frames(self, axs, grid, hem): #TODO decide if I want to keep magnetic coordinate stuff, if not remove comments
         """Configure polar and cubed-sphere axes. Write labels. Plot coastlines and grid outline."""
+        nh = True if hem == 'north' else False
 
         textargs = {'fontsize':18, 'color':'grey'}
         outlineargs = {'color':'black', 'zorder':8}
 
         # --------------- # 
         # POLAR PLOT
+        axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8, color='grey')
+        axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
+        axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh, mag = self.apx if self.mag else None) # coastlines in geographic coordinates
 
-        if self.mag:
-            pass
-        else:
-            axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8, color='grey')
-            axs['polar'].writeLTlabels(lat=49, degrees=True, **textargs)
-            # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
-            # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
+        xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
+        ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
 
-            nh = True if hem == 'north' else False
-            axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh) # coastlines in geographic coordinates
+        if self.mag: # convert grid coordinates to mlat, mlt
+            _la, mlon = self.apx.geo2apex(ys, xs, HEIGHT)
+            _lo = dpl.mlon2mlt(mlon, self.mid_time)
+        else: # keep geographic, but divide longitudes by 15
+            _la, _lo = ys, xs/15
 
-            # Grid outline (in black)
-            xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
-            ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
-            for i, (lon,lat) in enumerate(zip(xs, ys)):
-                axs['polar'].plot(lat, lon/15, linewidth = 3 if i == 0 else 1, **outlineargs) # geographic
+        for i, (lt,lat) in enumerate(zip(_lo, _la)):
+            axs['polar'].plot(lat, lt, linewidth = 3 if i == 0 else 1, **outlineargs) # geographic
+
 
         # --------------- # 
         # CUBED SPHERE (grid outline)
