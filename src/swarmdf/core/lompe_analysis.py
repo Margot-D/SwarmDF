@@ -71,7 +71,7 @@ def run_lompe(time_bounds, grids, data_objects_per_grid, SHs, SPs, l1=1, l2=1):
 
     return models
 
-def plot_lompe_output(models, sat_id, gif_speed=550, show_plot=False):
+def plot_lompe_output(models, sat_id, gif_speed=550):
     """
     Gives Lompe plot for each grid frame along Swarm trajectory
 
@@ -95,7 +95,7 @@ def plot_lompe_output(models, sat_id, gif_speed=550, show_plot=False):
         # Save to PNG
         lompe_fn = f'lompe-output_swarm{sat_id[-1]}' #TODO do we want swarm id in filename?
         fn = os.path.join(tmpdir, f"{lompe_fn}_{ct.strftime('%Y%m%d_%H%M%S')}.png")
-        savekw = None if show_plot else {"fname": fn, "dpi": 400}
+        savekw = {"fname": fn, "dpi": 400}
 
         # Lompe plot
         fig = lompe.lompeplot(user_model, 
@@ -113,7 +113,10 @@ def plot_lompe_output(models, sat_id, gif_speed=550, show_plot=False):
 
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                 fontsize=22, color="black", y=0.98)
-        
+
+        # Save PNG (with title)
+        fig.savefig(fn, dpi=400)
+
         # Convert figure to PIL (used for the UI GIF)
         fig.canvas.draw()
         buf = np.asarray(fig.canvas.buffer_rgba())[:, :, :3]
@@ -121,9 +124,7 @@ def plot_lompe_output(models, sat_id, gif_speed=550, show_plot=False):
         pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil.append(pil_img.copy())
 
-        if show_plot:
-            fig.savefig(fn, dpi=400)
-            plt.show(block=False)
+        plt.close(fig)
 
     print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
 
