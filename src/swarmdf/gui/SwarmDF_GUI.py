@@ -14,6 +14,11 @@ from tkinter import messagebox
 from tkcalendar import Calendar
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+import numpy as np
+
 from datetime import datetime, date
 import os
 
@@ -424,6 +429,25 @@ class SwarmDFGUI(customtkinter.CTk):
         self.btn_next_data.pack(side="left", padx=5)
 
         self.data_frame_controls.place_forget() # hide initially
+        
+        # # Option to switch between geographic and magnetic coords (polar plot)
+        # self.checkbox_magcoords = customtkinter.CTkCheckBox(master=self.frame_data, text='Magnetic coordinates (polar plot)')
+        # self.checkbox_magcoords.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="w")
+        # CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
+
+        # Option to open interactive plots
+        self.interactive_wdw_data = customtkinter.CTkFrame(self.frame_data, fg_color="transparent") #"#FFFFFF"
+        self.interactive_wdw_data.place(relx=0.98, rely=0.97, anchor="e")
+        self.btn_int_data = customtkinter.CTkButton(self.interactive_wdw_data,
+                                                text="Interactive plots",
+                                                width=30,
+                                                height=30,
+                                                fg_color="transparent",
+                                                border_width=0,
+                                                corner_radius=0,
+                                                command=self.interactive_window_input)
+        self.btn_int_data.pack(side="right", padx=5)
+        self.interactive_wdw_data.place_forget()
 
         ######
         # Lompe output
@@ -487,6 +511,21 @@ class SwarmDFGUI(customtkinter.CTk):
         self.btn_next_lompe.pack(side="left", padx=5)
 
         self.lompe_frame_controls.place_forget() # hide initially
+
+        # Option to open interactive plots
+        self.interactive_wdw_lompe = customtkinter.CTkFrame(self.lompe_frame, fg_color="transparent") #"#FFFFFF"
+        self.interactive_wdw_lompe.place(relx=0.98, rely=0.97, anchor="e")
+        self.btn_int_lompe = customtkinter.CTkButton(self.interactive_wdw_lompe,
+                                                text="Interactive plots",
+                                                width=30,
+                                                height=30,
+                                                fg_color="transparent",
+                                                border_width=0,
+                                                corner_radius=0,
+                                                command=self.interactive_window_output)
+        self.btn_int_lompe.pack(side="right", padx=5)
+        self.interactive_wdw_lompe.place_forget()
+
 
         # Make sure main window limits column 3's stretch
         self.grid_columnconfigure(4, weight=0)
@@ -839,6 +878,79 @@ class SwarmDFGUI(customtkinter.CTk):
     def next_frame_validation(self):
         self.anim_mgr.step_frame_generic(state=self.validation_state, step=+1, toggle_callback=self.toggle_play_pause)
 
+    def interactive_window_input(self):
+
+        plt.switch_backend("TkAgg")
+        
+        frames = [np.array(f) for f in self.data_frames_pil]
+
+        fig, ax = plt.subplots(figsize=(12, 9))
+        ax.axis("off")
+
+        im = ax.imshow(frames[0])
+
+        state = {"i": 0}
+
+        ax.set_title(f"Frame 1 / {len(frames)}", fontsize=15, color='gray', pad=15)
+        ax.text(0.5, 1.0001,"< use keyboard navigation >", transform=ax.transAxes, ha="center", fontsize=9, color="gray")
+
+        def update():
+            im.set_data(frames[state["i"]])
+            ax.set_title(f"Frame {state['i']+1} / {len(frames)}", fontsize=15, color='gray', pad=15)
+            fig.canvas.draw_idle()
+
+        def on_key(event):
+            if event.key == "right":
+                state["i"] = (state["i"] + 1) % len(frames)
+                update()
+            elif event.key == "left":
+                state["i"] = (state["i"] - 1) % len(frames)
+                update()
+            elif event.key == " ":
+                # quick play (hold space vibe)
+                state["i"] = (state["i"] + 1) % len(frames)
+                update()
+
+        fig.canvas.mpl_connect("key_press_event", on_key)
+
+        plt.show()
+
+    def interactive_window_output(self):
+
+        plt.switch_backend("TkAgg")
+        
+        frames = [np.array(f) for f in self.lompe_frames_pil]
+
+        fig, ax = plt.subplots(figsize=(12, 9))
+        ax.axis("off")
+
+        im = ax.imshow(frames[0])
+
+        state = {"i": 0}
+
+        ax.set_title(f"Frame 1 / {len(frames)}", fontsize=15, color='gray', pad=15)
+        ax.text(0.5, 1.0001,"< use keyboard navigation >", transform=ax.transAxes, ha="center", fontsize=9, color="gray")
+
+        def update():
+            im.set_data(frames[state["i"]])
+            ax.set_title(f"Frame {state['i']+1} / {len(frames)}", fontsize=15, color='gray', pad=15)
+            fig.canvas.draw_idle()
+
+        def on_key(event):
+            if event.key == "right":
+                state["i"] = (state["i"] + 1) % len(frames)
+                update()
+            elif event.key == "left":
+                state["i"] = (state["i"] - 1) % len(frames)
+                update()
+            elif event.key == " ":
+                # quick play (hold space vibe)
+                state["i"] = (state["i"] + 1) % len(frames)
+                update()
+
+        fig.canvas.mpl_connect("key_press_event", on_key)
+
+        plt.show()
 
     #################
     # Lompe input
@@ -856,14 +968,21 @@ class SwarmDFGUI(customtkinter.CTk):
             lompe_input = LompeInput(self.sat_id, self.start_time, self.end_time, self.datasets)
             self.grids, self.analysis_times = lompe_input.build_grids_around_swarm(self.timestep, self.grid_params)
             self.data_objects_per_grid = lompe_input.prepare_lompe_input(self.grids, self.analysis_times) 
-            data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data)
+            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data)
+
+            # # Convert PIL → Tkinter images
+            # self.label_data_gif.update_idletasks()
+            # w = max(self.label_data_gif.winfo_width() - 40, 1) 
+            # h = max(self.label_data_gif.winfo_height(), 1)
+            # self.data_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w, h), Image.LANCZOS), size=(w, h)) for f in self.data_frames_pil]
 
             # Convert PIL → Tkinter images
             self.label_data_gif.update_idletasks()
-            w = max(self.label_data_gif.winfo_width() - 40, 1) 
+            w = max(self.label_data_gif.winfo_width() - 40, 1)  # 10px margin each side
             h = max(self.label_data_gif.winfo_height(), 1)
-            self.data_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w, h), Image.LANCZOS), size=(w, h)) for f in data_frames_pil]
-            
+            self.data_frames_tk = [customtkinter.CTkImage(light_image=self.resize_keep_aspect(f, w, h), size=self.resize_keep_aspect(f, w, h).size) for f in self.data_frames_pil]
+
+
             # Initialize common "clock" for swarm_trajectory and lompe outputs (controls the timeline for both GIFs i.e, synchronize them)
             self.master_state = {"tracks": [],
                                 "current_frame": 0,
@@ -907,6 +1026,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Place frame controls
         self.data_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
+        self.interactive_wdw_data.place(relx=0.98, rely=0.97, anchor="e")
 
     #################
     # Lompe output
@@ -918,14 +1038,13 @@ class SwarmDFGUI(customtkinter.CTk):
         try:
             # Run Lompe analysis, get PIL images
             self.lompe_models = run_lompe(self.analysis_times, self.grids, self.data_objects_per_grid, self.SHs, self.SPs, self.l1, self.l2)
-            lompe_frames_pil = plot_lompe_output(self.lompe_models, self.sat_id, self.speed)
+            self.lompe_frames_pil = plot_lompe_output(self.lompe_models, self.sat_id, self.speed)
 
             # Convert PIL → Tkinter images
             self.label_lompe_gif.update_idletasks()
             w = max(self.label_lompe_gif.winfo_width() - 40, 1)  # 10px margin each side
             h = max(self.label_lompe_gif.winfo_height(), 1)
-            # self.lompe_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w, h), Image.LANCZOS), size=(w, h)) for f in lompe_frames_pil]
-            self.lompe_frames_tk = [customtkinter.CTkImage(light_image=self.resize_keep_aspect(f, w, h), size=self.resize_keep_aspect(f, w, h).size) for f in lompe_frames_pil]
+            self.lompe_frames_tk = [customtkinter.CTkImage(light_image=self.resize_keep_aspect(f, w, h), size=self.resize_keep_aspect(f, w, h).size) for f in self.lompe_frames_pil]
             
         except Exception as e:
             print("Error running lompe_output_UI:", e)
@@ -947,6 +1066,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Place frame controls
         self.lompe_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
+        self.interactive_wdw_lompe.place(relx=0.98, rely=0.97, anchor="e")
 
         if self.lompe_button:
             self.lompe_button.grid_forget()
