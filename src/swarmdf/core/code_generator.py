@@ -8,7 +8,7 @@ Automatically generates a standalone Python script from GUI configuration settin
 
 from pathlib import Path
 
-def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conductance_method, conductance_params, grid_params, regul_params, gif_speed, lompeosse, Gtimeoff, Gsnapshot):
+def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conductance_method, conductance_params, grid_params, regul_params, gif_speed, mag_coords, lompeosse, Gtimeoff, Gsnapshot):
     """
     Configuration dictionary from GUI inputs.
     """
@@ -24,6 +24,7 @@ def build_config_dict(sat_id, start_time, end_time, timestep, datasets, conducta
         "grid parameters": grid_params,
         "regularization parameters": regul_params,
         "gif speed": gif_speed,
+        "magnetic coordinates": mag_coords,
         "lompeOSSE analysis": lompeosse,
         "time offset": Gtimeoff,
         "Gamera snapshot": Gsnapshot
@@ -71,7 +72,7 @@ config = {repr(config)}
 
 # Path to data files
 package_root = Path(__file__).resolve().parents[0]
-data_path = str(package_root / "data" / "sample_datasets") + "/" 
+data_path = str(package_root / "data" / "sample_datasets") + "/" #TODO fix?
 
 # Fetch and load data
 datahandler = DataManager(config["start time"], config["end time"], config["datasets2download"])
@@ -82,14 +83,20 @@ datasets = datahandler.datasets
 ######################
 
 # Define individual analysis frames
-lompe_input = LompeInput(config["satellite ID"], config["start time"], config["end time"], datasets)
+lompe_input = LompeInput(config["satellite ID"], config["start time"], config["end time"], datasets, config["magnetic coordinates"])
 grids, analysis_times = lompe_input.build_grids_around_swarm(config["DT"], config["grid parameters"])
 
 # Prepare data objects for each analysis frame
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config["gif speed"], show_global_data=True, show_plot=False)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config["gif speed"], show_global_data=True)
+
+for frame in input_figs:
+    plt.figure(figsize=(8, 6))
+    plt.imshow(np.array(frame))
+    plt.axis("off")
+    plt.show()
 
 ######################
 # Run Lompe analysis (along satellite trajectory)
@@ -105,7 +112,13 @@ l1, l2 = config["regularization parameters"]['l1'], config["regularization param
 lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
 
 # Plot output (reconstructed electrodynamics)
-plot_lompe_output(lompe_models, config["satellite ID"], config["gif speed"], show_plot=False)    
+output_figs = plot_lompe_output(lompe_models, config["satellite ID"], config["gif speed"])    
+
+for frame in output_figs:
+    plt.figure(figsize=(8, 6))
+    plt.imshow(np.array(frame))
+    plt.axis("off")
+    plt.show()
 
 ######################
 # LompeOSSE analysis (analysis)
