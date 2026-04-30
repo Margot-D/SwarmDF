@@ -9,7 +9,7 @@ and reconstruction of ionospheric electrodynamics.
 import pandas as pd
 import os
 from pathlib import Path
-from lompe.data_tools import dataloader, datadownloader
+from lompe.data_tools import swarm, supermag, superdarn, dmsp_ssies, ampere, dataloader
 
 # TODO how to deal with user id? does the user have to log into each database? 
 
@@ -38,15 +38,10 @@ class DataManager:
             self.data_path = str(package_root / "data" / "sample_datasets") + "/"
         else:
             self.data_path = str(package_root / "data") + "/"
-        
-        print(self.data_path)
-        
+                
         # List of dates covering the full time interval
         self.event_dates = pd.date_range(start=start_time, end=end_time, freq="D")
-        self.event_dates = [d.strftime("%Y%m%d") for d in self.event_dates]
-
-        # self.event_date = start_time.strftime("%Y%m%d") #TODO change to next line when Fasil has final version of datadownloader 
-        # # self.event_date = start_time.strftime("%Y-%m-%d")
+        self.event_dates = [d.strftime("%Y-%m-%d") for d in self.event_dates]
 
         self.datasets = {}
 
@@ -76,34 +71,37 @@ class DataManager:
         for source in sources_to_fetch:
             try: 
                 if source == 'swarm_mag':
-                    datadownloader.download_swarmB(event_date, tempfile_path=self.data_path)
-
-                if source == 'swarm_efield':
-                    datadownloader.download_swarmE(event_date, tempfile_path=self.data_path)
+                    swarm.download_swarm_mag(event_date, tempfile_path=self.data_path)
+                    
+                # TODO work on this
+                # if source == 'swarm_efield':
+                #     datadownloader.download_swarmE(event_date, tempfile_path=self.data_path)
 
                 if source == 'superdarn':
-                    datadownloader.download_sdarn(event_date, tempfile_path=self.data_path)
+                    superdarn.download_sdarn(event_date, tempfile_path=self.data_path)
 
                 if source == 'supermag': #TODO fix userid
-                    datadownloader.download_smag(event_date, userid='mdecotte', tempfile_path=self.data_path) 
+                    supermag.download_supermag(event_date, tempfile_path=self.data_path) 
 
                 if source == 'iridium_ampere':
-                    iridium_file = datadownloader.download_iridium(event_date, tempfile_path=self.data_path) # download .nc file
+                    iridium_file = ampere.download_iridium(event_date, tempfile_path=self.data_path) # download .nc file
                     dataloader.read_iridium(event_date, file_name=iridium_file, basepath=self.data_path, tempfile_path=self.data_path) # creates .h5 file
 
                 if source in ('dmsp_ssies17', 'dmsp_ssies18'):
                     madrigal_kwargs = {'user_fullname': 'First','user_email': 'name@host.com', 'user_affiliation': 'University'}
-                    datadownloader.download_dmsp_ssies(event_date, sat=source[-2:], tempfile_path=self.data_path, **madrigal_kwargs)
+                    dmsp_ssies.download_dmsp_ssies(event_date, sat=source[-2:], tempfile_path=self.data_path, **madrigal_kwargs)
 
             except Exception as e:
                 print(f"Failed to download {source}:", e)
 
     def load_data(self, event_date, selected_sources):
         """ Load available datasets for a given date and return them as a dictionary of DataFrames."""
-       
+        
+        event_date = event_date.replace('-', '')
+
         # File paths for all supported datasets
-        paths = {'swarm_mag': os.path.join(self.data_path, f'{event_date}_swarmB.h5'),
-                'swarm_efield': os.path.join(self.data_path, f'{event_date}_swarmE.h5'),
+        paths = {'swarm_mag': os.path.join(self.data_path, f'{event_date}_swarm_mag.h5'),
+                'swarm_efield': os.path.join(self.data_path, f'{event_date}_swarmE.h5'), #TODO fix
                 'superdarn': os.path.join(self.data_path, f'{event_date}_superdarn_grdmap.h5'),
                 'supermag': os.path.join(self.data_path, f'{event_date}_supermag.h5'),
                 'iridium_ampere': os.path.join(self.data_path, f'{event_date}_iridium.h5'), 
