@@ -430,11 +430,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.data_frame_controls.place_forget() # hide initially
         
-        # Option to switch between geographic and magnetic coords (polar plot)
-        self.checkbox_magcoords = customtkinter.CTkCheckBox(master=self.frame_data, text='Polar plot in magnetic coordinates')
-        self.checkbox_magcoords.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="w")
-        CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
-
         # Option to open interactive plots
         self.interactive_wdw_data = customtkinter.CTkFrame(self.frame_data, fg_color="transparent") #"#FFFFFF"
         self.interactive_wdw_data.place(relx=0.98, rely=0.97, anchor="e")
@@ -544,7 +539,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.col3_frame.grid_rowconfigure((0, 1, 2), weight=1)
 
         ######
-        # GIF speed parameter
+        # GIF 
         self.gif_section = customtkinter.CTkFrame(self.col3_frame, corner_radius=8)
         self.gif_section.grid(row=0, column=0, pady=(0, 5), sticky="nsew")
         self.gif_section.grid_columnconfigure(0, weight=1)
@@ -552,6 +547,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.gif_section_title = customtkinter.CTkLabel(self.gif_section, text="GIF", font=customtkinter.CTkFont(size=14, weight="bold"))
         self.gif_section_title.grid(row=0, column=0, pady=(5, 5), sticky="ew")
 
+        # GIF speed parameter 
         self.label_gifspeed = customtkinter.CTkLabel(self.gif_section, text="Animation speed (ms/frame):")
         self.label_gifspeed.grid(row=1, column=0, pady=(15, 0), sticky="ew")
         self.entry_gifspeed = customtkinter.CTkEntry(self.gif_section, width=50)
@@ -562,7 +558,18 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Apply button
         self.button_apply = customtkinter.CTkButton(self.gif_section, text="Apply", command=self.apply_gif_parameters)
-        self.button_apply.grid(row=3, column=0, pady=(50,10))
+        self.button_apply.grid(row=3, column=0, pady=(15,10))
+
+         # TODO fix
+        # Option to switch between geographic and magnetic coords (polar plot)
+        self.checkbox_magcoords = customtkinter.CTkCheckBox(self.gif_section, text='Polar plot in magnetic coordinates')
+        self.checkbox_magcoords.grid(row=4, column=0, padx=15, pady=(20, 0), sticky="ew")
+        CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
+
+        self.button_runSwarmDF2 = customtkinter.CTkButton(self.gif_section, 
+                                                         command=self.run_swarm_df, 
+                                                         text='Run SwarmDF',) # width=160, height=80, font=("Arial", 18)
+        self.button_runSwarmDF2.grid(row=5, column=0, pady=(15,10))
 
         ######
         # Regularization parameters
@@ -965,10 +972,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try: 
             # Extract PIL images and individual grids #TODO fix comment!
-            lompe_input = LompeInput(self.sat_id, self.start_time, self.end_time, self.datasets)
+            lompe_input = LompeInput(self.sat_id, self.start_time, self.end_time, self.datasets, self.mag)
             self.grids, self.analysis_times = lompe_input.build_grids_around_swarm(self.timestep, self.grid_params)
             self.data_objects_per_grid = lompe_input.prepare_lompe_input(self.grids, self.analysis_times) 
-            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data, self.mag)
+            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data)
 
             # # Convert PIL → Tkinter images
             # self.label_data_gif.update_idletasks()
@@ -1333,7 +1340,8 @@ class SwarmDFGUI(customtkinter.CTk):
             self.speed = self.apply_gif_parameters(update_state=False) # ms/frame
             self.show_data = self.checkbox_showdata.get()
 
-            self.mag = self.checkbox_magcoords.get()
+            # Polar plot magnetic coordinates
+            self.mag = True if self.checkbox_magcoords.get() else False
 
             # regularization #TODO Ok kalle?
             slider_l1_value = self.slider_l1.get()
@@ -1357,7 +1365,8 @@ class SwarmDFGUI(customtkinter.CTk):
                                             self.conductance_params, 
                                             self.grid_params, 
                                             self.regul_params, 
-                                            self.speed, 
+                                            self.speed,
+                                            self.mag, 
                                             self.run_validation, 
                                             self.timeoff, 
                                             self.snapshot)

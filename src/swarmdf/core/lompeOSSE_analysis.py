@@ -80,7 +80,7 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
     return osse_models, gamera_outputs
 
 
-def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550, show_plot=False):
+def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
     """ 
     input: osse models
     output: lompe plot
@@ -114,7 +114,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550, show_plot=
         # Save to PNG
         lompeosse_fn = f'lompeOSSE_electrodynamics'
         fn = os.path.join(tmpdir, f"{lompeosse_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png") 
-        savekw = None if show_plot else {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
+        savekw = {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
 
         fig_lompeosse = lompe.lompeplot(osse_model,
                                         include_data=True,
