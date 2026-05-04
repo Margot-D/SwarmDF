@@ -33,7 +33,7 @@ customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark
 customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "green", "dark-blue"
 
 import warnings
-warnings.filterwarnings("ignore", message="Ignoring fixed y limits to fulfill fixed data aspect*")
+warnings.filterwarnings("ignore", category=UserWarning)
 
 import time as tt
 
@@ -70,30 +70,25 @@ class SwarmDFGUI(customtkinter.CTk):
         self.title_sidebar = customtkinter.CTkLabel(self.frame_sidebar, text="SwarmDF \n User interface", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.title_sidebar.grid(row=0, column=0, padx=20, pady=(20, 50))
 
-        # "Show data coverage" checkbox
-        self.checkbox_showdata = customtkinter.CTkCheckBox(self.frame_sidebar, text='Show global data coverage')
-        self.checkbox_showdata.grid(row=2, column=0, padx=20, pady=20)
-        self.checkbox_showdata.select()
-
         # "Run Lompe analysis" checkbox
         self.checkbox_runlompe = customtkinter.CTkCheckBox(master=self.frame_sidebar, text=f"Run Lompe analysis")
-        self.checkbox_runlompe.grid(row=3, column=0, padx=20, pady=20)
+        self.checkbox_runlompe.grid(row=3, column=0, padx=20, pady=(20,20))
         self.checkbox_runlompe.select()
         # CustomTooltip(self.checkbox_runlompe, text="When not selected, SwarmDF collects the requested data and show the data coverage around Swarm.")      
 
         # "Run LompeOSSE validation" checkbox
         self.checkbox_lompeosse = customtkinter.CTkCheckBox(self.frame_sidebar, text='Run LompeOSSE validation')
-        self.checkbox_lompeosse.grid(row=4, column=0, padx=20, pady=20)
+        self.checkbox_lompeosse.grid(row=4, column=0, padx=20, pady=(20,20))
         # self.checkbox_lompeosse.select()
 
         # "Generate Python code" switch
         self.switch_pythoncode = customtkinter.CTkSwitch(master=self.frame_sidebar, text=f"Generate Python code") 
-        self.switch_pythoncode.grid(row=5, column=0, padx=20, pady=10)
+        self.switch_pythoncode.grid(row=5, column=0, padx=20, pady=(20,5))
 
         # User filename for generated Python code
         self.entry_codename = customtkinter.CTkEntry(master=self.frame_sidebar, placeholder_text="MyFile.py")
         self.entry_codename.grid(row=6, column=0, padx=20, pady=5)
-        CustomTooltip(self.entry_codename, "Filename for generated script (default: SwarmDF_python_code.py")
+        CustomTooltip(self.entry_codename, "Filename for generated script (default: SwarmDF_script.py")
 
         # "Run SwarmDF" button
         self.button_runSwarmDF = customtkinter.CTkButton(self.frame_sidebar, 
@@ -210,32 +205,32 @@ class SwarmDFGUI(customtkinter.CTk):
         self.checkbox_swarm_bfield.grid(row=3, column=0, pady=(60, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_swarm_bfield, "Space magnetic field")
 
-        self.checkbox_swarm_conv = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Swarm V')
+        self.checkbox_swarm_conv = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Swarm ion flow')
         self.checkbox_swarm_conv.grid(row=3, column=1, pady=(60, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_swarm_conv, "Cross-track ion drift")
 
-        self.checkbox_swarm_efield = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Swarm elec')
-        self.checkbox_swarm_efield.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
-        CustomTooltip(self.checkbox_swarm_efield, "...")
+        # self.checkbox_swarm_efield = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Swarm elec')
+        # self.checkbox_swarm_efield.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
+        # CustomTooltip(self.checkbox_swarm_efield, "...")
 
         self.checkbox_supermag = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='SuperMAG')
         self.checkbox_supermag.grid(row=4, column=1, pady=(20, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_supermag, "Ground magnetometer")
 
         self.checkbox_superdarn = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='SuperDARN')
-        self.checkbox_superdarn.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="n")
+        self.checkbox_superdarn.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_superdarn, "Convection velocities")
 
         self.checkbox_iridium_ampere = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='Iridium/AMPERE')
-        self.checkbox_iridium_ampere.grid(row=5, column=1, pady=(20, 20), padx=10, sticky="n")
+        self.checkbox_iridium_ampere.grid(row=6, column=0, pady=(20, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_iridium_ampere, "Space magnetic perturbations")
 
         self.checkbox_dmsp_ssies17 = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='DMSP/SSIES 17')
-        self.checkbox_dmsp_ssies17.grid(row=6, column=0, pady=(20, 20), padx=10, sticky="n")
+        self.checkbox_dmsp_ssies17.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_dmsp_ssies17, "Ion drift")
 
         self.checkbox_dmsp_ssies18 = customtkinter.CTkCheckBox(master=self.tabview.tab(tab2), text='DMSP/SSIES 18')
-        self.checkbox_dmsp_ssies18.grid(row=6, column=1, pady=(20, 20), padx=10, sticky="n")
+        self.checkbox_dmsp_ssies18.grid(row=5, column=1, pady=(20, 20), padx=10, sticky="n")
         CustomTooltip(self.checkbox_dmsp_ssies18, "Ion drift")
 
         # self.entry_data = customtkinter.CTkEntry(self.tabview.tab(tab2), placeholder_text="myfile.cdf") # TODO remove if not fixed
@@ -305,8 +300,8 @@ class SwarmDFGUI(customtkinter.CTk):
         self.label_grid_param = customtkinter.CTkLabel(self.frame_gridparam, text="Grid parameters", font=customtkinter.CTkFont(size=14, weight="bold"))
         self.label_grid_param.grid(row=0, column=0, columnspan=2, pady=(0, 10))
 
-        self.label_L = customtkinter.CTkLabel(self.frame_gridparam, text="Length \n (along-track) \n (km):", anchor='center') # but in reality cross-track dimension of analysis grid
-        self.label_W = customtkinter.CTkLabel(self.frame_gridparam, text="Width \n (cross-track) \n (km):", anchor='center') # along-track dimension of analysis grid
+        self.label_L = customtkinter.CTkLabel(self.frame_gridparam, text="Along-track \n dimension (km):", anchor='center') # but in reality cross-track dimension of analysis grid
+        self.label_W = customtkinter.CTkLabel(self.frame_gridparam, text="Cross-track \n dimension (km):", anchor='center') # along-track dimension of analysis grid
         self.label_L.grid(row=2, column=0, padx=10, pady=10, sticky="n")
         self.label_W.grid(row=2, column=1, padx=10, pady=10, sticky="n")
 
@@ -315,8 +310,8 @@ class SwarmDFGUI(customtkinter.CTk):
         self.entry_L.grid(row=3, column=0, padx=10, pady=3)
         self.entry_W.grid(row=3, column=1, padx=10, pady=3)
 
-        self.label_Lres = customtkinter.CTkLabel(self.frame_gridparam, text="Along-track \n resolution \n (km):", anchor='center')
-        self.label_Wres = customtkinter.CTkLabel(self.frame_gridparam, text="Cross-track \n resolution \n (km):", anchor='center')
+        self.label_Lres = customtkinter.CTkLabel(self.frame_gridparam, text="Along-track \n resolution (km):", anchor='center')
+        self.label_Wres = customtkinter.CTkLabel(self.frame_gridparam, text="Cross-track \n resolution (km):", anchor='center')
         self.label_Lres.grid(row=4, column=0, padx=10, pady=(30,10), sticky="n")
         self.label_Wres.grid(row=4, column=1, padx=10, pady=(30,10), sticky="n")
 
@@ -325,8 +320,8 @@ class SwarmDFGUI(customtkinter.CTk):
         self.entry_Lres.grid(row=5, column=0, padx=10, pady=3)
         self.entry_Wres.grid(row=5, column=1, padx= 10, pady=3)
 
-        self.entry_L.insert(0, "1500")
-        self.entry_W.insert(0, "2000")
+        self.entry_L.insert(0, "2000")
+        self.entry_W.insert(0, "1500")
         self.entry_Lres.insert(0, "200")
         self.entry_Wres.insert(0, "200")
 
@@ -539,37 +534,63 @@ class SwarmDFGUI(customtkinter.CTk):
         self.col3_frame.grid_rowconfigure((0, 1, 2), weight=1)
 
         ######
-        # GIF 
-        self.gif_section = customtkinter.CTkFrame(self.col3_frame, corner_radius=8)
-        self.gif_section.grid(row=0, column=0, pady=(0, 5), sticky="nsew")
-        self.gif_section.grid_columnconfigure(0, weight=1)
+        # Plotting/GIF settings
 
-        self.gif_section_title = customtkinter.CTkLabel(self.gif_section, text="GIF", font=customtkinter.CTkFont(size=14, weight="bold"))
-        self.gif_section_title.grid(row=0, column=0, pady=(5, 5), sticky="ew")
+        self.tabview_fig = customtkinter.CTkTabview(self.col3_frame, corner_radius=8)
+        self.tabview_fig.grid(row=0, column=0, pady=(0, 5), sticky="nsew")
+        self.tab_plot = self.tabview_fig.add("Plot options")
+        self.tab_gif = self.tabview_fig.add("GIF")
+        self.tab_plot.grid_columnconfigure((0, 1), weight=1)
+        self.tab_gif.grid_columnconfigure(0, weight=1)
 
+        # TAB1
+        self.figsize_frame = customtkinter.CTkFrame(self.tab_plot, fg_color="transparent")
+        self.figsize_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="ew")
+        self.figsize_frame.grid_columnconfigure((0, 1), weight=1)
+
+        # Option to adjust figure size
+        # TODO add hspace and wspace? keep only figheight like in lompe? 
+        self.label_figh = customtkinter.CTkLabel(self.figsize_frame, text="Fig height:")
+        self.label_figh.grid(row=0, column=0, pady=(0, 3))
+        self.entry_figh = customtkinter.CTkEntry(self.figsize_frame, width=40)
+        self.entry_figh.grid(row=1, column=0, padx=5)
+        self.entry_figh.insert(0, 9)
+        CustomTooltip(self.entry_figh, "Figure height (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
+
+        self.label_figw = customtkinter.CTkLabel(self.figsize_frame, text="Fig width:")
+        self.label_figw.grid(row=0, column=1, pady=(0, 3))
+        self.entry_figw = customtkinter.CTkEntry(self.figsize_frame, width=40)
+        self.entry_figw.grid(row=1, column=1, padx=5)
+        self.entry_figw.insert(0, 12.2)
+        CustomTooltip(self.entry_figw, "Figure width (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
+
+        # Option to switch between geographic and magnetic coords (polar plot)
+        self.checkbox_magcoords = customtkinter.CTkCheckBox(self.tab_plot, text='Polar plot in magnetic coords')
+        self.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(30, 0), sticky="ew")
+        CustomTooltip(self.checkbox_magcoords, "The polar plot (top panel) will be shown in magnetic coordinates. Default is geographic") #TODO change that to opposite
+
+        # "Show global data coverage" checkbox
+        self.checkbox_showdata = customtkinter.CTkCheckBox(self.tab_plot, text='Show global data coverage')
+        self.checkbox_showdata.grid(row=3, column=0, columnspan=2, padx=20, pady=(30, 0), sticky="ew")
+        self.checkbox_showdata.select()
+
+        # Re-run SwarmDF button
+        self.button_runSwarmDF2 = customtkinter.CTkButton(self.tab_plot, command=self.run_swarm_df, text='Run SwarmDF')
+        self.button_runSwarmDF2.grid(row=4, column=0, columnspan=2, pady=(35, 10))
+
+        # TAB2
         # GIF speed parameter 
-        self.label_gifspeed = customtkinter.CTkLabel(self.gif_section, text="Animation speed (ms/frame):")
+        self.label_gifspeed = customtkinter.CTkLabel(self.tab_gif, text="Animation speed (ms/frame):")
         self.label_gifspeed.grid(row=1, column=0, pady=(15, 0), sticky="ew")
-        self.entry_gifspeed = customtkinter.CTkEntry(self.gif_section, width=50)
-        self.entry_gifspeed.grid(row=2, column=0, pady=(7, 0))        
-        self.default_speed = 550 # ms
-        self.entry_gifspeed.insert(0, self.default_speed)  
-        CustomTooltip(self.label_gifspeed, text="Time in milliseconds between each frame.\nLower = faster animation (0  stops the GIF).")      
+        self.entry_gifspeed = customtkinter.CTkEntry(self.tab_gif, width=50)
+        self.entry_gifspeed.grid(row=2, column=0, pady=(7, 0))
+        self.default_speed = 550  # ms
+        self.entry_gifspeed.insert(0, self.default_speed)
+        CustomTooltip(self.label_gifspeed, text="Time in milliseconds between each frame.\nLower = faster animation (0 stops the GIF).")
 
         # Apply button
-        self.button_apply = customtkinter.CTkButton(self.gif_section, text="Apply", command=self.apply_gif_parameters)
-        self.button_apply.grid(row=3, column=0, pady=(15,10))
-
-         # TODO fix
-        # Option to switch between geographic and magnetic coords (polar plot)
-        self.checkbox_magcoords = customtkinter.CTkCheckBox(self.gif_section, text='Polar plot in magnetic coordinates')
-        self.checkbox_magcoords.grid(row=4, column=0, padx=15, pady=(20, 0), sticky="ew")
-        CustomTooltip(self.checkbox_magcoords, "The polar plot (left) will be shown in magnetic coordinates.")
-
-        self.button_runSwarmDF2 = customtkinter.CTkButton(self.gif_section, 
-                                                         command=self.run_swarm_df, 
-                                                         text='Run SwarmDF',) # width=160, height=80, font=("Arial", 18)
-        self.button_runSwarmDF2.grid(row=5, column=0, pady=(15,10))
+        self.button_apply = customtkinter.CTkButton(self.tab_gif, text="Apply", command=self.apply_gif_parameters)
+        self.button_apply.grid(row=3, column=0, pady=(45, 10))
 
         ######
         # Regularization parameters
@@ -662,12 +683,13 @@ class SwarmDFGUI(customtkinter.CTk):
         # ------------ # 
         # check and validate entries
 
+        # TODO add more?
         self.validators = [(self.entry_timestep, "Timestep", 30, None, None),
                            (self.entry_kp, "Kp index", 4, 0, 9), 
                            (self.entry_f107, "F107 value", 100, 30, 400), #TODO ok? 
                            (self.entry_background, "Background value", 2, 0, None), # TODO what's a good range?
-                           (self.entry_L, "Grid length", 1500, None, None),
-                           (self.entry_W, "Grid width", 2000, None, None),
+                           (self.entry_L, "Grid length", 2000, None, None),
+                           (self.entry_W, "Grid width", 1500, None, None),
                            (self.entry_Lres, "Grid length resolution", 200, None, None),
                            (self.entry_Wres, "Grid width resolution", 200, None, None),
                            (self.entry_wshift, "wshift value", 0, None, None),
@@ -804,10 +826,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
     def get_grid_parameters(self):
         try:
-            return{'L': float(self.entry_L.get()),
-                   'W': float(self.entry_W.get()),
-                   'Lres': float(self.entry_Lres.get()),
-                   'Wres': float(self.entry_Wres.get()),
+            return{'L': float(self.entry_W.get()), # swapped L/W on purpose so that the GUI is intuitive. The issue comes from CSgrid...
+                   'W': float(self.entry_L.get()), # swapped L/W on purpose so that the GUI is intuitive. The issue comes from CSgrid...
+                   'Lres': float(self.entry_Wres.get()),
+                   'Wres': float(self.entry_Lres.get()),
                    'wshift': float(self.entry_wshift.get())}
         except ValueError:
             print("Invalid manual input")
@@ -975,7 +997,7 @@ class SwarmDFGUI(customtkinter.CTk):
             lompe_input = LompeInput(self.sat_id, self.start_time, self.end_time, self.datasets, self.mag)
             self.grids, self.analysis_times = lompe_input.build_grids_around_swarm(self.timestep, self.grid_params)
             self.data_objects_per_grid = lompe_input.prepare_lompe_input(self.grids, self.analysis_times) 
-            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.speed, self.show_data)
+            self.data_frames_pil = lompe_input.plot_lompe_input(self.grids, self.analysis_times, self.data_objects_per_grid, self.figh, self.figw, self.speed, self.show_data)
 
             # # Convert PIL → Tkinter images
             # self.label_data_gif.update_idletasks()
@@ -1045,7 +1067,7 @@ class SwarmDFGUI(customtkinter.CTk):
         try:
             # Run Lompe analysis, get PIL images
             self.lompe_models = run_lompe(self.analysis_times, self.grids, self.data_objects_per_grid, self.SHs, self.SPs, self.l1, self.l2)
-            self.lompe_frames_pil = plot_lompe_output(self.lompe_models, self.sat_id, self.speed)
+            self.lompe_frames_pil = plot_lompe_output(self.lompe_models, self.sat_id, self.figh, self.speed)
 
             # Convert PIL → Tkinter images
             self.label_lompe_gif.update_idletasks()
@@ -1201,22 +1223,31 @@ class SwarmDFGUI(customtkinter.CTk):
         print("run lompeosse:", t1 - t0)
 
 
-        lompeOSSE_frames_pil, gamera_frames_pil = plot_lompeOSSE_output(lompeOSSE_models, gamera_models, self.speed)
+        self.lompeOSSE_frames_pil, self.gamera_frames_pil = plot_lompeOSSE_output(lompeOSSE_models, gamera_models, self.figh, self.speed)
         t2 = tt.perf_counter()
         print("all lompeosse plots:", t2 - t1)
 
         # Convert PIL → Tkinter images
-        self.validation_window.update_idletasks()
+        # self.validation_window.update_idletasks()
 
-        w1 = self.lompe_plot_frame.winfo_width()
-        h1 = self.lompe_plot_frame.winfo_height()
-        self.lompeOSSE_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w1, h1), Image.LANCZOS),
-                           size=(w1, h1)) for f in lompeOSSE_frames_pil]
+        # w1 = self.lompe_plot_frame.winfo_width()
+        # h1 = self.lompe_plot_frame.winfo_height()
+        # self.lompeOSSE_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w1, h1), Image.LANCZOS),
+        #                    size=(w1, h1)) for f in self.lompeOSSE_frames_pil]
                 
-        w2 = self.gamera_plot_frame.winfo_width()
-        h2 = self.gamera_plot_frame.winfo_height()
-        self.gamera_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w2, h2), Image.LANCZOS),
-                    size=(w2, h2)) for f in gamera_frames_pil]
+        # w2 = self.gamera_plot_frame.winfo_width()
+        # h2 = self.gamera_plot_frame.winfo_height()
+        # self.gamera_frames_tk = [customtkinter.CTkImage(light_image=f.resize((w2, h2), Image.LANCZOS),
+        #             size=(w2, h2)) for f in self.gamera_frames_pil]
+
+
+        self.validation_window.update_idletasks()
+        w1 = max(self.lompe_plot_frame.winfo_width() - 40, 1)  # 10px margin each side
+        h1 = max(self.lompe_plot_frame.winfo_height(), 1)
+        self.lompeOSSE_frames_tk = [customtkinter.CTkImage(light_image=self.resize_keep_aspect(f, w1, h1), size=self.resize_keep_aspect(f, w1, h1).size) for f in self.lompeOSSE_frames_pil]
+        w2 = max(self.gamera_plot_frame.winfo_width() - 40, 1)  # 10px margin each side
+        h2 = max(self.gamera_plot_frame.winfo_height(), 1)    
+        self.gamera_frames_tk = [customtkinter.CTkImage(light_image=self.resize_keep_aspect(f, w2, h2), size=self.resize_keep_aspect(f, w2, h2).size) for f in self.gamera_frames_pil]
 
         # Initialize animation
         self.validation_state = {"tracks": [],
@@ -1303,8 +1334,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
             # datasets
             self.datasets2download = []
-            if self.checkbox_swarm_efield.get():
-                self.datasets2download.append('swarm_efield')
+            # if self.checkbox_swarm_efield.get():
+            #     self.datasets2download.append('swarm_efield')
+            #TODO add ion flow
             if self.checkbox_swarm_bfield.get():
                 self.datasets2download.append('swarm_mag')
             if self.checkbox_superdarn.get():
@@ -1336,12 +1368,18 @@ class SwarmDFGUI(customtkinter.CTk):
             if self.grid_params is None:
                 return
 
-            # GIF
-            self.speed = self.apply_gif_parameters(update_state=False) # ms/frame
-            self.show_data = self.checkbox_showdata.get()
+            # Figure size
+            self.figw = float(self.entry_figw.get())
+            self.figh = float(self.entry_figh.get())
 
             # Polar plot magnetic coordinates
-            self.mag = True if self.checkbox_magcoords.get() else False
+            self.mag = bool(self.checkbox_magcoords.get())
+
+            # Show global data (outside grid)
+            self.show_data = bool(self.checkbox_showdata.get())
+
+            # GIF speed
+            self.speed = self.apply_gif_parameters(update_state=False) # ms/frame
 
             # regularization #TODO Ok kalle?
             slider_l1_value = self.slider_l1.get()
@@ -1454,7 +1492,7 @@ class SwarmDFGUI(customtkinter.CTk):
                 if self.entry_codename.get():
                     fn= self.entry_codename.get()
                 else:
-                    fn= 'SwarmDF_python_code.py'
+                    fn= 'SwarmDF_script.py'
             
                 generate_python_code(self.config, fn)
 
