@@ -13,6 +13,7 @@ SwarmDF_python_codeTEST.py
 testlompeosse.py
 SwarmDF_script.py
 SwarmDF_paper.py
+my_SwarmDF_demo.ipynb
 
 *.nc
 *.h5
