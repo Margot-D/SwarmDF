@@ -18,7 +18,7 @@ We recommend running `SwarmDF_GUI.py`, which provides a graphical user interface
 
 Alternatively, you can run:
 - the demo notebook (`SwarmDF_demo.ipynb`), or 
-- the example Python script (`SwarmDF_example_script.py`).<br>
+- the example Python script (`SwarmDF_example_script.py`). \
 These provide a walkthrough of the full workflow. 
 
 ## Current status
@@ -27,15 +27,15 @@ These provide a walkthrough of the full workflow.
 
 ### Working features
 Data retrieval and preprocessing \
-Multi-instrument data integration
-Electrodynamics reconstruction (Lompe)
-Demo script and notebook (/example folder)
-Graphical user interface (/gui folder)
+Multi-instrument data integration \
+Electrodynamics reconstruction (Lompe) \
+Demo script and notebook (/example folder) \
+Graphical user interface (/gui folder) \
 
 ### In progress
-Validation tool (LompeOSSE)
-Extended documentation
-Data product descriptions
+Validation tool (LompeOSSE) \
+Extended documentation \
+Data product descriptions \
 
 
 ## Installation
@@ -54,6 +54,6 @@ SwarmDF also integrates LompeOSSE (under development) as a built-in validation t
 ### Environment setup (recommended)
 
 An environment file (environment.yml) is provided to install all dependencies automatically, including Lompe and LompeOSSE:
-conda env create -f environment.yml  
+`conda env create -f environment.yml`
 
 
