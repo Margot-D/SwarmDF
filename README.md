@@ -18,7 +18,7 @@ We recommend running `SwarmDF_GUI.py`, which provides a graphical user interface
 
 Alternatively, you can run:
 - the demo notebook (`SwarmDF_demo.ipynb`), or 
-- the example Python script (`SwarmDF_example_script.py`).
+- the example Python script (`SwarmDF_example_script.py`).<br>
 These provide a walkthrough of the full workflow. 
 
 ## Current status
@@ -26,7 +26,7 @@ These provide a walkthrough of the full workflow.
 ⚠️ This project is under active development.
 
 ### Working features
-Data retrieval and preprocessing
+Data retrieval and preprocessing \
 Multi-instrument data integration
 Electrodynamics reconstruction (Lompe)
 Demo script and notebook (/example folder)
