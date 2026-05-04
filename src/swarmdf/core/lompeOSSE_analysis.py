@@ -10,7 +10,7 @@ from pathlib import Path
 import os
 
 import imageio.v2 as imageio
-from PIL import Image
+from PIL import Image, ImageOps
 
 import lompe
 from lompe.model.visualization import *
@@ -21,9 +21,8 @@ import time as tt
 # TODO check gamera quantities with Kalle, and the grid used to plot stuff
 # TODO check radius stuff in get_B with Kalle
 
-package_root = Path(__file__).resolve().parents[1]  
-src_root = package_root.parent  
-outputs_path = str(src_root / "outputs")
+package_root = Path(__file__).resolve().parents[3]  
+outputs_path = str(package_root / "outputs")
 tmpdir = outputs_path + '/tmp/' #TODO fix to true temporary folder?
 
 def run_lompeOSSE(models, time_offset=0, snapshot=0):
@@ -80,7 +79,7 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
     return osse_models, gamera_outputs
 
 
-def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
+def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=550):
     """ 
     input: osse models
     output: lompe plot
@@ -128,12 +127,18 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
                                                     "space_mag_fac":    600e-9,
                                                     "space_mag_full":   600e-9,
                                                     "electric_current": 1}, 
+                                        figheight=figheight,
                                         savekw=savekw)
 
         fig_lompeosse.suptitle(f"LompeOSSE-reconstructed electrodynamics (GAMERA data) \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-                fontsize=19, color="black", y=0.98)
+                fontsize=22, color="black", y=0.98)
         # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
         
+        fig_lompeosse.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
+
+        # Save PNG (with title)
+        fig_lompeosse.savefig(fn, dpi=400)
+
         t22 = tt.perf_counter()
         print("lompeosseplot:", t22 - t11)
 
@@ -141,11 +146,8 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
         fig_lompeosse.canvas.draw()
         buf = np.asarray(fig_lompeosse.canvas.buffer_rgba())[:, :, :3]
         pil_img = Image.fromarray(buf)
+        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil_lompeosse.append(pil_img.copy())
-
-        if show_plot:
-            fig_lompeosse.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
-            plt.show(block=False) 
 
         #################
         # GAMERA plot 
@@ -294,7 +296,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
 
         plt.subplots_adjust(top=0.86, bottom=0.065, left=0.01, right=0.99, hspace=0.1, wspace=0.01) 
         fig_gamera.suptitle(f"Original GAMERA electrodynamics \n {t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-                fontsize=19, color="black", y=0.98)
+                fontsize=22, color="black", y=0.98)
         
         # Save to PNG
         gamera_fn = f'GAMERA_electrodynamics'
@@ -304,10 +306,8 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, gif_speed=550):
         fig_gamera.canvas.draw()
         buf = np.asarray(fig_gamera.canvas.buffer_rgba())[:, :, :3]
         pil_img = Image.fromarray(buf)
+        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil_gamera.append(pil_img.copy())
-
-        if show_plot:
-            plt.show(block=False)
 
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 

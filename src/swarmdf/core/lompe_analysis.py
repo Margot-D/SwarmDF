@@ -20,9 +20,11 @@ from .lompe_input import QUIVERSCALES
 import imageio.v2 as imageio
 from PIL import Image, ImageOps
 
-package_root = Path(__file__).resolve().parents[1]  
-src_root = package_root.parent  
-outputs_path = str(src_root / "outputs")
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
+package_root = Path(__file__).resolve().parents[3]  
+outputs_path = str(package_root / "outputs")
 tmpdir = outputs_path + '/tmp/' #TODO fix
 
 # TODO find good name for output file
@@ -71,7 +73,7 @@ def run_lompe(time_bounds, grids, data_objects_per_grid, SHs, SPs, l1=1, l2=1):
 
     return models
 
-def plot_lompe_output(models, sat_id, gif_speed=550):
+def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
     """
     Gives Lompe plot for each grid frame along Swarm trajectory
 
@@ -109,10 +111,13 @@ def plot_lompe_output(models, sat_id, gif_speed=550):
                             #                "space_mag_full":   600e-9,
                             #                "electric_current": 1}
                                 quiverscales = QUIVERSCALES,
+                                figheight = figheight,
                                 savekw=savekw)
 
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                 fontsize=22, color="black", y=0.98)
+        
+        fig.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
 
         # Save PNG (with title)
         fig.savefig(fn, dpi=400)

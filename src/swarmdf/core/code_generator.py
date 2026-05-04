@@ -71,7 +71,7 @@ config = {repr(config)}
 ######################
 
 # Path to data files
-package_root = Path(__file__).resolve().parents[0]
+package_root = Path(__file__).resolve().parents[3]
 data_path = str(package_root / "data" / "sample_datasets") + "/" #TODO fix?
 
 # Fetch and load data

@@ -32,7 +32,7 @@ class DataManager:
         
     def __init__(self, start_time, end_time, selected_sources, demo=False):
 
-        package_root = Path(__file__).resolve().parents[1]
+        package_root = Path(__file__).resolve().parents[3]
 
         if demo: 
             self.data_path = str(package_root / "data" / "sample_datasets") + "/"
@@ -64,6 +64,8 @@ class DataManager:
 
     def fetch_data(self, event_date, selected_sources):
         """ Check if data files for selected sources already exist in the user data folder; download them if needed"""
+
+        print("Downloading/retrieving data...")
 
         required_sources = {''}  # always needed
         sources_to_fetch = set(selected_sources) | required_sources
@@ -97,6 +99,8 @@ class DataManager:
     def load_data(self, event_date, selected_sources):
         """ Load available datasets for a given date and return them as a dictionary of DataFrames."""
         
+        print("Loading data...")
+
         event_date = event_date.replace('-', '')
 
         # File paths for all supported datasets
@@ -139,6 +143,8 @@ class DataManager:
                         print(f"⚠️ {key}: columns with only NaNs: {all_nan_cols}")
 
                 datasets[key] = df
+
+                print(f"{key} dataset loaded.")
 
             except Exception as e:
                 print(f"Failed to load {key} data: {e}")

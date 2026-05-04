@@ -19,6 +19,11 @@ import apexpy
 import dipole # github.com/klaundal/dipole
 import warnings
 # warnings.simplefilter("always")
+# warnings.filterwarnings("ignore", category=UserWarning)
+
+import logging
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
+
 from collections import defaultdict
 
 import tkinter as tk
@@ -28,14 +33,12 @@ from PIL import Image, ImageOps
 
 import lompe 
 
-# Earth radius
-RE = 6371.2 # [km] 
-HEIGHT = 110 # ionosphere height # TODO: Check that it is consistent throughout
+RE = 6371.2 # Earth radius [km] 
+HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throughout
 
 # Path for saving output files
-package_root = Path(__file__).resolve().parents[1]  
-src_root = package_root.parent  
-outputs_path = str(src_root / "outputs")
+package_root = Path(__file__).resolve().parents[3]
+outputs_path = str(package_root / "outputs")
 tmpdir = outputs_path + '/tmp/' #TODO fix to real temporary folder?
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
@@ -73,6 +76,8 @@ class LompeInput:
 
     def __init__(self, sat_id, start_time, end_time, datasets, mag_coords=False):
 
+        print("Preparing Lompe input...")
+
         self.sat_id = sat_id
         self.start_time = start_time
         self.end_time = end_time
@@ -92,7 +97,7 @@ class LompeInput:
         self.all_swarm = swarm.groupby('Spacecraft', group_keys=False).apply(self.add_pass_id)
                 
         # User-selected satellite only
-        self.one_swarm = self.all_swarm[self.all_swarm['Spacecraft'] == sat_id[-1]]
+        self.one_swarm = self.all_swarm[self.all_swarm['Spacecraft'] == sat_id[-1]].copy()
 
     def _scatter(self, pax, lat, lon, **kwargs):
         """ scatter plot in polar coordinates, converting to magnetic if necessary """
@@ -248,7 +253,8 @@ class LompeInput:
         for ct in center_times: 
 
             # Nearest available satellite timestamp
-            idx = self.one_swarm.index.get_loc(ct, method='nearest') #TODO make nearest the point before instead of after?
+            # idx = self.one_swarm.index.get_loc(ct, method='nearest') #TODO make nearest the point before instead of after?
+            idx = self.one_swarm.index.get_indexer([ct], method='nearest')[0] #TODO make nearest the point before instead of after?
             ct_swarm = self.one_swarm.index[idx]
             
             # Spacecraft position and velocity at center
@@ -289,7 +295,7 @@ class LompeInput:
         
         return grids, analysis_times
     
-    def get_grid(self, sc_lon, sc_lat, sc_ve, sc_vn, grid_params, RI=RE+HEIGHT): #TODO RI OK?
+    def get_grid(self, sc_lon, sc_lat, sc_ve, sc_vn, grid_params, RI=RE+HEIGHT):
         """
         Create a cubed-sphere grid aligned with satellite motion.
 
@@ -372,13 +378,13 @@ class LompeInput:
         data_objects_for_lompe = {}
 
         for key, df in datasets.items():
-        
+
             # Magnetic field data from Swarm satellites (A, B and C)
             if key in ['swarm_mag']: 
 
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.Longitude, sub.Latitude)]
-
+                
                 if sub.empty:
                     # print(f'{key} is empty')
                     continue
@@ -411,6 +417,7 @@ class LompeInput:
             # Ground magnetometer data from SuperMAG 
             elif key in ['supermag']:
 
+                df.index = df.index.tz_localize(None)
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.lon, sub.lat)]
 
@@ -443,6 +450,7 @@ class LompeInput:
             # Convection data from DMSP/SSIES (F17 & F18)
             elif key in ['dmsp_ssies17', 'dmsp_ssies18']:
 
+                df.index = df.index.tz_localize(None)
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.glon, sub.gdlat)]
 
@@ -487,10 +495,19 @@ class LompeInput:
     # Plotting input (data and grids)
     # ------------------------------------------------------------------
 
-    def _init_figure(self, t0, t1):
+    def _init_figure(self, t0, t1, grid, figheight, figwidth):
         """Create figure and base axes."""
 
-        fig = plt.figure(figsize = (12.2,9), constrained_layout=True) #(22,12) 12,9
+
+        ar = grid.shape[1] / grid.shape[0] # aspect ratio
+        figwidth=(3 * ar + 1)/2 * figheight * .8
+        # print(figwidth)
+        # if figwidth < 11:
+        #     figwidth=11
+
+        figsize = (figwidth, figheight) #TODO find min size that owrks for 1000x2000 grid (tall but narrow)
+
+        fig = plt.figure(figsize = figsize, constrained_layout=True) #(22,12) 12,9
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                         fontsize=22, color="black", y=0.98)
         
@@ -514,7 +531,8 @@ class LompeInput:
         axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
         axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, north=nh, mag = self.apx if self.mag else None)
         axs['polar'].ax.text(0.5, 0.85, f"Polar projection (in {coords} coordinates)", transform=axs['polar'].ax.transAxes, ha="center", fontsize=11)
-        
+        # TODO make it move depending on grid/figure size? 
+
         # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
         # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
         
@@ -771,7 +789,7 @@ class LompeInput:
 
             # cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection")
             
-    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, gif_speed = 550, show_global_data=True):
+    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, figheight=9, figwidth=12.2, gif_speed = 550, show_global_data=True):
         """
         Visualize Lompe input data along a Swarm satellite trajectory.
 
@@ -824,7 +842,7 @@ class LompeInput:
             # --------------- # 
             # Initialize figure and axes
 
-            fig, axes = self._init_figure(t0, t1)
+            fig, axes = self._init_figure(t0, t1, grid, figheight, figwidth)
             polax, csax = self._setup_plot_frames(axes, grid, hem)
             
             # --------------- # 
