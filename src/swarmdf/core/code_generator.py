@@ -58,6 +58,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("TkAgg")
+
 from swarmdf import *
 
 ######################
@@ -69,10 +72,6 @@ config = {repr(config)}
 ######################
 # Collect data
 ######################
-
-# Path to data files
-package_root = Path(__file__).resolve().parents[3]
-data_path = str(package_root / "data" / "sample_datasets") + "/" #TODO fix?
 
 # Fetch and load data
 datahandler = DataManager(config["start time"], config["end time"], config["datasets2download"])
