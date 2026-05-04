@@ -14,10 +14,11 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 - User-friendly graphical interface
 
 ### Getting started 
-We recommend running SwarmDF_GUI.py, which provides a graphical user interface and does not require prior knowledge of the code structure. 
-Alternatively, you can run 
-- the SwarmDF_demo notebook, or 
-- the example Python script (see /example folder).
+We recommend running `SwarmDF_GUI.py`, which provides a graphical user interface and does not require prior knowledge of the code structure. 
+
+Alternatively, you can run:
+- the demo notebook (`SwarmDF_demo.ipynb`), or 
+- the example Python script (`SwarmDF_example_script.py`).
 These provide a walkthrough of the full workflow. 
 
 ## Current status
@@ -29,6 +30,7 @@ Data retrieval and preprocessing
 Multi-instrument data integration
 Electrodynamics reconstruction (Lompe)
 Demo script and notebook (/example folder)
+Graphical user interface (/gui folder)
 
 ### In progress
 Validation tool (LompeOSSE)
