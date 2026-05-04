@@ -21,9 +21,10 @@ import time as tt
 # TODO check gamera quantities with Kalle, and the grid used to plot stuff
 # TODO check radius stuff in get_B with Kalle
 
-package_root = Path(__file__).resolve().parents[3]  
-output_dir = str(package_root / "outputs")
-tmpdir = output_dir + '/tmp/' #TODO fix to true temporary folder?
+# Path for saving output files
+package_root = Path(__file__).resolve().parents[3]
+output_dir = package_root / "outputs"
+tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 def run_lompeOSSE(models, time_offset=0, snapshot=0):
     """
@@ -112,7 +113,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
 
         # Save to PNG
         lompeosse_fn = f'lompeOSSE_electrodynamics'
-        fn = os.path.join(tmpdir, f"{lompeosse_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png") 
+        fn = tmpdir / f"{lompeosse_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         savekw = {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
 
         fig_lompeosse = lompe.lompeplot(osse_model,
@@ -300,7 +301,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         
         # Save to PNG
         gamera_fn = f'GAMERA_electrodynamics'
-        fn = os.path.join(tmpdir, f"{gamera_fn}_{t0.strftime('%Y%m%d_%H%M%S')}.png")
+        fn = tmpdir / f"{gamera_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         fig_gamera.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
 
         fig_gamera.canvas.draw()
@@ -312,8 +313,8 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIFs
-    output_gam = output_dir + f"/{gamera_fn}.gif"
-    output_lomp = output_dir + f"/{lompeosse_fn}.gif"
+    output_gam = output_dir / f"{gamera_fn}.gif"
+    output_lomp = output_dir / f"{lompeosse_fn}.gif"
 
     with imageio.get_writer(output_lomp, mode="I", duration=gif_speed) as writer:
         for frame in frames_pil_lompeosse:

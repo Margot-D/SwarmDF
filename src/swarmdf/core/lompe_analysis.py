@@ -23,9 +23,10 @@ from PIL import Image, ImageOps
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-package_root = Path(__file__).resolve().parents[3]  
-output_dir = str(package_root / "outputs")
-tmpdir = output_dir + '/tmp/' #TODO fix
+# Path for saving output files
+package_root = Path(__file__).resolve().parents[3]
+output_dir = package_root / "outputs"
+tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 # TODO find good name for output file
 # TODO finish cleanup (see chatgpt)
@@ -96,7 +97,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
 
         # Save to PNG
         lompe_fn = f'lompe-output_swarm{sat_id[-1]}' #TODO do we want swarm id in filename?
-        fn = os.path.join(tmpdir, f"{lompe_fn}_{ct.strftime('%Y%m%d_%H%M%S')}.png")
+        fn = tmpdir / f"{lompe_fn}_{ct:%Y%m%d_%H%M%S}.png"
         savekw = {"fname": fn, "dpi": 400}
 
         # Lompe plot
@@ -134,7 +135,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
     print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIF
-    output = output_dir + f"/{lompe_fn}.gif"
+    output = output_dir / f"{lompe_fn}.gif"
 
     with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
         for frame in frames_pil:
