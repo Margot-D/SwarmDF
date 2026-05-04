@@ -24,8 +24,8 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 package_root = Path(__file__).resolve().parents[3]  
-outputs_path = str(package_root / "outputs")
-tmpdir = outputs_path + '/tmp/' #TODO fix
+output_dir = str(package_root / "outputs")
+tmpdir = output_dir + '/tmp/' #TODO fix
 
 # TODO find good name for output file
 # TODO finish cleanup (see chatgpt)
@@ -134,7 +134,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
     print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIF
-    output = outputs_path + f"/{lompe_fn}.gif"
+    output = output_dir + f"/{lompe_fn}.gif"
 
     with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
         for frame in frames_pil:

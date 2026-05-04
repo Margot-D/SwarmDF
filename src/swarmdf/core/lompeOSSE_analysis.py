@@ -22,8 +22,8 @@ import time as tt
 # TODO check radius stuff in get_B with Kalle
 
 package_root = Path(__file__).resolve().parents[3]  
-outputs_path = str(package_root / "outputs")
-tmpdir = outputs_path + '/tmp/' #TODO fix to true temporary folder?
+output_dir = str(package_root / "outputs")
+tmpdir = output_dir + '/tmp/' #TODO fix to true temporary folder?
 
 def run_lompeOSSE(models, time_offset=0, snapshot=0):
     """
@@ -312,8 +312,8 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIFs
-    output_gam = outputs_path + f"/{gamera_fn}.gif"
-    output_lomp = outputs_path + f"/{lompeosse_fn}.gif"
+    output_gam = output_dir + f"/{gamera_fn}.gif"
+    output_lomp = output_dir + f"/{lompeosse_fn}.gif"
 
     with imageio.get_writer(output_lomp, mode="I", duration=gif_speed) as writer:
         for frame in frames_pil_lompeosse:

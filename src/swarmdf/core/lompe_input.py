@@ -38,8 +38,8 @@ HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throug
 
 # Path for saving output files
 package_root = Path(__file__).resolve().parents[3]
-outputs_path = str(package_root / "outputs")
-tmpdir = outputs_path + '/tmp/' #TODO fix to real temporary folder?
+output_dir = str(package_root / "outputs")
+tmpdir = output_dir + '/tmp/' #TODO fix to real temporary folder?
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
 QUIVERSCALES = {'ground_mag':       600 * 1e-9 , # ground magnetic field scale [T]
@@ -915,7 +915,7 @@ class LompeInput:
         print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
 
         # Save GIF
-        output = outputs_path + f"/{swarm_fn}.gif" 
+        output = output_dir + f"/{swarm_fn}.gif" 
 
         with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
             for frame in frames_pil:
