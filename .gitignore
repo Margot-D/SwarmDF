@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 .DS_Store
 
+swarmdf.egg-info/
+
 data/*
 !data/sample_datasets/
 !data/sample_datasets/**
