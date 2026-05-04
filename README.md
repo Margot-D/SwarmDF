@@ -1,17 +1,24 @@
 # Swarm Data Fusion (SwarmDF)
 
-SwarmDF is a Python toolbox designed to automate the full workflow for analysing high-latitude ionospheric electrodynamics using multi-instrument observations.
+SwarmDF is a Python tool designed to automate the full workflow for analysing high-latitude ionospheric electrodynamics using multi-instrument observations.
 
 ## Overview
 
-SwarmDF combines measurements from ESA’s Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) to reconstruct two-dimensional maps of ionospheric electrodynamics along and around a user-defined Swarm trajectory.
+SwarmDF uses the [[Lompe technique](https://github.com/klaundal/lompe)] to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along and around a user-defined Swarm trajectory.
 
-The toolbox integrates:
-- Automated data retrieval and preprocessing  
+### Key features:
+- End-to-end automated workflow
 - Multi-instrument data fusion  
-- Electrodynamics reconstruction using the Lompe technique  
-- A validation framework based on synthetic data (under development)  
+- Electrodynamics reconstruction using [Lompe](https://github.com/klaundal/lompe)  
+- Built-in validation tool (LompeOSSE, under development)
+- User-friendly graphical interface
 
+### Getting started 
+We recommend running SwarmDF_GUI.py, which provides a graphical user interface and does not require prior knowledge of the code structure. 
+Alternatively, you can run 
+- the SwarmDF_demo notebook, or 
+- the example Python script (see /example folder).
+These provide a walkthrough of the full workflow. 
 
 ## Current status
 
@@ -20,25 +27,31 @@ The toolbox integrates:
 ### Working features
 Data retrieval and preprocessing
 Multi-instrument data integration
-Lompe-based electrodynamics reconstruction
+Electrodynamics reconstruction (Lompe)
+Demo script and notebook (/example folder)
 
 ### In progress
-Validation framework (LompeOSSE)
+Validation tool (LompeOSSE)
 Extended documentation
 Data product descriptions
 
 
 ## Installation
 
-explain how to install. (check what I did in Lompe osse, ask chatgpt how to know what's needed for user to run the module)
+SwarmDF can be installed by cloning the repository: `git clone https://github.com/Margot-D/SwarmDF.git`
 
-I guess running the gui requires more packages-
-for easy demo run, run demo notebook or the SwarmDF_script.py which runs an example event
+### Dependencies 
 
-say that the demo file can be run. 
+SwarmDF requires several external Python packages.
+If you already have Lompe installed, you may still need the following dependencies:
+`pip install customtkinter tkcalendar imageio pillow`
 
-the validation/LompeOSSE part is still under ongoing development. 
+SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:
+`git clone https://github.com/Margot-D/lompe_osse.git` (not functional yet)
 
-Other things too, like unfinished documentation, but things are runable. 
+### Environment setup (recommended)
 
-Soon published: data documentation. 
+An environment file (environment.yml) is provided to install all dependencies automatically, including Lompe and LompeOSSE:
+conda env create -f environment.yml  
+
+
