@@ -20,7 +20,7 @@ from swarmdf import *
 # Input settings
 ######################
 
-config = {'satellite ID': 'Swarm A', 'start time': datetime.datetime(2014, 12, 15, 1, 10), 'end time': datetime.datetime(2014, 12, 15, 1, 20), 'DT': 30.0, 'datasets2download': ['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'], 'conductance method': 'Zang & Paxton model', 'conductance parameters': {'kp': 4.0, 'f107': 100.0, 'background': 2.0}, 'grid parameters': {'L': 1500.0, 'W': 2000.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0}, 'regularization parameters': {'l1': 1.0, 'l2': 1.0}, 'gif speed': 550, 'magnetic coordinates': False, 'lompeOSSE analysis': 0, 'time offset': 0, 'Gamera snapshot': 0}
+config = {'satellite ID': 'Swarm A', 'start time': datetime.datetime(2014, 12, 15, 1, 10), 'end time': datetime.datetime(2014, 12, 15, 1, 20), 'DT': 30.0, 'datasets2download': ['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'], 'conductance method': 'Zang & Paxton model', 'conductance parameters': {'kp': 4.0, 'f107': 100.0, 'background': 2.0}, 'grid parameters': {'L': 2000.0, 'W': 1500.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0}, 'regularization parameters': {'l1': 1.0, 'l2': 1.0}, 'gif speed': 550, 'magnetic coordinates': False, 'lompeOSSE analysis': 0, 'time offset': 0, 'Gamera snapshot': 0}
 
 ######################
 # Collect data
