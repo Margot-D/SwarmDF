@@ -10,6 +10,9 @@ outputs/
 
 SwarmDF_python_code.py
 SwarmDF_python_codeTEST.py
+testlompeosse.py
+SwarmDF_script.py
+SwarmDF_paper.py
 
 *.nc
 *.h5
