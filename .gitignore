@@ -5,6 +5,7 @@ __pycache__/
 swarmdf.egg-info/
 
 data/*
+!data/
 !data/sample_datasets/
 !data/sample_datasets/**
 
@@ -17,8 +18,8 @@ SwarmDF_script.py
 SwarmDF_paper.py
 my_SwarmDF_demo.ipynb
 
-*.nc
-*.h5
+# *.nc
+# *.h5
 *.cdf
 .env
 
