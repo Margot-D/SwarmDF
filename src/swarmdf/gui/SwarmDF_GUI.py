@@ -826,8 +826,8 @@ class SwarmDFGUI(customtkinter.CTk):
 
     def get_grid_parameters(self):
         try:
-            return{'L': float(self.entry_W.get()), # swapped L/W on purpose so that the GUI is intuitive. The issue comes from CSgrid...
-                   'W': float(self.entry_L.get()), # swapped L/W on purpose so that the GUI is intuitive. The issue comes from CSgrid...
+            return{'L': float(self.entry_L.get()), 
+                   'W': float(self.entry_W.get()),
                    'Lres': float(self.entry_Wres.get()),
                    'Wres': float(self.entry_Lres.get()),
                    'wshift': float(self.entry_wshift.get())}

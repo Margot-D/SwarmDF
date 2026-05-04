@@ -9,7 +9,10 @@ import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from pathlib import Path
+
+# Uncomment if weird kernel crash
+# import matplotlib
+# matplotlib.use("TkAgg")
 
 from swarmdf import *
 
@@ -22,10 +25,6 @@ config = {'satellite ID': 'Swarm A', 'start time': datetime.datetime(2014, 12, 1
 ######################
 # Collect data
 ######################
-
-# Path to data files
-package_root = Path(__file__).resolve().parents[0]
-data_path = str(package_root / "data" / "sample_datasets") + "/" #TODO fix?
 
 # Fetch and load data
 datahandler = DataManager(config["start time"], config["end time"], config["datasets2download"])
@@ -43,7 +42,7 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config["DT"], confi
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config["gif speed"], show_global_data=True)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, gif_speed = config["gif speed"], show_global_data=True)
 
 for frame in input_figs:
     plt.figure(figsize=(8, 6))
@@ -65,41 +64,12 @@ l1, l2 = config["regularization parameters"]['l1'], config["regularization param
 lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
 
 # Plot output (reconstructed electrodynamics)
-output_figs = plot_lompe_output(lompe_models, config["satellite ID"], config["gif speed"])    
+output_figs = plot_lompe_output(lompe_models, config["satellite ID"], gif_speed=config["gif speed"])    
 
 for frame in output_figs:
     plt.figure(figsize=(8, 6))
     plt.imshow(np.array(frame))
     plt.axis("off")
     plt.show()
-
-######################
-# LompeOSSE analysis (analysis)
-######################
-
-dolompeosse = config["lompeOSSE analysis"]
-if dolompeosse:
-    lompeOSSE_models, gamera_models = run_lompeOSSE(lompe_models, config["time offset"], config["Gamera snapshot"])
-    plot_lompeOSSE_output(lompeOSSE_models, gamera_models, config["gif speed"], show_plot=False)
-
     
-
-# TODO remove?
-# # Example usage:
-
-# # Access individual Lompe model
-
-# models = [entry["model"] for entry in lompe_models]
-# model0 = models[0] 
-# grid = model0.grid_E
-
-# # Plot FACs
-
-# facs = model0.FAC(grid.lon, grid.lat).reshape(grid.lon.shape)
-# fac_levels = np.linspace(-1.95, 1.95, 40) * 1e-6 * 2
-
-# fig, ax = plt.subplots(figsize=(8, 8))
-# csax1 = cs.CSplot(ax, grid, gridtype='cs')
-# csax1.contour(grid.lon, grid.lat, facs, colors='k')
-# ax.set_title("")
 

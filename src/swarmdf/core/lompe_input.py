@@ -8,12 +8,9 @@ Builds and visualizes inputs for Lompe analysis.
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from matplotlib.patches import FancyArrowPatch
-import datetime
 from polplot import Polarplot
 from secsy import spherical, CSgrid, CSprojection, CSplot
 import pandas as pd
-import os 
 from pathlib import Path
 import apexpy
 import dipole # github.com/klaundal/dipole
@@ -38,8 +35,8 @@ HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throug
 
 # Path for saving output files
 package_root = Path(__file__).resolve().parents[3]
-output_dir = str(package_root / "outputs")
-tmpdir = output_dir + '/tmp/' #TODO fix to real temporary folder?
+output_dir = package_root / "outputs"
+tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
 QUIVERSCALES = {'ground_mag':       600 * 1e-9 , # ground magnetic field scale [T]
@@ -317,7 +314,8 @@ class LompeInput:
         position = (sc_lon, sc_lat) # grid center
         orientation = (sc_vn, -sc_ve) # aligns coordinate system such that xi axis points right wrt satellite velocity vector, and eta along velocity
         projection = CSprojection(position, orientation)
-        grid = CSgrid(projection, grid_params["L"]*1e3, grid_params["W"]*1e3, grid_params["Lres"]*1e3, grid_params["Wres"]*1e3, wshift = grid_params["wshift"]*1e3, R = RI*1e3) # in [m]
+        grid = CSgrid(projection, grid_params["W"]*1e3, grid_params["L"]*1e3, grid_params["Lres"]*1e3, grid_params["Wres"]*1e3, wshift = grid_params["wshift"]*1e3, R = RI*1e3) # in [m]
+        # swapped L/W here on purpose; there's an issue coming from CSgrid... With the swapping the GUI remains intuitive. 
 
         return grid
 
@@ -488,7 +486,7 @@ class LompeInput:
 
             # Create and store Lompe data object for each dataset
             data_objects_for_lompe[key] = lompe.Data(values, coords, LOS=LOS, datatype=datatype, iweight=iweight, error=error)
-
+            
         return data_objects_for_lompe
     
     # ------------------------------------------------------------------
@@ -900,7 +898,8 @@ class LompeInput:
 
             # Save to PNG
             swarm_fn = f'lompe-input_swarm{self.sat_id[-1]}'
-            fn = os.path.join(tmpdir, f"{swarm_fn}_{ct.strftime('%Y%m%d_%H%M%S')}.png")
+            # fn = os.path.join(tmpdir, f"{swarm_fn}_{ct.strftime('%Y%m%d_%H%M%S')}.png")
+            fn = tmpdir / f"{swarm_fn}_{ct:%Y%m%d_%H%M%S}.png"
             plt.savefig(fn, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
 
             # Convert figure to PIL (used for the UI GIF)
@@ -915,7 +914,7 @@ class LompeInput:
         print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
 
         # Save GIF
-        output = output_dir + f"/{swarm_fn}.gif" 
+        output = output_dir / f"{swarm_fn}.gif" 
 
         with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
             for frame in frames_pil:
