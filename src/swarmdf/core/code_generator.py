@@ -58,8 +58,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("TkAgg")
+# Uncomment if weird kernel crash
+# import matplotlib
+# matplotlib.use("TkAgg")
 
 from swarmdf import *
 
@@ -89,7 +90,7 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config["DT"], confi
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config["gif speed"], show_global_data=True)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, gif_speed=config["gif speed"], show_global_data=True)
 
 for frame in input_figs:
     plt.figure(figsize=(8, 6))
@@ -111,7 +112,7 @@ l1, l2 = config["regularization parameters"]['l1'], config["regularization param
 lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
 
 # Plot output (reconstructed electrodynamics)
-output_figs = plot_lompe_output(lompe_models, config["satellite ID"], config["gif speed"])    
+output_figs = plot_lompe_output(lompe_models, config["satellite ID"], gif_speed=config["gif speed"])    
 
 for frame in output_figs:
     plt.figure(figsize=(8, 6))
@@ -126,7 +127,7 @@ for frame in output_figs:
 dolompeosse = config["lompeOSSE analysis"]
 if dolompeosse:
     lompeOSSE_models, gamera_models = run_lompeOSSE(lompe_models, config["time offset"], config["Gamera snapshot"])
-    plot_lompeOSSE_output(lompeOSSE_models, gamera_models, config["gif speed"], show_plot=False)
+    plot_lompeOSSE_output(lompeOSSE_models, gamera_models, gif_speed=config["gif speed"], show_plot=False)
 
     
 
