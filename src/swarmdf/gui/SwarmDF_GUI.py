@@ -160,12 +160,12 @@ class SwarmDFGUI(customtkinter.CTk):
         self.entry_end_time.link_datetime_entries(self.entry_start_time, self.entry_end_time)
 
         # Time step
-        self.label_timestep = customtkinter.CTkLabel(self.tabview.tab(tab1), text="Time steps:")
+        self.label_timestep = customtkinter.CTkLabel(self.tabview.tab(tab1), text="Time steps:   ⓘ")
         self.label_timestep.grid(row=3, column=0, padx=20, pady=40, sticky="w")
         self.entry_timestep = customtkinter.CTkEntry(self.tabview.tab(tab1), width=50)
         self.entry_timestep.grid(row=3, column=0, pady=20)        
         self.entry_timestep.insert(0, 30) # default: 30 s
-        CustomTooltip(self.entry_timestep, "Time between frames. \n Use the dropdown to select seconds, minutes, or hours. \n Min value: 10 sec")
+        CustomTooltip(self.label_timestep, "Time between frames. \n Use the dropdown to select seconds, minutes, or hours. \n Min value: 10 sec")
 
         self.timestep_unit_var = customtkinter.StringVar(value="s")
         self.timestep_unit_menu = customtkinter.CTkOptionMenu(self.tabview.tab(tab1), values=["s", "min", "h"], variable=self.timestep_unit_var, width=60, button_color="#A0A0A0", fg_color="#A0A0A0")
