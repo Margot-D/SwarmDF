@@ -496,7 +496,6 @@ class LompeInput:
     def _init_figure(self, t0, t1, grid, figheight, figwidth):
         """Create figure and base axes."""
 
-
         ar = grid.shape[1] / grid.shape[0] # aspect ratio
         figwidth=(3 * ar + 1)/2 * figheight * .8
         # print(figwidth)
@@ -538,11 +537,11 @@ class LompeInput:
         xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
     
-        xs, ys = np.asarray(xs), np.asarray(ys)
+        # xs, ys = np.asarray(xs), np.asarray(ys)
 
         if self.mag: # convert grid coordinates to mlat, mlt
             #TODO fix things here...
-            xs, ys = np.concatenate(xs), np.concatenate(ys)
+            # xs, ys = np.concatenate(xs), np.concatenate(ys)
             _la, mlon = self.apx.geo2apex(ys, xs, HEIGHT)
             _lo = self.dpl.mlon2mlt(mlon, self.mid_time)
         else: # keep geographic, but divide longitudes by 15
@@ -793,8 +792,8 @@ class LompeInput:
 
         For each analysis grid, this function:
             - plots the Swarm satellite tracks for the current pass
-            - overlays data from all available datasets
-            - shows data inside the grid and optionally all available data within analysis interval
+            - overlays data from selected datasets inside the grid 
+            - optionally shows all available data within analysis interval
             - saves each frame as a PNG and compiles them into a GIF animation
 
         Parameters
