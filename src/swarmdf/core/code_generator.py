@@ -71,10 +71,9 @@ from swarmdf import *
 config = {repr(config)}
 
 ######################
-# Collect data
+# Retrieve and load data
 ######################
 
-# Fetch and load data
 datahandler = DataManager(config["start time"], config["end time"], config["datasets2download"])
 datasets = datahandler.datasets
 
@@ -82,7 +81,7 @@ datasets = datahandler.datasets
 # Prepare input for Lompe  
 ######################
 
-# Define individual analysis frames
+# Define individual analysis frames (grid)
 lompe_input = LompeInput(config["satellite ID"], config["start time"], config["end time"], datasets, config["magnetic coordinates"])
 grids, analysis_times = lompe_input.build_grids_around_swarm(config["DT"], config["grid parameters"])
 
