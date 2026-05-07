@@ -1,7 +1,7 @@
 """
 SwarmDF — Lompe analysis module
 
-Runs a Lompe analysi using the inputs from lompe_input.py
+Runs a Lompe analysis using the inputs from lompe_input.py
 
 """
 
@@ -137,7 +137,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
     # Path to save the GIF
     output = output_dir / f"{lompe_fn}.gif"
 
-    with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
+    with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
         for frame in frames_pil:
             writer.append_data(np.array(frame))  # convert PIL → numpy
 

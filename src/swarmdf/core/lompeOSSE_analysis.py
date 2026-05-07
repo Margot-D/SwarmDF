@@ -131,7 +131,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
                                         figheight=figheight,
                                         savekw=savekw)
 
-        fig_lompeosse.suptitle(f"LompeOSSE-reconstructed electrodynamics (GAMERA data) \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
+        fig_lompeosse.suptitle(f"OSSE-reconstructed electrodynamics \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                 fontsize=22, color="black", y=0.98)
         # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
         
@@ -149,6 +149,8 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         pil_img = Image.fromarray(buf)
         pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil_lompeosse.append(pil_img.copy())
+
+        plt.close(fig_lompeosse)
 
         #################
         # GAMERA plot 
@@ -296,7 +298,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         #     ax.set_ylabel("")
 
         plt.subplots_adjust(top=0.86, bottom=0.065, left=0.01, right=0.99, hspace=0.1, wspace=0.01) 
-        fig_gamera.suptitle(f"Original GAMERA electrodynamics \n {t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
+        fig_gamera.suptitle(f'"Truth" electrodynamics \n {t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}',
                 fontsize=22, color="black", y=0.98)
         
         # Save to PNG
@@ -310,17 +312,19 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         pil_img = ImageOps.expand(pil_img, border=15, fill="white")
         frames_pil_gamera.append(pil_img.copy())
 
+        plt.close(fig_gamera)
+
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIFs
     output_gam = output_dir / f"{gamera_fn}.gif"
     output_lomp = output_dir / f"{lompeosse_fn}.gif"
 
-    with imageio.get_writer(output_lomp, mode="I", duration=gif_speed) as writer:
+    with imageio.get_writer(output_lomp, mode="I", duration=gif_speed, loop=0) as writer:
         for frame in frames_pil_lompeosse:
             writer.append_data(np.array(frame))  # convert PIL → numpy
 
-    with imageio.get_writer(output_gam, mode="I", duration=gif_speed) as writer:
+    with imageio.get_writer(output_gam, mode="I", duration=gif_speed, loop=0) as writer:
         for frame in frames_pil_gamera:
             writer.append_data(np.array(frame))  # convert PIL → numpy
 
