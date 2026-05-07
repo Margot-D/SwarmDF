@@ -130,24 +130,9 @@ if dolompeosse:
 
     
 
-# TODO remove?
-# # Example usage:
-
 # # Access individual Lompe model
-
 # models = [entry["model"] for entry in lompe_models]
 # model0 = models[0] 
-# grid = model0.grid_E
-
-# # Plot FACs
-
-# facs = model0.FAC(grid.lon, grid.lat).reshape(grid.lon.shape)
-# fac_levels = np.linspace(-1.95, 1.95, 40) * 1e-6 * 2
-
-# fig, ax = plt.subplots(figsize=(8, 8))
-# csax1 = cs.CSplot(ax, grid, gridtype='cs')
-# csax1.contour(grid.lon, grid.lat, facs, colors='k')
-# ax.set_title("")
 
 '''
 
