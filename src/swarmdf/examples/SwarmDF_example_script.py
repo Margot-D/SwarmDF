@@ -54,7 +54,7 @@ for frame in input_figs:
 ######################
 
 # Conductances
-SHs, SPs = compute_conductances(config["conductance method"], analysis_times, grids, config["conductance parameters"])
+SHs, SPs = compute_conductances(config["conductance method"], config["conductance parameters"], analysis_times, grids)
 
 # Regularization parameters
 l1, l2 = config["regularization parameters"]['l1'], config["regularization parameters"]['l2']

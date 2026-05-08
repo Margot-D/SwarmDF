@@ -3,7 +3,7 @@ import lompe
 
 # TODO add new auroral conductance estimation method!! 
 
-def compute_conductances(conductance_method, tbounds, grids, conductance_params):
+def compute_conductances(conductance_method, conductance_params, tbounds, grids):
     """
     Docstring for compute_conductances
     
