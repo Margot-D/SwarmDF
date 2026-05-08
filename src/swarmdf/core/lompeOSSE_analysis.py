@@ -298,7 +298,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         #     ax.set_ylabel("")
 
         plt.subplots_adjust(top=0.86, bottom=0.065, left=0.01, right=0.99, hspace=0.1, wspace=0.01) 
-        fig_gamera.suptitle(f'"Truth" electrodynamics \n {t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}',
+        fig_gamera.suptitle(f'"Truth" electrodynamics \n {t0.strftime("%Y-%m-%d %H:%M:%S")}  -  {t1.strftime("%Y-%m-%d %H:%M:%S")}',
                 fontsize=22, color="black", y=0.98)
         
         # Save to PNG
