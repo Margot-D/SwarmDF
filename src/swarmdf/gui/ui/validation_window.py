@@ -73,3 +73,19 @@ def open_validation_window(gui):
     gui.btn_play_pause_validation.pack(side="left", padx=10)
     gui.btn_next_validation.pack(side="left", padx=10)
 
+    gui.validation_controls.pack_forget() # hide initially
+
+    # Option to open interactive plots
+    gui.interactive_wdw_validation = customtkinter.CTkFrame(gui.validation_window, fg_color="transparent") #"#FFFFFF"
+    gui.interactive_wdw_validation.place(relx=0.98, rely=0.97, anchor="e")
+    gui.button_interactive_wdw_validation = customtkinter.CTkButton(gui.interactive_wdw_validation,
+                                            text="Interactive plots",
+                                            width=30,
+                                            height=30,
+                                            fg_color="transparent",
+                                            border_width=0,
+                                            corner_radius=0,
+                                            command=gui.interactive_window_validation)
+    gui.button_interactive_wdw_validation.pack(side="right", padx=5)
+    gui.interactive_wdw_validation.place_forget()
+
