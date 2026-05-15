@@ -29,15 +29,13 @@ def compute_conductances(conductance_method, conductance_params, tbounds, grids)
     # for grid, ct in zip(grids, center_times):
     for grid, ct in zip(grids, tbounds['ct']):
 
-        # time = tm.replace(tzinfo=None) if tm.tzinfo else tm
-
         # functions for conductances to be passed to the Lompe model
         if conductance_method== 'Hardy model':
             SH = lambda lon = grid.lon, lat = grid.lat: lompe.conductance.hardy_EUV(lon, lat, kp_value, ct, 'hall', F107=f107_value, starlight= background_value) 
             SP = lambda lon = grid.lon, lat = grid.lat: lompe.conductance.hardy_EUV(lon, lat, kp_value, ct, 'pedersen', F107=f107_value, starlight = background_value)
             SHs.append(SH)
             SPs.append(SP)
-        if conductance_method== 'Zang & Paxton model':
+        elif conductance_method== 'Zhang & Paxton model':
             SH = lambda lon = grid.lon, lat = grid.lat: lompe.conductance.ZhangPaxton_EUV(lon, lat, kp_value, ct, 'hall', F107=f107_value, starlight= background_value) 
             SP = lambda lon = grid.lon, lat = grid.lat: lompe.conductance.ZhangPaxton_EUV(lon, lat, kp_value, ct, 'pedersen', F107=f107_value, starlight = background_value)
             SHs.append(SH)
@@ -48,3 +46,8 @@ def compute_conductances(conductance_method, conductance_params, tbounds, grids)
                 "Must be one of ['Hardy model', 'Zhang & Paxton model']")
         
     return SHs, SPs
+
+# try:
+#     run_hardy()
+# except ZeroDivisionError:
+#     fallback_to_zhang_paxton()
