@@ -29,7 +29,7 @@ from swarmdf.gui.ui.sidebar_right import build_right_sidebar
 from swarmdf.gui.ui.input_panels import build_input_panels
 from swarmdf.gui.ui.output_panels import build_output_panels
 from swarmdf.gui.ui.validation_window import open_validation_window
-from swarmdf.gui.ui.display_helpers import compute_widget_size, pil_to_ctk_images, open_interactive_window
+from swarmdf.gui.ui.display_helpers import compute_widget_size, pil_to_ctk_images, open_interactive_window, combine_validation_frames
 from swarmdf.gui.ui.utils import validate_entry, make_error_frame, resize_keep_aspect
 from swarmdf.gui.ui.animation_manager import AnimationManager
 import warnings
@@ -89,6 +89,18 @@ class SwarmDFGUI(customtkinter.CTk):
     # Run SwarmDF analysis
 
     def run_swarm_df(self):
+
+        # # Stop master animation loop
+        # if hasattr(self, "master_state"):
+        #     if self.master_state.get("job") is not None:
+        #         self.after_cancel(self.master_state["job"])
+        #         self.master_state["job"] = None
+
+        # # Stop validation animation loop
+        # if hasattr(self, "validation_state"):
+        #     if self.validation_state.get("job") is not None:
+        #         self.after_cancel(self.validation_state["job"])
+        #         self.validation_state["job"] = None
         
         self.button_runSwarmDF.configure(state="disabled")
         self.button_interactive_wdw_input.configure(state="disabled")
@@ -366,7 +378,8 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Kill old animation loop
         if hasattr(self, "master_state") and self.master_state.get("job") is not None:
-            self.after_cancel(self.master_state["job"])    
+            self.after_cancel(self.master_state["job"])
+            self.master_state['job'] = None    
 
         try: 
             # Extract PIL images 
@@ -476,12 +489,16 @@ class SwarmDFGUI(customtkinter.CTk):
         # Kill old animation loop
         if hasattr(self, "validation_state") and self.validation_state.get("job") is not None:
             self.after_cancel(self.validation_state["job"])
+            self.validation_state['job'] = None    
 
         try:
             # Extract PIL images 
             self.lompeosse_frames_pil = lompeosse_results.lompeosse_PILframes
             self.gamera_frames_pil = lompeosse_results.gamera_PILframes
 
+            # .-. TODO
+            self.validation_combined_frames_pil = combine_validation_frames(self.lompeosse_frames_pil, self.gamera_frames_pil)
+            
             # Convert to CTkinter images
             w1 = max(self.lompe_plot_frame.winfo_width() - 40, 1)  # 10px margin each side
             h1 = max(self.lompe_plot_frame.winfo_height(), 1)
@@ -525,11 +542,16 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.register_track(self.lompeosse_frames_tk, self.lompe_label,  self.validation_state)
         self.anim_mgr.register_track(self.gamera_frames_tk,    self.gamera_label, self.validation_state)
 
+        # Place frame controls
+        self.validation_controls.pack(side="bottom", pady=5)
+        self.interactive_wdw_validation.place(relx=0.97, rely=0.92, anchor="e")
+
         # Update validation window label
         self.status_label.configure(text="")
 
         # Play animation
         self.play_validation()
+
 
 #######
 # Helper functions 
@@ -600,11 +622,16 @@ class SwarmDFGUI(customtkinter.CTk):
         # Run lompe with new parameters
         self.trigger_lompe_analysis()
 
+
     def interactive_window_input(self):
         open_interactive_window(self.data_frames_pil, title="Lompe input")
 
     def interactive_window_output(self):
         open_interactive_window(self.lompe_frames_pil, title="Lompe output")
+
+    def interactive_window_validation(self):
+        # open_interactive_window(self.lompeosse_frames_pil, title="LompeOSSE output (validation)")
+        open_interactive_window(self.validation_combined_frames_pil, title="LompeOSSE output (validation)", figsize=(15,10))
 
     def play(self):
         self.anim_mgr.play_generic(state=self.master_state)
