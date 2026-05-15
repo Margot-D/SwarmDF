@@ -13,6 +13,9 @@ import tempfile
 import os 
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
+
 import lompe
 from lompe.utils.time import yearfrac_to_datetime 
 from .lompe_input import QUIVERSCALES

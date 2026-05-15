@@ -17,6 +17,10 @@ from lompe.model.visualization import *
 from lompeosse import LompeOSSE, Gamera_output
 
 import time as tt
+
+import matplotlib
+matplotlib.use("Agg")
+
 # TODO documentation
 # TODO check gamera quantities with Kalle, and the grid used to plot stuff
 # TODO check radius stuff in get_B with Kalle
