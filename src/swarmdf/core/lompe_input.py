@@ -905,7 +905,6 @@ class LompeInput:
             height = f"{np.clip(14 - 2*self.ar, 11, 16)}%"
             gap = 0.19 - 0.21*self.ar + 0.04*(self.ar - 1)**2
             gap = np.clip(gap, -0.22, 0.3)
-            xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
 
             arrowpolax = inset_axes(polax.ax,
                                  width="100%",
@@ -919,7 +918,12 @@ class LompeInput:
             arrowpolax.set_ylim(0, 1) 
             arrowpolax.set_axis_off()
 
-            arrowpolax.quiver(.25-xshift, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
+            xarrow = 0.25 - xshift
+            text_offset = np.clip(0.18 - 0.08*(self.ar - 1), 0.10, 0.18)
+            xtext = xarrow + text_offset
+
+            arrowpolax.quiver(xarrow, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
             
             # cs axis
             bbox = csax.ax.get_position()
@@ -932,25 +936,28 @@ class LompeInput:
             arrowcsax.set_ylim(0, 1) 
             arrowcsax.set_axis_off()
 
-            arrowcsax.quiver(.25-xshift, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            arrowcsax.quiver(xarrow, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
 
             # measurement types and scales
             groups = defaultdict(list)
             for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
                 groups[label].append((value, unit))
-            y = 0.75
+            ypol = 0.75
+            ycs  = 0.7
+            pol_spacing = 0.13 + 0.16*self.ar
+            cs_spacing  = 0.18 + 0.24*self.ar
             for label, items in groups.items():
                 value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
-                arrowpolax.text(0.43-xshift, y, f"{label}: {value//2:.0f} {unit}",
+                arrowpolax.text(xtext, ypol, f"{label}: {value//2:.0f} {unit}",
                              transform=arrowpolax.transAxes,
                              fontsize=14*self.font_scale,
                              va='center')
-                arrowcsax.text(0.43-xshift, y, f"{label}: {value//2:.0f} {unit}",
+                arrowcsax.text(xtext, ycs, f"{label}: {value//2:.0f} {unit}",
                              transform=arrowcsax.transAxes,
                              fontsize=14*self.font_scale,
                              va='center')
-                y -= 0.16 + 0.20*self.ar # line spacing
-
+                ypol -= pol_spacing
+                ycs  -= cs_spacing
             # --------------- # 
             # Save output
 
