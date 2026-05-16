@@ -41,7 +41,6 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        run_validation_flag=False,
                        timeoff=0,
                        snapshot=0,
-                       demo=False,
                        generate_script_flag=True)
 
 

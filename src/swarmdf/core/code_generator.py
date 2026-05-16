@@ -91,7 +91,7 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, co
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, figheight=config.figh, figwidth=config.figw, gif_speed=config.speed, show_global_data=True)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, figheight=config.figh, figwidth=config.figw, gif_speed=config.speed, show_global_data=config.show_data)
 
 %matplotlib inline
 for frame in input_figs:

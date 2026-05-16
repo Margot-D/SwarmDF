@@ -89,18 +89,6 @@ class SwarmDFGUI(customtkinter.CTk):
     # Run SwarmDF analysis
 
     def run_swarm_df(self):
-
-        # # Stop master animation loop
-        # if hasattr(self, "master_state"):
-        #     if self.master_state.get("job") is not None:
-        #         self.after_cancel(self.master_state["job"])
-        #         self.master_state["job"] = None
-
-        # # Stop validation animation loop
-        # if hasattr(self, "validation_state"):
-        #     if self.validation_state.get("job") is not None:
-        #         self.after_cancel(self.validation_state["job"])
-        #         self.validation_state["job"] = None
         
         self.button_runSwarmDF.configure(state="disabled")
         self.button_interactive_wdw_input.configure(state="disabled")
@@ -180,9 +168,6 @@ class SwarmDFGUI(customtkinter.CTk):
     # Collect GUI input 
 
     def collect_user_config(self):
-
-        # demo mode
-        demo = True if self.switch_demo.get() else False
 
         # satellite ID
         sat_id = self.optmenu_satellite.get()
@@ -283,7 +268,6 @@ class SwarmDFGUI(customtkinter.CTk):
                              show_data,
                              run_validation_flag,
                              timeoff, snapshot,
-                             demo,
                              generate_script_flag)
 
     def get_start_end_times(self):

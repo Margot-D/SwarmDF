@@ -45,8 +45,5 @@ class SwarmDFConfig:
     timeoff: int
     snapshot: int
 
-    # demo mode
-    demo: bool
-
     # python script 
     generate_script_flag: bool
