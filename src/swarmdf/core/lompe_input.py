@@ -22,7 +22,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import matplotlib
 matplotlib.use("Agg")
-matplotlib.rcParams['figure.dpi'] = 300
+# matplotlib.rcParams['figure.dpi'] = 300
 
 import logging
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
@@ -858,6 +858,9 @@ class LompeInput:
         - A GIF animation summarizing the data coverage is saved to disk.
         """
         
+        print("Plotting Lompe input...")
+
+        
         frames_pil = []
 
         legend_stuff = {"legend_handles": [], # matplotlib legend entries
@@ -958,6 +961,7 @@ class LompeInput:
                              va='center')
                 ypol -= pol_spacing
                 ycs  -= cs_spacing
+
             # --------------- # 
             # Save output
 
