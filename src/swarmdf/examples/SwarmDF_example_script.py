@@ -3,9 +3,6 @@ This example reproduces a typical SwarmDF workflow.
 The `config` object is normally populated directly from 
 the user input in the GUI, but its parameters can also 
 be edited manually in this script.
-
-Turn demo on to skip data download
-and use the example event instead.
 """
 
 import datetime
@@ -24,7 +21,6 @@ from swarmdf import *
 # Input settings
 ######################  
 
-demo = True # set to True to turn demo on
 
 config = SwarmDFConfig(sat_id='Swarm A',
                        start_time=datetime.datetime(2014, 12, 15, 1, 19),
@@ -45,15 +41,14 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        run_validation_flag=False,
                        timeoff=0,
                        snapshot=0,
-                       generate_script_flag=True,
-                       demo_flag=demo)
+                       generate_script_flag=True)
 
 
 ######################
 # Retrieve and load data
 ######################
 
-datahandler = DataManager(config.start_time, config.end_time, config.datasets2download, config.demo_flag)
+datahandler = DataManager(config.start_time, config.end_time, config.datasets2download)
 datasets = datahandler.datasets
 
 ######################
@@ -68,7 +63,7 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, co
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, show_global_data=config.show_data)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, figheight=config.figh, figwidth=config.figw, gif_speed=config.speed, show_global_data=config.show_data)
 
 %matplotlib inline
 for frame in input_figs:
@@ -93,7 +88,7 @@ if config.run_lompe_flag:
     lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
 
     # Plot output (reconstructed electrodynamics)
-    output_figs = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.gif_speed)    
+    output_figs = plot_lompe_output(lompe_models, config.sat_id, figheight=9, gif_speed=config.speed)    
 
     for frame in output_figs:
         plt.figure(figsize=(8, 6))
@@ -107,7 +102,7 @@ if config.run_lompe_flag:
 
 if config.run_validation_flag:
     lompeOSSE_models, gamera_quantities = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
-    lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_quantities, config.figh, config.gif_speed)
+    lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_quantities, figheight=config.figh, gif_speed=config.speed)
 
     for osse_frame, gamera_frame in zip(lompeosse_figs, gamera_figs):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))

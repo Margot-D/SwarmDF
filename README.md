@@ -55,6 +55,6 @@ SwarmDF also integrates LompeOSSE (under development) as a built-in validation t
 ### Environment setup (recommended)
 
 An environment file (swarmdf_environment.yml) is provided to install all dependencies automatically, including Lompe and LompeOSSE:
-`conda env create -f swarmdf_environment.yml`
+`conda env create -f environment.yml`
 
 
