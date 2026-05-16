@@ -19,12 +19,12 @@ from swarmdf import *
 
 ######################
 # Input settings
-######################
+######################  
 
 
 config = SwarmDFConfig(sat_id='Swarm A',
-                       start_time=datetime.datetime(2014, 12, 15, 1, 15),
-                       end_time=datetime.datetime(2014, 12, 15, 1, 16),
+                       start_time=datetime.datetime(2014, 12, 15, 1, 19),
+                       end_time=datetime.datetime(2014, 12, 15, 1, 20),
                        timestep=30.0,
                        datasets2download=['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                        conductance_method='Zhang & Paxton model',
@@ -64,7 +64,7 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, co
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, figheight=config.figh, figwidth=config.figw, gif_speed=config.speed, show_global_data=True)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, figheight=config.figh, figwidth=config.figw, gif_speed=config.speed, show_global_data=config.show_data)
 
 %matplotlib inline
 for frame in input_figs:
