@@ -254,6 +254,9 @@ class SwarmDFGUI(customtkinter.CTk):
         # Python script flag
         generate_script_flag = bool(self.switch_pythoncode.get())
             
+        # demo mode
+        demo_flag = bool(self.switch_demo.get())
+
         return SwarmDFConfig(sat_id,
                              start_time, end_time, timestep,
                              datasets2download,
@@ -268,7 +271,8 @@ class SwarmDFGUI(customtkinter.CTk):
                              show_data,
                              run_validation_flag,
                              timeoff, snapshot,
-                             generate_script_flag)
+                             generate_script_flag, 
+                             demo_flag)
 
     def get_start_end_times(self):
 
@@ -378,7 +382,7 @@ class SwarmDFGUI(customtkinter.CTk):
                                 "current_frame": 0,
                                 "playing": True,
                                 "job": None,
-                                "delay": self.config.speed, 
+                                "delay": self.config.gif_speed, 
                                 "scheduler": self.after, 
                                 "cancel": self.after_cancel}
 
@@ -496,7 +500,7 @@ class SwarmDFGUI(customtkinter.CTk):
                                     "current_frame": 0,
                                     "playing": True,
                                     "job": None,
-                                    "delay": self.config.speed,
+                                    "delay": self.config.gif_speed,
                                     "scheduler": self.validation_window.after, 
                                     "cancel": self.validation_window.after_cancel}
 

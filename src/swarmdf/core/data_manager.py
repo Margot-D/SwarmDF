@@ -36,6 +36,7 @@ class DataManager:
 
         if demo: 
             self.data_path = str(package_root / "data" / "sample_datasets") + "/"
+            print(f"Using sample datasets for example event {start_time} -- {end_time}")
         else:
             self.data_path = str(package_root / "data") + "/"
                 

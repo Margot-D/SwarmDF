@@ -52,7 +52,7 @@ def run_swarmdf_pipeline(config):  # TODO useful at all? not used in gui.py
 
 def get_data(config):
 
-    datahandler = DataManager(config.start_time, config.end_time, config.datasets2download, demo = config.demo)
+    datahandler = DataManager(config.start_time, config.end_time, config.datasets2download, config.demo_flag)
     datasets = datahandler.datasets
     
     return datasets
@@ -63,7 +63,7 @@ def compute_swarmdf_input(config, datasets):
     lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag)
     grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, config.grid_params)
     data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times)
-    input_PILframes = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.speed, config.show_data)
+    input_PILframes = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, config.show_data)
 
     return SwarmDFInput(grids, analysis_times, data_objects_per_grid, input_PILframes)
 
@@ -72,7 +72,7 @@ def compute_swarmdf_output(config, input_data: SwarmDFInput):
 
     SHs, SPs = compute_conductances(config.conductance_method, config.conductance_params, input_data.analysis_times, input_data.grids)
     lompe_models = run_lompe(input_data.analysis_times, input_data.grids, input_data.data_objects_per_grid, SHs, SPs, config.l1, config.l2)
-    output_PILframes = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.speed)
+    output_PILframes = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.gif_speed)
 
     return SwarmDFOutput(lompe_models, output_PILframes)
 
@@ -81,6 +81,6 @@ def compute_swarmdf_validation(config, lompe_results : SwarmDFOutput):
 
     lompe_models = lompe_results.lompe_models
     lompeosse_models, gamera_quantities = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
-    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(lompeosse_models, gamera_quantities, config.figh, config.speed)
+    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(lompeosse_models, gamera_quantities, config.figh, config.gif_speed)
         
     return SwarmDFValidation(lompeosse_PILframes, gamera_PILframes)

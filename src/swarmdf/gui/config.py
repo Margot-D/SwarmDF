@@ -47,3 +47,6 @@ class SwarmDFConfig:
 
     # python script 
     generate_script_flag: bool
+
+    # demo mode
+    demo_flag: bool
