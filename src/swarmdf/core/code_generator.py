@@ -129,8 +129,8 @@ if config.run_lompe_flag:
 ######################
 
 if config.run_validation_flag:
-    lompeOSSE_models, gamera_quantities = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
-    lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_quantities, config.figh, config.gif_speed)
+    lompeOSSE_models, gamera_output = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
+    lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_output, config.figh, config.gif_speed)
 
     for osse_frame, gamera_frame in zip(lompeosse_figs, gamera_figs):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
