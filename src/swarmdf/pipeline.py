@@ -80,7 +80,7 @@ def compute_swarmdf_output(config, input_data: SwarmDFInput):
 def compute_swarmdf_validation(config, lompe_results : SwarmDFOutput):
 
     lompe_models = lompe_results.lompe_models
-    lompeosse_models, gamera_quantities = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
-    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(lompeosse_models, gamera_quantities, config.figh, config.gif_speed)
+    lompeosse_models, gamera_output = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
+    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(lompeosse_models, gamera_output, config.figh, config.gif_speed)
         
     return SwarmDFValidation(lompeosse_PILframes, gamera_PILframes)
