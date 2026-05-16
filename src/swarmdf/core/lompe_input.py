@@ -974,7 +974,7 @@ class LompeInput:
         # Save GIF
         output = output_dir / f"{swarm_fn}.gif" 
 
-        with imageio.get_writer(output, mode="I", duration=gif_speed) as writer:
+        with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
             for frame in frames_pil:
                 writer.append_data(np.array(frame))  # convert PIL → numpy
 
