@@ -32,7 +32,7 @@ class SwarmDFConfig:
     l2: float
 
     # plotting
-    speed: int
+    gif_speed: int
     figw: float
     figh: float
 

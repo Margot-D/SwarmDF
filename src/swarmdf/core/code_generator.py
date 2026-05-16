@@ -34,7 +34,7 @@ config = SwarmDFConfig(sat_id={config.sat_id!r},
                        run_lompe_flag={config.run_lompe_flag!r},
                        l1={config.l1!r},
                        l2={config.l2!r},
-                       speed={config.gif_speed!r},
+                       gif_speed={config.gif_speed!r},
                        figw={config.figw!r},
                        figh={config.figh!r},
                        mag={config.mag!r},
@@ -59,12 +59,11 @@ import pandas as pd
 import numpy as np
 from swarmdf.gui.config import SwarmDFConfig
 from swarmdf.pipeline import run_swarmdf_pipeline
+from swarmdf import *
 
 # Uncomment if weird kernel crash
 # import matplotlib
 # matplotlib.use("TkAgg")
-
-from swarmdf import *
 
 ######################
 # Input settings

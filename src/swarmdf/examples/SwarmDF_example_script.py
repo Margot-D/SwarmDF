@@ -13,12 +13,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from swarmdf.gui.config import SwarmDFConfig
+from swarmdf import *
 
 # Uncomment if weird kernel crash
 # import matplotlib
 # matplotlib.use("TkAgg")
-
-from swarmdf import *
 
 ######################
 # Input settings
@@ -37,7 +36,7 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        run_lompe_flag=True,
                        l1=1.0,
                        l2=1.0,
-                       speed=550,
+                       gif_speed=550,
                        figw=12.2,
                        figh=9.0,
                        mag=False,
