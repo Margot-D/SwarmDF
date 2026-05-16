@@ -19,6 +19,8 @@ SwarmDF_script.py
 SwarmDF_paper.py
 my_SwarmDF_demo.ipynb
 
+correlation_plot.gif
+
 *.nc
 *.h5
 *.cdf
