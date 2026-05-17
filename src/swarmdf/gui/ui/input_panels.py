@@ -129,8 +129,6 @@ def build_input_panels(gui):
     gui.checkbox_supermag.select()
     gui.checkbox_superdarn.select()
     gui.checkbox_iridium_ampere.select()
-    gui.checkbox_dmsp_ssies17.select()
-    gui.checkbox_dmsp_ssies18.select()
 
     # Link to data documentation TODO fix link!
     gui.link_data_docu = customtkinter.CTkLabel(gui.tabview.tab(tab2), text="Data documentation", text_color="green", cursor="hand2")
@@ -410,4 +408,3 @@ class DateTimeEntry(customtkinter.CTkFrame):
             entry.delete(0, "end")
             entry.insert(0, ph)
             # entry.configure(text_color="gray70")  # optional if you re-enable color handling
-
