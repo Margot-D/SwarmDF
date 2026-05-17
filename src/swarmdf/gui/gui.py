@@ -99,6 +99,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
        # Collect user input
         self.config = self.collect_user_config()
+        if self.config is None:
+            self.button_runSwarmDF.configure(state="normal")
+            return
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.config.generate_script_flag:
@@ -664,5 +667,4 @@ class SwarmDFGUI(customtkinter.CTk):
 if __name__ == "__main__":
     app = SwarmDFGUI()
     app.mainloop()
-
 
