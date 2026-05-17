@@ -96,8 +96,12 @@ class LompeInput:
         window_end   = pd.to_datetime(end_time)   + pd.to_timedelta(45, 'm')
 
         swarm = datasets['swarm_mag'].loc[window_start:window_end].copy()
-        #TODO find out what the problem is here? 
-        self.all_swarm = swarm.groupby('Spacecraft', group_keys=False).apply(self.add_pass_id)
+
+        swarm_with_pass_ids = []
+        for _spacecraft, spacecraft_data in swarm.groupby('Spacecraft', sort=False):
+            swarm_with_pass_ids.append(self.add_pass_id(spacecraft_data))
+
+        self.all_swarm = pd.concat(swarm_with_pass_ids).sort_index()
                 
         # User-selected satellite only
         self.one_swarm = self.all_swarm[self.all_swarm['Spacecraft'] == sat_id[-1]].copy()
@@ -242,7 +246,7 @@ class LompeInput:
         self.one_swarm['vn'] = np.hstack((tn, np.nan))
 
         # Time sampling
-        times = pd.date_range(start=self.start_time, end=self.end_time, freq=f'{dt}S', tz=None)
+        times = pd.date_range(start=self.start_time, end=self.end_time, freq=f'{dt}s', tz=None)
 
         # # Grid centers
         # center_times = times[:-1] + pd.to_timedelta(dt/2, unit='s')
@@ -566,19 +570,17 @@ class LompeInput:
         # xs = np.hstack((grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1])) # geographic
         # ys = np.hstack((grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1])) # geographic
 
-        # TODO the grid is not displayed in the polar plot when using np.hstack above
         xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
-        xs, ys = np.asarray(xs), np.asarray(ys)
 
-        if self.mag: # convert grid coordinates to mlat, mlt
-            #TODO fix things here...
-            _la, mlon = self.apx.geo2apex(ys, xs, HEIGHT)
-            _lo = self.dpl.mlon2mlt(mlon, self.mid_time)
-        else: # keep geographic, but divide longitudes by 15
-            _la, _lo = ys, xs/15
+        for i, (x, y) in enumerate(zip(xs, ys)):
+            if self.mag: # convert grid coordinates to mlat, mlt
+                lat, mlon = self.apx.geo2apex(y, x, HEIGHT)
+                lt = self.dpl.mlon2mlt(mlon, self.mid_time)
+            else: # keep geographic, but divide longitudes by 15
+                lat = y
+                lt = x/15
 
-        for i, (lt,lat) in enumerate(zip(_lo, _la)):
             axs['polar'].plot(lat, lt, linewidth = 3 if i == 0 else 1, **outlineargs)
         
         # --------------- # 
