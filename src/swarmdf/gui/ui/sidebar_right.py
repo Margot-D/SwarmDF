@@ -47,7 +47,7 @@ def build_right_sidebar(gui):
         CustomTooltip(gui.entry_figw, "Figure width (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
 
         # Option to switch between geographic and magnetic coords (polar plot)
-        gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords')
+        gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords', command=gui.replot_lompe_input)
         gui.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(30, 0), sticky="ew")
         CustomTooltip(gui.checkbox_magcoords, "The polar plot (top panel) will be shown in magnetic coordinates. Default is geographic") #TODO change that to opposite
 
@@ -162,5 +162,4 @@ def build_right_sidebar(gui):
         gui.link_lompeosse_docu = customtkinter.CTkLabel(gui.validation_section, text="LompeOSSE documentation", text_color="green", cursor="hand2")
         gui.link_lompeosse_docu.grid(row=5, column=0, columnspan=2, padx=35, pady=(25, 0), sticky='nsew')
         gui.link_lompeosse_docu.bind("<Button-1>", lambda e: webbrowser.open(""))
-
 
