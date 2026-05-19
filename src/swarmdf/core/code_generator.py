@@ -55,6 +55,7 @@ to rerun the analysis outside the application.
 
 import datetime
 import matplotlib.pyplot as plt
+import matplotlib
 import pandas as pd
 import numpy as np
 from swarmdf.gui.config import SwarmDFConfig
@@ -64,6 +65,8 @@ from swarmdf import *
 # Uncomment if weird kernel crash
 # import matplotlib
 # matplotlib.use("TkAgg")
+
+matplotlib.rcParams['figure.dpi'] = 200
 
 ######################
 # Input settings
