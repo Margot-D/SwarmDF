@@ -99,9 +99,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
        # Collect user input
         self.config = self.collect_user_config()
-        if self.config is None:
-            self.button_runSwarmDF.configure(state="normal")
-            return
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.config.generate_script_flag:
@@ -133,7 +130,6 @@ class SwarmDFGUI(customtkinter.CTk):
         try: 
             # Data
             datasets = get_data(self.config)
-            self.datasets = datasets
 
             # Input to Lompe
             self.input_results = compute_swarmdf_input(self.config, datasets) 
@@ -363,39 +359,6 @@ class SwarmDFGUI(customtkinter.CTk):
         threading.Thread(target=worker, daemon=True).start()
         
 
-    def replot_lompe_input(self):
-        """Rebuild Lompe input plots from the latest input results."""
-
-        if not hasattr(self, "input_results") or not hasattr(self, "datasets") or self.config is None:
-            return
-
-        self.checkbox_magcoords.configure(state="disabled")
-        self.config.mag = bool(self.checkbox_magcoords.get())
-
-        def worker():
-            try:
-                lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag)
-                input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
-                                                            self.input_results.analysis_times,
-                                                            self.input_results.data_objects_per_grid,
-                                                            self.config.figh,
-                                                            self.config.figw,
-                                                            self.config.gif_speed,
-                                                            self.config.show_data)
-                self.input_results.input_PILframes = input_frames
-                self.after(0, lambda: self.display_lompe_input(self.input_results))
-
-            except Exception as e:
-                print("Lompe input replot failed:", e)
-                msg = str(e)
-                self.after(0, lambda: messagebox.showerror("Lompe input replot failed", msg))
-
-            finally:
-                self.after(0, lambda: self.checkbox_magcoords.configure(state="normal"))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-
     #################
     # Display output animations
 
@@ -456,8 +419,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Register/prepare frames for animated GIF
         self.anim_mgr.register_track(self.data_frames_tk,  self.label_data_gif, self.master_state)
-        if hasattr(self, "lompe_frames_tk"):
-            self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
         self.anim_mgr.update_tracks(self.master_state)
 
         # Place frame controls
@@ -703,3 +664,5 @@ class SwarmDFGUI(customtkinter.CTk):
 if __name__ == "__main__":
     app = SwarmDFGUI()
     app.mainloop()
+
+
