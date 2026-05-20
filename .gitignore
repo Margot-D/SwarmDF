@@ -12,7 +12,6 @@ data/*
 
 outputs/
 
-SwarmDF_example_script.py
 SwarmDF_script.py
 SwarmDF_paper.py
 
