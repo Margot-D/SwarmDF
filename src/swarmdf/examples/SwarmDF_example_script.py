@@ -10,13 +10,14 @@ and use the example event instead.
 
 import datetime
 import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib
 import numpy as np
 from swarmdf.gui.config import SwarmDFConfig
 from swarmdf import *
 
-# Uncomment if weird kernel crash
-# import matplotlib
+matplotlib.rcParams['figure.dpi'] = 300
+
+## Uncomment if weird kernel crash
 # matplotlib.use("TkAgg")
 
 ######################
@@ -27,13 +28,13 @@ demo = True # set to True to turn demo on
 
 config = SwarmDFConfig(sat_id='Swarm A',
                        start_time=datetime.datetime(2014, 12, 15, 1, 19),
-                       end_time=datetime.datetime(2014, 12, 15, 1, 20),
+                       end_time=datetime.datetime(2014, 12, 15, 3, 20),
                        timestep=30.0,
                        datasets2download=['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                        conductance_method='Zhang & Paxton model',
                        conductance_params={'kp': 4.0, 'f107': 100.0, 'background': 2.0},
                        grid_params={'L': 2000.0, 'W': 1500.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0},
-                       run_lompe_flag=True,
+                       run_lompe_flag=False,
                        l1=1.0,
                        l2=1.0,
                        gif_speed=550,

@@ -97,12 +97,12 @@ class LompeInput:
 
         swarm = datasets['swarm_mag'].loc[window_start:window_end].copy()
 
+        # self.all_swarm = swarm.groupby('Spacecraft', group_keys=False).apply(self.add_pass_id)
         swarm_with_pass_ids = []
         for _spacecraft, spacecraft_data in swarm.groupby('Spacecraft', sort=False):
             swarm_with_pass_ids.append(self.add_pass_id(spacecraft_data))
-
         self.all_swarm = pd.concat(swarm_with_pass_ids).sort_index()
-                
+
         # User-selected satellite only
         self.one_swarm = self.all_swarm[self.all_swarm['Spacecraft'] == sat_id[-1]].copy()
 
@@ -121,13 +121,14 @@ class LompeInput:
     def _plotpins(self, pax, lat, lon, east, north, hemisign, **kwrds):
         """ plot pins in polar coords, converting to magnetic if necessary """
 
-        quiver_scale = kwrds.pop('SCALE', None)
-        if quiver_scale is not None:
-            bbox = pax.ax.get_window_extent().transformed(pax.ax.figure.dpi_scale_trans.inverted())
-            x0, x1 = pax.ax.get_xlim()
-            y0, y1 = pax.ax.get_ylim()
-            data_units_per_inch = min(abs(x1 - x0)/bbox.width, abs(y1 - y0)/bbox.height)
-            kwrds['SCALE'] = 0.1 * quiver_scale / data_units_per_inch
+        # # i don't think this works
+        # quiver_scale = kwrds.pop('SCALE', None)
+        # if quiver_scale is not None:
+        #     bbox = pax.ax.get_window_extent().transformed(pax.ax.figure.dpi_scale_trans.inverted())
+        #     x0, x1 = pax.ax.get_xlim()
+        #     y0, y1 = pax.ax.get_ylim()
+        #     data_units_per_inch = min(abs(x1 - x0)/bbox.width, abs(y1 - y0)/bbox.height)
+        #     kwrds['SCALE'] = 0.1 * quiver_scale / data_units_per_inch
 
         if self.mag: # convert coordinates and components to magnetic and plot
             f1, f2 = self.apx.basevectors_qd(lat, lon, HEIGHT, coords = 'geo')
@@ -560,16 +561,22 @@ class LompeInput:
         axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
         axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag = self.apx if self.mag else None)
         
-        
-        axs['polar'].write(52, 12, f"Polar projection (in {coords} coordinates)", ha="center", va="bottom", fontsize=15*self.font_scale)
+        title_gap = np.clip(-0.13 + 0.38*(self.ar - 0.8), -0.18, 0.10)
+        titleax = inset_axes(axs['polar'].ax,
+                             width="100%",
+                             height="8%",
+                             loc="upper center",
+                             bbox_to_anchor=(0, title_gap, 1, 1),
+                             bbox_transform=axs['polar'].ax.transAxes,
+                             borderpad=0)
+        titleax.set_axis_off()
+        titleax.text(0.5, 0.5, f"Polar projection (in {coords} coordinates)", ha="center", va="center", fontsize=15*self.font_scale, transform=titleax.transAxes)
+        # axs['polar'].write(52, 12, f"Polar projection (in {coords} coordinates)", ha="center", va="bottom", fontsize=15*self.font_scale)
 
         # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
         # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
         
         # Grid outline
-        # xs = np.hstack((grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1])) # geographic
-        # ys = np.hstack((grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1])) # geographic
-
         xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
 
@@ -669,7 +676,6 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
             
-            #1800
             self._plotpins(polar_ax, lat, lon, Ve, Vn, hemisign, SCALE = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
 
@@ -696,7 +702,6 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            # 150 *1-9
             self._plotpins(polar_ax, lat, lon, Be, Bn, hemisign, SCALE = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches')
 
@@ -722,10 +727,11 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            # 250*1e-9
             self._plotpins(polar_ax, lat, lon, Be, Bn, hemisign, SCALE=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
-            # print('my quiver magnitude', np.sqrt(Be[0]**2 + Bn[0]**2) )
+            # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], hemisign, SCALE=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
+            # print('my quiver magnitude', np.sqrt(Be[1]**2 + Bn[1]**2) )
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='AMPERE'))
@@ -749,7 +755,6 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
             
-            #300*1e-9
             self._plotpins(polar_ax, lat, lon, Be, Bn, hemisign, SCALE =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Be, Bn, lon, lat, width=0.004, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
 
@@ -813,7 +818,6 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
 
-            # 1800
             self._plotpins(polar_ax, lat, lon, Ve, Vn, hemisign, SCALE=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
 
