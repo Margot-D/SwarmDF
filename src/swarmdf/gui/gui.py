@@ -324,17 +324,19 @@ class SwarmDFGUI(customtkinter.CTk):
         # Disable interactive window buttons until Lompe is done running
         self.button_interactive_wdw_input.configure(state="disabled")
         self.button_interactive_wdw_output.configure(state="disabled")
+        self.update_idletasks()
 
-        def worker():
-            try:
-                self.output_results = compute_swarmdf_output(self.config, self.input_results)
-                self.after(0, lambda: self.display_lompe_output(self.output_results))
+        try:
+            self.output_results = compute_swarmdf_output(self.config, self.input_results)
+            self.display_lompe_output(self.output_results)
 
-            except Exception as e:
-                print("Lompe run failed:", e)
-                raise RuntimeError from e    
-        
-        threading.Thread(target=worker, daemon=True).start()
+        except Exception as e:
+            print("Lompe run failed:", e)
+            messagebox.showerror("Lompe run failed", str(e))
+            if hasattr(self, "progress_output"):
+                self.progress_output.stop()
+                self.progress_output.destroy()
+            self.button_interactive_wdw_input.configure(state="normal")
 
 
     def wait_for_lompe_then_validate(self):
@@ -366,34 +368,31 @@ class SwarmDFGUI(customtkinter.CTk):
     def replot_lompe_input(self):
         """Rebuild Lompe input plots from the latest input results."""
 
-        if not hasattr(self, "input_results") or not hasattr(self, "datasets") or self.config is None:
+        if not hasattr(self, "input_results") or not hasattr(self, "datasets") or getattr(self, "config", None) is None:
             return
 
         self.checkbox_magcoords.configure(state="disabled")
+        self.update_idletasks()
         self.config.mag = bool(self.checkbox_magcoords.get())
 
-        def worker():
-            try:
-                lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag)
-                input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
-                                                            self.input_results.analysis_times,
-                                                            self.input_results.data_objects_per_grid,
-                                                            self.config.figh,
-                                                            self.config.figw,
-                                                            self.config.gif_speed,
-                                                            self.config.show_data)
-                self.input_results.input_PILframes = input_frames
-                self.after(0, lambda: self.display_lompe_input(self.input_results))
+        try:
+            lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag)
+            input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
+                                                        self.input_results.analysis_times,
+                                                        self.input_results.data_objects_per_grid,
+                                                        self.config.figh,
+                                                        self.config.figw,
+                                                        self.config.gif_speed,
+                                                        self.config.show_data)
+            self.input_results.input_PILframes = input_frames
+            self.display_lompe_input(self.input_results)
 
-            except Exception as e:
-                print("Lompe input replot failed:", e)
-                msg = str(e)
-                self.after(0, lambda: messagebox.showerror("Lompe input replot failed", msg))
+        except Exception as e:
+            print("Lompe input replot failed:", e)
+            messagebox.showerror("Lompe input replot failed", str(e))
 
-            finally:
-                self.after(0, lambda: self.checkbox_magcoords.configure(state="normal"))
-
-        threading.Thread(target=worker, daemon=True).start()
+        finally:
+            self.checkbox_magcoords.configure(state="normal")
 
 
     #################
