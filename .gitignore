@@ -12,6 +12,7 @@ data/*
 
 outputs/
 
+my_swarmdf_script.py
 SwarmDF_script.py
 SwarmDF_paper.py
 
