@@ -32,10 +32,9 @@ from swarmdf.gui.ui.validation_window import open_validation_window
 from swarmdf.gui.ui.display_helpers import compute_widget_size, pil_to_ctk_images, open_interactive_window, combine_validation_frames
 from swarmdf.gui.ui.utils import validate_entry, make_error_frame, resize_keep_aspect
 from swarmdf.gui.ui.animation_manager import AnimationManager
+
 import warnings
 # warnings.filterwarnings("ignore", category=UserWarning)
-
-# TODO remember to fix citation (github)
 
 class SwarmDFGUI(customtkinter.CTk):
     def __init__(self):
@@ -46,8 +45,8 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.title("SwarmDF.py")
         width, height = 1660, 950
-        self.aspect_ratio = 16/9 #width/height
-        self.geometry(f"{width}x{height}") #{1660}x{870}
+        self.aspect_ratio = 16/9 # width/height
+        self.geometry(f"{width}x{height}")
         self.minsize(1450, 780)
         # self.bind("<Configure>", self.enforce_aspect)
 
@@ -64,19 +63,18 @@ class SwarmDFGUI(customtkinter.CTk):
         #############
         # Check/validate user entries
 
-        # TODO add more? make this better
-        self.validators = [(self.entry_timestep, "Timestep", 30, None, None),
+        self.validators = [(self.entry_timestep, "Timestep", 30, 5, None),
                            (self.entry_kp, "Kp index", 4, 0, 9), 
-                           (self.entry_f107, "F107 value", 100, 30, 400), #TODO ok? 
-                           (self.entry_background, "Background value", 2, 0, None), # TODO what's a good range?
-                           (self.entry_L, "Grid length", 2000, None, None),
-                           (self.entry_W, "Grid width", 1500, None, None),
-                           (self.entry_Lres, "Grid length resolution", 200, None, None),
-                           (self.entry_Wres, "Grid width resolution", 200, None, None),
-                           (self.entry_wshift, "wshift value", 0, None, None),
+                           (self.entry_f107, "F107 value (s.f.u)", 100, 30, 400), #TODO values ok Kalle? 
+                           (self.entry_background, "Background value", 2, 0, None), # TODO what's a good range Kalle?
+                           (self.entry_L, "Grid length (km)", 2000, None, None),
+                           (self.entry_W, "Grid width (km)", 1500, None, None),
+                           (self.entry_Lres, "Grid length resolution (km)", 200, None, None),
+                           (self.entry_Wres, "Grid width resolution (km)", 200, None, None),
+                           (self.entry_wshift, "Cross-track shift value (km)", 0, lambda: -float(self.entry_W.get())/2+float(self.entry_W.get())/10, lambda: float(self.entry_W.get())/2-float(self.entry_W.get())/10),
                            (self.entry_gifspeed, "Animation speed", 550, 0, None),
-                           (self.entry_Gtimeoff, "Time offset", 0, 0, 23), #TODO ok?
                            (self.entry_Gsnapshot, "Gamera snapshot", 0, None, None),
+                           (self.entry_Gtimeoff, "Time offset", 0, 0, 23), #TODO ok?
                            ]
         
         # Check and validate values from entries as the user types
@@ -91,6 +89,10 @@ class SwarmDFGUI(customtkinter.CTk):
     def run_swarm_df(self):
         
         self.button_runSwarmDF.configure(state="disabled")
+        self.button_runSwarmDF2.configure(state="disabled")
+        self.button_apply.configure(state="disabled")
+        self.lompe_button2.configure(state="disabled")
+        self.button_validate.configure(state="disabled")
         self.button_interactive_wdw_input.configure(state="disabled")
 
         # Check and validate values from all entries before running SwarmDF
@@ -163,7 +165,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         finally: 
             self.button_runSwarmDF.configure(state="normal")
-
+            self.button_runSwarmDF2.configure(state="normal")
+            self.button_apply.configure(state="normal")
+            self.lompe_button2.configure(state="normal")
+            self.button_validate.configure(state="normal")
 
 # -------------------------------------------------------
 # -------------------------------------------------------
