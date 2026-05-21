@@ -70,10 +70,11 @@ def make_error_frame(width, height, text="An error occurred..."):
 
 
 def resize_keep_aspect(img, max_w, max_h):
+    """Resize image to fit within (max_w, max_h) while preserving aspect ratio."""
+
     orig_w, orig_h = img.size
     scale = min(max_w / orig_w, max_h / orig_h)
 
     new_size = (int(orig_w * scale), int(orig_h * scale))
 
     return img.resize(new_size, Image.Resampling.LANCZOS)
-    # return img.resize(new_size, Image.LANCZOS)

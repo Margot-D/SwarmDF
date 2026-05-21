@@ -2,7 +2,7 @@ from PIL import Image, ImageTk, ImageDraw
 
 class Icons:
     """
-    Create play/pause and previous/next icons for GIFs
+    Create play/pause and previous/next icons
     """
     def __init__(self, color="snow"):
         self.play = self._create_play_icon(25, color) #25

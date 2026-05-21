@@ -1,9 +1,12 @@
-
 import customtkinter
 
-# Small info box pops up when hovering widget 
 class CustomTooltip:
     """
+    Custom tooltip widget for CustomTkinter.
+
+    Displays a small hover tooltip with a configurable delay,
+    positioned relative to the target widget and kept within
+    window bounds.
     """
     def __init__(self, widget, text, delay=500):
         self.widget = widget
