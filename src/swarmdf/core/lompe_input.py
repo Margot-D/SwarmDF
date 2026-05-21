@@ -558,7 +558,7 @@ class LompeInput:
 
         axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8*self.marker_scale, color='grey')
         axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
-        axs['polar'].coastlines(resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag = self.apx if self.mag else None)
+        axs['polar'].coastlines(time=self.mid_time if self.mag else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if self.mag else None)
         
         
         axs['polar'].write(52, 12, f"Polar projection (in {coords} coordinates)", ha="center", va="bottom", fontsize=15*self.font_scale)
