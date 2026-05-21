@@ -15,7 +15,6 @@ from pathlib import Path
 import apexpy
 import dipole # github.com/klaundal/dipole
 import warnings
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # warnings.simplefilter("always")
 # warnings.filterwarnings("ignore", category=UserWarning)
@@ -534,7 +533,16 @@ class LompeInput:
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                         fontsize=22*self.font_scale, color="black", y=0.98) #y=0.98
         
-        axs = {"polar": fig.add_subplot(121), "zoom": fig.add_subplot(122)}
+        gs = fig.add_gridspec(3, 2, height_ratios=[0.16, 1.00, 0.26], hspace=0.04, wspace=0.18)
+        axs = {"polar_title": fig.add_subplot(gs[0, 0]),
+               "polar":       fig.add_subplot(gs[1, 0]),
+               "polar_scale": fig.add_subplot(gs[2, 0]),
+               "zoom_title":  fig.add_subplot(gs[0, 1]),
+               "zoom":        fig.add_subplot(gs[1, 1]),
+               "zoom_scale":  fig.add_subplot(gs[2, 1])}
+
+        for ax in [axs["polar_title"], axs["polar_scale"], axs["zoom_title"], axs["zoom_scale"]]:
+            ax.set_axis_off()
 
 
         top = np.clip(1.026 - 0.088*self.ar - 0.015*max(0, self.ar-1), 0.84, 0.97)
@@ -559,9 +567,8 @@ class LompeInput:
         axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8*self.marker_scale, color='grey')
         axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
         axs['polar'].coastlines(time=self.mid_time if self.mag else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if self.mag else None)
-        
-        
-        axs['polar'].write(52, 12, f"Polar projection (in {coords} coordinates)", ha="center", va="bottom", fontsize=15*self.font_scale)
+
+        axs['polar_title'].text(0.5, 0.5, f"Polar projection\nin {coords} coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['polar_title'].transAxes)
 
         # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
         # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
@@ -590,7 +597,7 @@ class LompeInput:
         csax0 = CSplot(axs['zoom'], grid, gridtype='geo', view_from_below=sh)
         csax0.add_coastlines(color='darkgrey')
         axs['zoom'].spines['bottom'].set_linewidth(5) # bottom of grid frame 
-        axs['zoom'].set_title("Cubed sphere projection (in geographic coordinates)", fontsize=15*self.font_scale)
+        axs['zoom_title'].text(0.5, 0.5, "Cubed sphere projection\nin geographic coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['zoom_title'].transAxes)
 
         return axs['polar'], csax0
 
@@ -907,18 +914,7 @@ class LompeInput:
             # Vectors 
 
             # polar axis
-            height = f"{np.clip(14 - 2*self.ar, 11, 16)}%"
-            gap = 0.19 - 0.21*self.ar + 0.04*(self.ar - 1)**2
-            gap = np.clip(gap, -0.22, 0.3)
-
-            arrowpolax = inset_axes(polax.ax,
-                                 width="100%",
-                                 height=height,
-                                 loc="lower center",
-                                 bbox_to_anchor=(0, gap, 1, 1),
-                                 bbox_transform=polax.ax.transAxes,
-                                 borderpad=0)
-
+            arrowpolax = axes["polar_scale"]
             arrowpolax.set_xlim(0, 1) 
             arrowpolax.set_ylim(0, 1) 
             arrowpolax.set_axis_off()
@@ -931,12 +927,7 @@ class LompeInput:
             arrowpolax.quiver(xarrow, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
             
             # cs axis
-            bbox = csax.ax.get_position()
-            fig = csax.ax.figure
-            fig_w, fig_h = fig.get_size_inches()
-            legend_h = 0.6 / fig_h   # physical height (inches → figure fraction)
-            gap = (0.12*self.ar - 0.05) / fig_h
-            arrowcsax = fig.add_axes([bbox.x0, bbox.y0 - legend_h - gap, bbox.width, legend_h])
+            arrowcsax = axes["zoom_scale"]
             arrowcsax.set_xlim(0, 1) 
             arrowcsax.set_ylim(0, 1) 
             arrowcsax.set_axis_off()
@@ -947,22 +938,18 @@ class LompeInput:
             groups = defaultdict(list)
             for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
                 groups[label].append((value, unit))
-            ypol = 0.75
-            ycs  = 0.7
-            pol_spacing = 0.13 + 0.16*self.ar
-            cs_spacing  = 0.18 + 0.24*self.ar
-            for label, items in groups.items():
+            labels = list(groups.items())
+            y_positions = np.linspace(0.78, 0.34, len(labels)) if len(labels) > 1 else [0.65]
+            for (label, items), y in zip(labels, y_positions):
                 value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
-                arrowpolax.text(xtext, ypol, f"{label}: {value//2:.0f} {unit}",
+                arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
                              transform=arrowpolax.transAxes,
                              fontsize=14*self.font_scale,
                              va='center')
-                arrowcsax.text(xtext, ycs, f"{label}: {value//2:.0f} {unit}",
+                arrowcsax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
                              transform=arrowcsax.transAxes,
                              fontsize=14*self.font_scale,
                              va='center')
-                ypol -= pol_spacing
-                ycs  -= cs_spacing
 
             # --------------- # 
             # Save output
