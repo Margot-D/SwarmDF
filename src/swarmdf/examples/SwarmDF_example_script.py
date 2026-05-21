@@ -10,13 +10,14 @@ and use the example event instead.
 
 import datetime
 import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib
 import numpy as np
 from swarmdf.gui.config import SwarmDFConfig
 from swarmdf import *
 
-# Uncomment if weird kernel crash
-# import matplotlib
+matplotlib.rcParams['figure.dpi'] = 300
+
+## Uncomment if weird kernel crash
 # matplotlib.use("TkAgg")
 
 ######################

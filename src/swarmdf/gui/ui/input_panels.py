@@ -129,7 +129,9 @@ def build_input_panels(gui):
     gui.checkbox_supermag.select()
     gui.checkbox_superdarn.select()
     gui.checkbox_iridium_ampere.select()
-
+    gui.checkbox_dmsp_ssies17.select()
+    gui.checkbox_dmsp_ssies18.select()
+    
     # Link to data documentation TODO fix link!
     gui.link_data_docu = customtkinter.CTkLabel(gui.tabview.tab(tab2), text="Data documentation", text_color="green", cursor="hand2")
     gui.link_data_docu.grid(row=9, column=0, columnspan=2, padx=35, pady=(25, 0), sticky='nsew') #pady=(25, 5)

@@ -34,7 +34,7 @@ from swarmdf.gui.ui.utils import validate_entry, make_error_frame, resize_keep_a
 from swarmdf.gui.ui.animation_manager import AnimationManager
 
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+# warnings.filterwarnings("ignore", category=UserWarning)
 
 class SwarmDFGUI(customtkinter.CTk):
     def __init__(self):
@@ -101,7 +101,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
        # Collect user input
         self.config = self.collect_user_config()
-        if self.config is None:
+        if self.config is None: #TODO chcekc if useful
             self.button_runSwarmDF.configure(state="normal")
             return
 
@@ -138,7 +138,7 @@ class SwarmDFGUI(customtkinter.CTk):
             self.datasets = datasets
 
             # Input to Lompe
-            self.input_results = compute_swarmdf_input(self.config, datasets) 
+            self.input_results = compute_swarmdf_input(self.config, self.datasets) 
             self.display_lompe_input(self.input_results)
             
             # Play animation

@@ -12,12 +12,9 @@ data/*
 
 outputs/
 
-SwarmDF_python_code.py
-SwarmDF_python_codeTEST.py
-testlompeosse.py
+my_swarmdf_script.py
 SwarmDF_script.py
 SwarmDF_paper.py
-my_SwarmDF_demo.ipynb
 
 correlation_plot.gif
 
@@ -26,6 +23,4 @@ correlation_plot.gif
 *.cdf
 .env
 
-orbit/
-lompe_data/
-test_scripts
+test_scripts/
