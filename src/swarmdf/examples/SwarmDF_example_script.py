@@ -35,19 +35,18 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        conductance_params={'kp': 4.0, 'f107': 100.0, 'background': 2.0},
                        grid_params={'L': 2000.0, 'W': 1500.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0},
                        run_lompe_flag=True,
-                       l1=1.0,
-                       l2=1.0,
+                       regularization_l1=1.0,
+                       regularization_l2=1.0,
                        gif_speed=550,
                        figw=12.2,
                        figh=9.0,
-                       mag=False,
-                       show_data=True,
+                       mag_coords_flag=False,
+                       show_all_data_flag=True,
                        run_validation_flag=False,
-                       timeoff=0,
+                       time_offset=0,
                        snapshot=0,
                        generate_script_flag=True,
                        demo_flag=demo)
-
 
 ######################
 # Retrieve and load data
@@ -61,14 +60,14 @@ datasets = datahandler.datasets
 ######################
 
 # Define individual analysis frames (grid)
-lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag)
+lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag_coords_flag)
 grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, config.grid_params)
 
 # Prepare data objects for each analysis frame
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, show_global_data=config.show_data)
+input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, show_global_data=config.show_all_data_flag)
 
 %matplotlib inline
 for frame in input_figs:
@@ -87,7 +86,7 @@ if config.run_lompe_flag:
     SHs, SPs = compute_conductances(config.conductance_method, config.conductance_params, analysis_times, grids)
 
     # Regularization parameters
-    l1, l2 = config.l1, config.l2
+    l1, l2 = config.regularization_l1, config.regularization_l2
 
     # Build Lompe model for each analysis frame
     lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
@@ -106,7 +105,7 @@ if config.run_lompe_flag:
 ######################
 
 if config.run_validation_flag:
-    lompeOSSE_models, gamera_quantities = run_lompeOSSE(lompe_models, config.timeoff, config.snapshot)
+    lompeOSSE_models, gamera_quantities = run_lompeOSSE(lompe_models, config.time_offset, config.snapshot)
     lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_quantities, config.figh, config.gif_speed)
 
     for osse_frame, gamera_frame in zip(lompeosse_figs, gamera_figs):

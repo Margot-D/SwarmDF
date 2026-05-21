@@ -5,8 +5,14 @@ from datetime import datetime
 
 @dataclass
 class SwarmDFConfig:
+    """
+    Central configuration object controlling a full SwarmDF run.
 
-    # satellite
+    This includes data selection, grid setup, physics parameters,
+    plotting options, and execution flags.
+    """
+
+    # Swarm satellite
     sat_id: str
 
     # time interval
@@ -14,35 +20,22 @@ class SwarmDFConfig:
     end_time: datetime
     timestep: float
 
-    # datasets
+    # datasets to retrieve
     datasets2download: list
 
-    # conductance
-    conductance_method: str
-    conductance_params: dict
-
-    # grid
+    # analysis grid
     grid_params: dict
 
     # lompe
     run_lompe_flag: bool
+    conductance_method: str
+    conductance_params: dict
+    regularization_l1: float
+    regularization_l2: float
 
-    # regularization
-    l1: float
-    l2: float
-
-    # plotting
-    gif_speed: int
-    figw: float
-    figh: float
-
-    # plot options
-    mag: bool
-    show_data: bool
-
-    # validation
+    # lompeOSSE/validation
     run_validation_flag: bool
-    timeoff: int
+    time_offset: int #
     snapshot: int
 
     # python script 
@@ -50,3 +43,12 @@ class SwarmDFConfig:
 
     # demo mode
     demo_flag: bool
+
+    # plotting
+    gif_speed: int
+    figw: float
+    figh: float
+
+    # plot options
+    mag_coords_flag: bool
+    show_all_data_flag: bool
