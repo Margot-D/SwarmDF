@@ -3,7 +3,7 @@ from tkinter import messagebox
 
 def validate_entry(entry, name, default=None, min_val=None, max_val=None):
     """
-    Safely read a float from an entry widget.
+    Read and validate a float value from an entry widget.
     
     Parameters
     ----------
@@ -14,9 +14,22 @@ def validate_entry(entry, name, default=None, min_val=None, max_val=None):
     default : float, optional
         Value to use if parsing fails
     min_val, max_val : float, optional
-        Optional bounds to check
+        Optional bounds to check. Can also be callables returning floats.
     """
 
+    # Evaluate dynamic bounds if needed
+    try:
+        if callable(min_val):
+            min_val = min_val()
+
+        if callable(max_val):
+            max_val = max_val()
+
+    except (ValueError, TypeError):
+        min_val = None
+        max_val = None
+
+    # Read entry value
     try:
         value = float(entry.get())
 
@@ -32,12 +45,13 @@ def validate_entry(entry, name, default=None, min_val=None, max_val=None):
         messagebox.showwarning("Invalid input", f"{name} must be ≤ {max_val}. Using default: {default}")
         value = default
 
-    # reflect corrected value in UI
+    # Reflect corrected value in UI
     if default is not None and value == default:
         entry.delete(0, "end")
         entry.insert(0, str(default))
 
-    return
+    return # wrong if value is returned!
+
 
 def make_error_frame(width, height, text="An error occurred..."):
     """Error placeholder"""
