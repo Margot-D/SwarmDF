@@ -1,5 +1,3 @@
-#TODO add small docu here 
-
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -8,8 +6,8 @@ class SwarmDFConfig:
     """
     Central configuration object controlling a full SwarmDF run.
 
-    This includes data selection, grid setup, physics parameters,
-    plotting options, and execution flags.
+    This includes data selection, grid setup, lompe and lompeOSSE parameters,
+    vizualization settings, and execution control flags.
     """
 
     # Swarm satellite
