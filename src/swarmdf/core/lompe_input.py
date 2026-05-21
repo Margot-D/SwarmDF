@@ -533,7 +533,9 @@ class LompeInput:
         fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                         fontsize=22*self.font_scale, color="black", y=0.98) #y=0.98
         
-        gs = fig.add_gridspec(3, 2, height_ratios=[0.16, 1.00, 0.26], hspace=0.04, wspace=0.18)
+        title_h = np.clip(0.11 + 0.03*(self.ar < 1), 0.09, 0.14) #0.16
+        hspace = 0.04 + 0.015*max(0, self.ar - 1)
+        gs = fig.add_gridspec(3, 2, height_ratios=[title_h, 1.00, 0.26], hspace=hspace, wspace=0.18)
         axs = {"polar_title": fig.add_subplot(gs[0, 0]),
                "polar":       fig.add_subplot(gs[1, 0]),
                "polar_scale": fig.add_subplot(gs[2, 0]),
@@ -545,9 +547,11 @@ class LompeInput:
             ax.set_axis_off()
 
 
-        top = np.clip(1.026 - 0.088*self.ar - 0.015*max(0, self.ar-1), 0.84, 0.97)
+        # top = np.clip(1.026 - 0.088*self.ar - 0.015*max(0, self.ar-1), 0.84, 0.97)
+        top = 0.91
         fig.subplots_adjust(top=top)
-        bottom = np.clip(0.05 + 0.10*self.ar, 0.08, 0.26)
+        # bottom = np.clip(0.05 + 0.10*self.ar, 0.08, 0.26)
+        bottom = 0.07
         fig.subplots_adjust(bottom=bottom)
 
         return fig, axs
@@ -924,7 +928,7 @@ class LompeInput:
             text_offset = np.clip(0.18 - 0.08*(self.ar - 1), 0.10, 0.18)
             xtext = xarrow + text_offset
 
-            arrowpolax.quiver(xarrow, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
             
             # cs axis
             arrowcsax = axes["zoom_scale"]
@@ -932,14 +936,20 @@ class LompeInput:
             arrowcsax.set_ylim(0, 1) 
             arrowcsax.set_axis_off()
 
-            arrowcsax.quiver(xarrow, 0.5, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            arrowcsax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
 
             # measurement types and scales
             groups = defaultdict(list)
             for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
                 groups[label].append((value, unit))
             labels = list(groups.items())
-            y_positions = np.linspace(0.78, 0.34, len(labels)) if len(labels) > 1 else [0.65]
+            if len(labels) == 1:
+                y_positions = [0.55]
+            elif len(labels) == 2:
+                y_positions = [0.65, 0.45]
+            else:
+                y_positions = np.linspace(0.78, 0.34, len(labels))
+            # y_positions = np.linspace(0.78, 0.34, len(labels)) if len(labels) > 1 else [0.65]
             for (label, items), y in zip(labels, y_positions):
                 value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
                 arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
