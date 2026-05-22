@@ -9,12 +9,20 @@ class SwarmDFInput: #TODO how do I know what type everything is?
     grids: list
     analysis_times: list
     data_objects_per_grid: list
+    # input_PILframes: list
+
+@dataclass
+class SwarmDFInputPlot:
     input_PILframes: list
 
 @dataclass
 class SwarmDFOutput:
     lompe_models: list | None
-    output_PILframes: list | None
+    # output_PILframes: list | None
+
+@dataclass
+class SwarmDFOutputPlot:
+    output_PILframes: list
 
 @dataclass
 class SwarmDFValidation:
@@ -63,19 +71,42 @@ def compute_swarmdf_input(config, datasets):
     lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag_coords_flag)
     grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, config.grid_params)
     data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times)
-    input_PILframes = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, config.show_all_data_flag)
 
-    return SwarmDFInput(grids, analysis_times, data_objects_per_grid, input_PILframes)
+    return SwarmDFInput(grids, analysis_times, data_objects_per_grid)
+    # TODO call lompe_input something else? 
 
+def render_swarmdf_input(config, datasets, input_data: SwarmDFInput):
+    
+    lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag_coords_flag)
+    pil_frames = lompe_input.plot_lompe_input(
+        input_data.grids,
+        input_data.analysis_times,
+        input_data.data_objects_per_grid,
+        config.figh,
+        config.figw,
+        config.gif_speed,
+        config.show_all_data_flag
+    )
+    
+    return SwarmDFInputPlot(pil_frames)
 
 def compute_swarmdf_output(config, input_data: SwarmDFInput):
 
     SHs, SPs = compute_conductances(config.conductance_method, config.conductance_params, input_data.analysis_times, input_data.grids)
     lompe_models = run_lompe(input_data.analysis_times, input_data.grids, input_data.data_objects_per_grid, SHs, SPs, config.regularization_l1, config.regularization_l2)
-    output_PILframes = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.gif_speed)
 
-    return SwarmDFOutput(lompe_models, output_PILframes)
+    return SwarmDFOutput(lompe_models)
 
+def render_swarmdf_output(config, output_data: SwarmDFOutput):
+    
+    # output_PILframes = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.gif_speed)
+    pil_frames = plot_lompe_output(
+        output_data.lompe_models,
+        config.sat_id,
+        config.figh,
+        config.gif_speed
+    )
+    return SwarmDFOutputPlot(pil_frames)
 
 def compute_swarmdf_validation(config, lompe_results : SwarmDFOutput):
 
