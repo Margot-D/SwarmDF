@@ -12,8 +12,8 @@ import matplotlib
 matplotlib.use("TkAgg")
 
 from tkinter import messagebox
-from PIL import Image
 import threading
+import traceback
 
 import customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -21,7 +21,7 @@ customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "gr
 
 from swarmdf import *
 
-from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation
+from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation, render_swarmdf_input, render_swarmdf_output
 
 from swarmdf.gui.config import SwarmDFConfig
 from swarmdf.gui.ui.sidebar_left import build_left_sidebar
@@ -29,9 +29,8 @@ from swarmdf.gui.ui.sidebar_right import build_right_sidebar
 from swarmdf.gui.ui.input_panels import build_input_panels
 from swarmdf.gui.ui.output_panels import build_output_panels
 from swarmdf.gui.ui.validation_window import open_validation_window
-from swarmdf.gui.ui.display_helpers import compute_widget_size, pil_to_ctk_images, open_interactive_window, combine_validation_frames
-from swarmdf.gui.ui.helpers.utils import validate_entry, make_error_frame, resize_keep_aspect
-from swarmdf.gui.ui.animation_manager import AnimationManager
+from swarmdf.gui.ui.helpers.image_display import *
+from swarmdf.gui.ui.helpers.animation_manager import AnimationManager
 
 import warnings
 # warnings.filterwarnings("ignore", category=UserWarning)
@@ -71,7 +70,7 @@ class SwarmDFGUI(customtkinter.CTk):
                            (self.entry_W, "Grid width (km)", 1500, None, None),
                            (self.entry_Lres, "Grid length resolution (km)", 200, None, None),
                            (self.entry_Wres, "Grid width resolution (km)", 200, None, None),
-                           (self.entry_wshift, "Cross-track shift value (km)", 0, lambda: -float(self.entry_W.get())/2+float(self.entry_W.get())/10, lambda: float(self.entry_W.get())/2-float(self.entry_W.get())/10),
+                           (self.entry_wshift, "Cross-track shift value (km)", 0, None, None),
                            (self.entry_gifspeed, "Animation speed", 550, 0, None),
                            (self.entry_Gsnapshot, "Gamera snapshot", 0, None, None),
                            (self.entry_Gtimeoff, "Time offset", 0, 0, 23), #TODO ok?
@@ -80,30 +79,25 @@ class SwarmDFGUI(customtkinter.CTk):
         # Check and validate values from entries as the user types
         for entry, name, default, min_val, max_val in self.validators:
             entry.bind("<FocusOut>", lambda e, entry=entry, name=name, default=default, min_val=min_val, max_val=max_val: 
-                        validate_entry(entry, name, default, min_val, max_val))
-            
+                        self.validate_entry(entry, name, default, min_val, max_val))
 
     #################
     # Run SwarmDF analysis
 
     def run_swarm_df(self):
-        
-        self.button_runSwarmDF.configure(state="disabled")
-        self.button_runSwarmDF2.configure(state="disabled")
-        self.button_apply.configure(state="disabled")
-        self.lompe_button2.configure(state="disabled")
-        self.button_validate.configure(state="disabled")
-        self.button_interactive_wdw_input.configure(state="disabled")
+
+        # Disable buttons when SwarmDF starts running 
+        self.set_buttons_state("disabled")
 
         # Check and validate values from all entries before running SwarmDF
         for entry, name, default, min_val, max_val in self.validators:
-            validate_entry(entry, name, default, min_val, max_val)
+            self.validate_entry(entry, name, default, min_val, max_val)
 
        # Collect user input
         self.config = self.collect_user_config()
-        if self.config is None: #TODO chcekc if useful
-            self.button_runSwarmDF.configure(state="normal")
-            return
+        # if self.config is None: #TODO check if useful
+        #     self.button_runSwarmDF.configure(state="normal")
+        #     return
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.config.generate_script_flag:
@@ -116,12 +110,12 @@ class SwarmDFGUI(customtkinter.CTk):
         
             generate_python_code(self.config, fn)
 
-        # Start progress bars
+        # Progress bar for Lompe input panel
         self.progress_input = customtkinter.CTkProgressBar(self.frame_data, mode="indeterminate")
         self.progress_input.grid(row=1, column=0, pady=(30, 10))
         self.progress_input.start()
 
-        # TODO...
+        # Initialize animation manager
         self.anim_mgr = AnimationManager()
 
         # Schedule heavy part of SwarmDF AFTER letting the GUI update
@@ -134,15 +128,11 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try: 
             # Data
-            datasets = get_data(self.config)
-            self.datasets = datasets
+            self.datasets = get_data(self.config)
 
             # Input to Lompe
             self.input_results = compute_swarmdf_input(self.config, self.datasets) 
             self.display_lompe_input(self.input_results)
-            
-            # Play animation
-            self.play()
 
             # Lompe output
             if self.config.run_lompe_flag:
@@ -152,7 +142,7 @@ class SwarmDFGUI(customtkinter.CTk):
                 # Button for triggering Lompe
                 self.lompe_button = customtkinter.CTkButton(master=self.lompe_frame, text="Run Lompe analysis", command=self.trigger_lompe_analysis, width=170, height=40)
                 self.lompe_button.grid(row=1, column=0, pady=(0, 20))
-                self.button_interactive_wdw_input.configure(state="normal")
+                self.set_buttons_state("normal")
 
             # LompeOSSE validation (once Lompe is done)
             if self.config.run_validation_flag:
@@ -163,18 +153,109 @@ class SwarmDFGUI(customtkinter.CTk):
             messagebox.showerror("SwarmDF failed", str(e)) # TODO for debugging only
             print("SwarmDF failed, the following exception occured:", e) 
 
-        finally: 
-            self.button_runSwarmDF.configure(state="normal")
-            self.button_runSwarmDF2.configure(state="normal")
-            self.button_apply.configure(state="normal")
-            self.lompe_button2.configure(state="normal")
-            self.button_validate.configure(state="normal")
-
 # -------------------------------------------------------
 # -------------------------------------------------------
+# Helper functions 
 
-    #################
-    # Collect GUI input 
+####################
+####################
+# # GUI callback and update helpers
+        
+    def keep_ratio(self, event):
+        """
+        Maintain fixed aspect ratio for the output frames 
+        when the container is resized.
+        """
+        container_w = event.width
+        container_h = event.height
+
+        panel_h = (container_h - 10) // 2
+
+        h = panel_h
+        w = int(h * self.aspect_ratio)
+
+        if w > container_w:
+            w = container_w
+            h = int(w / self.aspect_ratio)
+
+        self.frame_data.configure(width=w, height=h)
+        self.lompe_frame.configure(width=w, height=h)
+        
+    def validate_entry(self, entry, name, default=None, min_val=None, max_val=None):
+        """Read and validate a float value from an entry widget"""
+
+        try:
+            value = float(entry.get())
+        except ValueError:
+            value = default
+            messagebox.showwarning("Invalid input", f"{name} is invalid. Using default value: {default}")
+
+        if min_val is not None and value < min_val:
+            messagebox.showwarning("Invalid input", f"{name} must be ≥ {min_val}. Using default: {default}")
+            value = default
+        if max_val is not None and value > max_val:
+            messagebox.showwarning("Invalid input", f"{name} must be ≤ {max_val}. Using default: {default}")
+            value = default
+
+        # Reflect corrected value in UI
+        if default is not None and value == default:
+            entry.delete(0, "end")
+            entry.insert(0, str(default))
+
+        return # wrong if value is returned!
+
+    def apply_gif_parameters(self, update_state=True):
+        """
+        Validate and get GIF speed from the entry.
+        Optionally update the master/validation state if it exists.
+        Returns the validated speed.
+        """
+        try:
+            speed = int(self.entry_gifspeed.get())
+        except ValueError:
+            speed = self.default_speed
+
+        if speed < 0:
+            speed = self.default_speed
+
+        # reflect the final value in the UI
+        self.entry_gifspeed.delete(0, "end")
+        self.entry_gifspeed.insert(0, str(speed))
+
+        # If it already exists, update the animations with new speed
+        if update_state:
+            new_speed = speed
+            if hasattr(self, "master_state"):
+                self.master_state["delay"] = new_speed
+            # also update LompeOSSE validation animation
+            if hasattr(self, "validation_state"):
+                self.validation_state["delay"] = new_speed
+
+            print(f"Animation update: applied speed = {new_speed} ms per frame")
+
+        return speed
+
+    def update_l1_label(self, slider_val):
+            log_val = 10 ** slider_val # log scale
+            self.label_value_l1.configure(text=f"{log_val:.2f}")
+            # TODO is l1 = exponent or 1**exponent ??
+
+    def update_l2_label(self, slider_val):
+            log_val = 10 ** slider_val # log scale
+            self.label_value_l2.configure(text=f"{log_val:.2f}")
+            
+    def apply_new_regularization(self):
+
+        # Get updated slider values
+        self.config.regularization_l1 = 10 ** self.slider_l1.get()
+        self.config.regularization_l2 = 10 ** self.slider_l2.get()
+
+        # Run lompe with new parameters
+        self.trigger_lompe_analysis()
+        
+####################
+####################
+# # Functions for collecting GUI input
 
     def collect_user_config(self):
 
@@ -313,15 +394,26 @@ class SwarmDFGUI(customtkinter.CTk):
         except ValueError:
             print("Invalid manual input")
             return None
+        
+    def set_buttons_state(self, state):
+        self.button_runSwarmDF.configure(state=state)
+        self.button_runSwarmDF2.configure(state=state)
+        self.button_apply.configure(state=state)
+        self.lompe_button2.configure(state=state)
+        self.button_validate.configure(state=state)
 
-
-    #################
-    # Trigger lompe/lompeOSSE analyses
-
+####################
+####################
+## Functions for triggering lompe and lompeOSSE analyses in GUI
+            
     def trigger_lompe_analysis(self):
         """Runs Lompe when requested"""
 
-        # Progress bar
+        # Remove intermediate "Run Lompe" button
+        if self.lompe_button:
+            self.lompe_button.grid_forget()
+
+        # Progress bar for Lompe output panel
         self.progress_output = customtkinter.CTkProgressBar(self.lompe_frame, mode="indeterminate")
         self.progress_output.grid(row=1, column=0, pady=(30, 10))
         self.progress_output.start()
@@ -329,19 +421,19 @@ class SwarmDFGUI(customtkinter.CTk):
         # Disable interactive window buttons until Lompe is done running
         self.button_interactive_wdw_input.configure(state="disabled")
         self.button_interactive_wdw_output.configure(state="disabled")
-        self.update_idletasks()
+        self.set_buttons_state("disabled")
 
-        try:
-            self.output_results = compute_swarmdf_output(self.config, self.input_results)
-            self.display_lompe_output(self.output_results)
+        def worker():
+            try:
+                self.output_results = compute_swarmdf_output(self.config, self.input_results)
+                self.after(0, lambda: self.display_lompe_output(self.output_results)) # plotting and GUI update must go through after
 
-        except Exception as e:
-            print("Lompe run failed:", e)
-            messagebox.showerror("Lompe run failed", str(e))
-            if hasattr(self, "progress_output"):
-                self.progress_output.stop()
-                self.progress_output.destroy()
-            self.button_interactive_wdw_input.configure(state="normal")
+            except Exception as e:
+                print("Lompe run failed:", e)
+                # messagebox.showerror("Lompe run failed", str(e))
+                self.stop_pb(self.progress_output)
+
+        threading.Thread(target=worker, daemon=True).start()
 
 
     def wait_for_lompe_then_validate(self):
@@ -355,13 +447,16 @@ class SwarmDFGUI(customtkinter.CTk):
 
     def trigger_lompeosse_analysis(self):
         """Runs LompeOSSE when requested"""
+        # TODO probably have to fix this in a similar way 
 
         open_validation_window(self)
         self.update_idletasks()
+
+        self.set_buttons_state("disabled")
         
         def worker():
             try:
-                validation_results = compute_swarmdf_validation(self.config, self.output_results)
+                validation_results = compute_swarmdf_validation(self.config, self.output_results) #TODO replace with lompe_models
                 self.after(0, lambda: self.display_lompeosse_validation(validation_results))
 
             except Exception as e:
@@ -379,6 +474,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.checkbox_magcoords.configure(state="disabled")
         self.update_idletasks()
         self.config.mag_coords_flag = bool(self.checkbox_magcoords.get())
+        self.config.show_all_data_flag = bool(self.checkbox_showdata.get())
 
         try:
             lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag_coords_flag)
@@ -399,301 +495,187 @@ class SwarmDFGUI(customtkinter.CTk):
         finally:
             self.checkbox_magcoords.configure(state="normal")
 
+    def stop_pb(self, widget):
+        """Stop and destroy progressbar if it exists"""
+        if widget is not None:
+            widget.stop()
+            widget.destroy()
 
-    #################
-    # Display output animations
+####################
+####################
+# # Functions for displaying output animations in GUI
 
     def display_lompe_input(self, input_results):
 
-        # Kill old animation loop
-        if hasattr(self, "master_state") and self.master_state.get("job") is not None:
-            self.after_cancel(self.master_state["job"])
-            self.master_state['job'] = None    
+        self.stop_animation(getattr(self, "master_state", None))
+        self.master_state = self.init_animation_state(self.after, self.after_cancel)
 
         try: 
-            # Extract PIL images 
-            self.data_frames_pil = input_results.input_PILframes
-
-            # Convert to CTkinter images
-            w, h = compute_widget_size(self.label_data_gif)
-            self.data_frames_tk = pil_to_ctk_images(self.data_frames_pil, resize_keep_aspect, w, h)
-
-            # Initialize common "clock" for input and output animations (controls the timeline for both GIFs i.e, synchronize them)
-            self.master_state = {"tracks": [],
-                                "current_frame": 0,
-                                "playing": True,
-                                "job": None,
-                                "delay": self.config.gif_speed, 
-                                "scheduler": self.after, 
-                                "cancel": self.after_cancel}
+            # Extract PIL images
+            # self.data_frames_pil = input_results.input_PILframes
+            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_results).input_PILframes
 
         except Exception as e:
-            print("Error running display_lompe_input:", e)
+            print("Can't load PIL images", e)
+            traceback.print_exc()
 
-            # Replace frames with a single “error” image
-            self.error_frame = make_error_frame(self.label_data_gif.winfo_width(), self.label_data_gif.winfo_height())
-            error_img = customtkinter.CTkImage(light_image=self.error_frame.resize((w,h), Image.LANCZOS), size=(w,h))
-            self.data_frames_tk = [error_img]
+            self.stop_pb(self.progress_input)
 
             # Display error frame
-            self.anim_mgr.register_track(self.data_frames_tk,  self.label_data_gif, self.master_state)
-            self.anim_mgr.update_tracks(self.master_state)
+            error_img = make_error_frame(self.label_data_gif)
+            self.label_data_gif.configure(image=error_img, text="An error occurred...")
+            self.label_data_gif.image = error_img
 
-            # Also replace Lompe output if it exists from a previous run
             if hasattr(self, "label_lompe_gif"):
-                self.lompe_frames_tk = [error_img]
-                self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
-                self.anim_mgr.update_tracks(self.master_state)
-
-            raise RuntimeError from e
+                self.label_lompe_gif.configure(image=error_img, text="An error occurred...")
+                self.label_lompe_gif.image = error_img
+                    
+        # Convert to CTkinter images and register frames
+        self.data_frames_tk = pil_to_ctk_images(self.data_frames_pil, self.label_data_gif)
+        self.anim_mgr.register_track(self.data_frames_tk, self.label_data_gif, self.master_state)
         
-        # Stop progressbar
-        if hasattr(self, "progress_input"):
-            self.progress_input.stop()
-            self.progress_input.destroy()
-
-        # Reset play/pause buttons to match new state
-        icon = self.icons.pause if self.master_state["playing"] else self.icons.play
-        self.btn_play_pause_data.configure(image=icon)
-        if hasattr(self, "btn_play_pause_lompe"):
-            self.btn_play_pause_lompe.configure(image=icon)
-
-        # Register/prepare frames for animated GIF
-        self.anim_mgr.register_track(self.data_frames_tk,  self.label_data_gif, self.master_state)
         if hasattr(self, "lompe_frames_tk"):
             self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
-        self.anim_mgr.update_tracks(self.master_state)
 
-        # Place frame controls
+        self.stop_pb(self.progress_input)
+
+        # Reset play/pause buttons to match new state (useful for re-runs)
+        buttons = [self.btn_play_pause_data]
+        if hasattr(self, "btn_play_pause_lompe"):
+            buttons.append(self.btn_play_pause_lompe)
+        self.update_play_pause_icons(buttons, self.master_state["playing"])
+
+        # Place frame controls and interactive window button
         self.data_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
         self.interactive_wdw_data.place(relx=0.98, rely=0.97, anchor="e")
+
+        # Play animation
+        self.anim_mgr.play_generic(state=self.master_state)
 
 
     def display_lompe_output(self, output_results):
 
         try:
             # Extract PIL images 
-            self.lompe_frames_pil = output_results.output_PILframes
-
-            # Convert to CTkinter images
-            w, h = compute_widget_size(self.label_lompe_gif)
-            self.lompe_frames_tk = pil_to_ctk_images(self.lompe_frames_pil, resize_keep_aspect, w, h)
+            # self.lompe_frames_pil = output_PILframes
+            self.lompe_frames_pil = render_swarmdf_output(self.config, output_results).output_PILframes
 
         except Exception as e:
-            print("Error running display_lompe_output:", e)
+            print("Can't load PIL images", e)
+            traceback.print_exc()
 
-            # Replace frames with a single “error” image
-            self.error_frame = make_error_frame(self.label_lompe_gif.winfo_width(), self.label_lompe_gif.winfo_height())
-            error_img = customtkinter.CTkImage(light_image=self.error_frame.resize((w,h), Image.LANCZOS), size=(w,h))
-            self.lompe_frames_tk = [error_img]
+            self.stop_pb(self.progress_output)
 
             # Display error frame
-            self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
-            self.anim_mgr.update_tracks(self.master_state)
+            error_img = make_error_frame(self.label_lompe_gif)
+            self.label_lompe_gif.configure(image=error_img, text="An error occurred...")
+            self.label_lompe_gif.image = error_img
 
-            raise RuntimeError from e
-        
-        # Stop progressbar
-        if hasattr(self, "progress_output"):
-            self.progress_output.stop()
-            self.progress_output.destroy()
-        
-        # Register/prepare frames for animated GIF
+        # Convert to CTkinter images and register frames
+        self.lompe_frames_tk = pil_to_ctk_images(self.lompe_frames_pil, self.label_lompe_gif)
         self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
-        self.anim_mgr.update_tracks(self.master_state)
+        
+        self.stop_pb(self.progress_output)
 
-        # Place frame controls
+        # Place frame controls and interactive window button
         self.lompe_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
         self.interactive_wdw_lompe.place(relx=0.98, rely=0.97, anchor="e")
-
-        # Remove intermediate "Run Lompe" button
-        if self.lompe_button:
-            self.lompe_button.grid_forget()
-
+        
         # Enable buttons for interactive views once Lompe is finished
         self.button_interactive_wdw_input.configure(state="normal")
         self.button_interactive_wdw_output.configure(state="normal")
 
+        if not self.config.run_validation_flag:
+            self.set_buttons_state("normal")
+
 
     def display_lompeosse_validation(self, lompeosse_results):
-        
-        # Kill old animation loop
-        if hasattr(self, "validation_state") and self.validation_state.get("job") is not None:
-            self.after_cancel(self.validation_state["job"])
-            self.validation_state['job'] = None    
+
+        self.stop_animation(getattr(self, "validation_state", None))
+        self.validation_state = self.init_animation_state(self.validation_window.after, self.validation_window.after_cancel)
 
         try:
             # Extract PIL images 
             self.lompeosse_frames_pil = lompeosse_results.lompeosse_PILframes
             self.gamera_frames_pil = lompeosse_results.gamera_PILframes
 
-            # .-. TODO
+            # Combine PIL images from both sources into single frames (useful for the interactive window)
             self.validation_combined_frames_pil = combine_validation_frames(self.lompeosse_frames_pil, self.gamera_frames_pil)
-            
-            # Convert to CTkinter images
-            w1 = max(self.lompe_plot_frame.winfo_width() - 40, 1)  # 10px margin each side
-            h1 = max(self.lompe_plot_frame.winfo_height(), 1)
-            self.lompeosse_frames_tk = pil_to_ctk_images(self.lompeosse_frames_pil, resize_keep_aspect, w1, h1)
-            w2 = max(self.gamera_plot_frame.winfo_width() - 40, 1)  # 10px margin each side
-            h2 = max(self.gamera_plot_frame.winfo_height(), 1)    
-            self.gamera_frames_tk = pil_to_ctk_images(self.gamera_frames_pil, resize_keep_aspect, w2, h2)
-
-            # Initialize animation
-            self.validation_state = {"tracks": [],
-                                    "current_frame": 0,
-                                    "playing": True,
-                                    "job": None,
-                                    "delay": self.config.gif_speed,
-                                    "scheduler": self.validation_window.after, 
-                                    "cancel": self.validation_window.after_cancel}
 
         except Exception as e:
-            print("Error running display_lompe_input:", e)
-        
-            # Replace frames with a single “error” image
-            self.error_frame = make_error_frame(self.lompe_label.winfo_width(), self.lompe_label.winfo_height())
-            error_img1 = customtkinter.CTkImage(light_image=self.error_frame.resize((w1,h1), Image.LANCZOS), size=(w1,h1))
-            self.lompeosse_frames_tk = [error_img1]
-            self.error_frame = make_error_frame(self.gamera_label.winfo_width(), self.gamera_label.winfo_height())
-            error_img2 = customtkinter.CTkImage(light_image=self.error_frame.resize((w2,h2), Image.LANCZOS), size=(w2,h2))
-            self.gamera_frames_tk = [error_img2]
+            print("Can't load PIL images", e)
+            traceback.print_exc()
+
+            self.stop_pb(self.progress_validation)
 
             # Display error frame
-            self.anim_mgr.register_track(self.lompeosse_frames_tk,  self.lompe_label, self.master_state)
-            self.anim_mgr.register_track(self.gamera_frames_tk,  self.gamera_label, self.master_state)
-            self.anim_mgr.update_tracks(self.master_state)
-
-            raise RuntimeError from e
-
-        if hasattr(self, "progress_validation"):
-            self.progress_validation.stop()
-            self.progress_validation.destroy()
-
-        # Register/prepare frames for animated GIF
+            for label in (self.lompe_label, self.gamera_label):
+                error_img = make_error_frame(label)
+                label.configure(image=error_img, text="An error occurred...")
+                label.image = error_img
+        
+        # Convert to CTkinter images and register frames
+        self.lompeosse_frames_tk = pil_to_ctk_images(self.lompeosse_frames_pil, self.lompe_plot_frame)
+        self.gamera_frames_tk = pil_to_ctk_images(self.gamera_frames_pil, self.gamera_plot_frame)
         self.anim_mgr.register_track(self.lompeosse_frames_tk, self.lompe_label,  self.validation_state)
         self.anim_mgr.register_track(self.gamera_frames_tk,    self.gamera_label, self.validation_state)
 
-        # Place frame controls
+        self.stop_pb(self.progress_validation)
+
+        # Place frame controls and interactive window button
         self.validation_controls.pack(side="bottom", pady=5)
         self.interactive_wdw_validation.place(relx=0.97, rely=0.92, anchor="e")
+
+        self.set_buttons_state("normal")
 
         # Update validation window label
         self.status_label.configure(text="")
 
         # Play animation
-        self.play_validation()
+        self.anim_mgr.play_generic(state=self.validation_state)   
 
 
-#######
-# Helper functions 
-        
-    def keep_ratio(self, event):
-        """
-        Maintain fixed aspect ratio for the output frames 
-        when the container is resized.
-        """
-        container_w = event.width
-        container_h = event.height
-
-        panel_h = (container_h - 10) // 2
-
-        h = panel_h
-        w = int(h * self.aspect_ratio)
-
-        if w > container_w:
-            w = container_w
-            h = int(w / self.aspect_ratio)
-
-        self.frame_data.configure(width=w, height=h)
-        self.lompe_frame.configure(width=w, height=h)
-        
-    def apply_gif_parameters(self, update_state=True):
-        """
-        Validate and get GIF speed from the entry.
-        Optionally update the master/validation state if it exists.
-        Returns the validated speed.
-        """
-        try:
-            speed = int(self.entry_gifspeed.get())
-        except ValueError:
-            speed = self.default_speed
-
-        if speed < 0:
-            speed = self.default_speed
-
-        # reflect the final value in the UI
-        self.entry_gifspeed.delete(0, "end")
-        self.entry_gifspeed.insert(0, str(speed))
-
-        # If it already exists, update the animations with new speed
-        if update_state:
-            new_speed = speed
-            if hasattr(self, "master_state"):
-                self.master_state["delay"] = new_speed
-            # also update LompeOSSE validation animation
-            if hasattr(self, "validation_state"):
-                self.validation_state["delay"] = new_speed
-
-            print(f"Animation update: applied speed = {new_speed} ms per frame")
-
-        return speed
-
-    def update_l1_label(self, slider_val):
-            log_val = 10 ** slider_val # log scale
-            self.label_value_l1.configure(text=f"{log_val:.2f}")
-            # TODO is l1 = exponent or 1**exponent ??
-
-    def update_l2_label(self, slider_val):
-            log_val = 10 ** slider_val # log scale
-            self.label_value_l2.configure(text=f"{log_val:.2f}")
+    def stop_animation(self, state):
+        """Stop a running animation loop for the given animation state."""
+        if state is not None and state.get("job") is not None:
+            self.after_cancel(state["job"])
+            # state["job"] = None
             
-    def apply_new_regularization(self):
+    def init_animation_state(self, scheduler, cancel):
+        """ Initialize common "clock" for input and output animations (controls the timeline for both GIFs i.e, synchronize them)"""
+        
+        return {"tracks": [],
+                "frame_index": 0,
+                "playing": True,
+                "job": None,
+                "delay": self.config.gif_speed, 
+                "scheduler": self.after, 
+                "cancel": self.after_cancel}
+    
+    def update_play_pause_icons(self, buttons, is_playing):
+        """Update play/pause button icons to match animation state."""
 
-        # Get updated slider values
-        self.config.regularization_l1 = 10 ** self.slider_l1.get()
-        self.config.regularization_l2 = 10 ** self.slider_l2.get()
+        new_icon = self.icons.pause if is_playing else self.icons.play
 
-        # Run lompe with new parameters
-        self.trigger_lompe_analysis()
-
-
-    def interactive_window_input(self):
-        open_interactive_window(self.data_frames_pil, title="Lompe input")
-
-    def interactive_window_output(self):
-        open_interactive_window(self.lompe_frames_pil, title="Lompe output")
-
-    def interactive_window_validation(self):
-        # open_interactive_window(self.lompeosse_frames_pil, title="LompeOSSE output (validation)")
-        open_interactive_window(self.validation_combined_frames_pil, title="LompeOSSE output (validation)", figsize=(15,10))
-
-    def play(self):
-        self.anim_mgr.play_generic(state=self.master_state)
-    def play_validation(self):
-        self.anim_mgr.play_generic(state=self.validation_state)
+        for btn in buttons:
+            btn.configure(image=new_icon)
 
     def toggle_play_pause(self):
         """
-        Run the play/pause function + change the play/pause the icon for the outputs
+        Run the play/pause function
         """
         buttons = [self.btn_play_pause_data]
         if hasattr(self, "btn_play_pause_lompe"):
             buttons.append(self.btn_play_pause_lompe)
 
-        playing = self.anim_mgr.toggle_play_pause_generic(state=self.master_state, buttons=buttons)
-
-        icon = self.icons.pause if playing else self.icons.play
-        for btn in buttons:
-            btn.configure(image=icon)
-
+        is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.master_state)
+        self.update_play_pause_icons(buttons, is_playing)
+            
     def toggle_play_pause_validation(self):
-        buttons=[self.btn_play_pause_validation]
         
-        playing = self.anim_mgr.toggle_play_pause_generic(state=self.validation_state, buttons=buttons)
-
-        icon = self.icons.pause if playing else self.icons.play
-        for btn in buttons:
-            btn.configure(image=icon)
+        buttons=[self.btn_play_pause_validation]
+        is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.validation_state)
+        self.update_play_pause_icons(buttons, is_playing)
 
     def prev_frame(self):
         self.anim_mgr.step_frame_generic(state=self.master_state, step=-1, toggle_callback=self.toggle_play_pause)
@@ -704,6 +686,19 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.step_frame_generic(state=self.validation_state, step=-1, toggle_callback=self.toggle_play_pause)
     def next_frame_validation(self):
         self.anim_mgr.step_frame_generic(state=self.validation_state, step=+1, toggle_callback=self.toggle_play_pause)
+
+####################
+####################
+# # Functions for opening matplotlib viewers
+
+    def interactive_window_input(self):
+        open_interactive_window(self.data_frames_pil, title="Lompe input")
+
+    def interactive_window_output(self):
+        open_interactive_window(self.lompe_frames_pil, title="Lompe output")
+
+    def interactive_window_validation(self):
+        open_interactive_window(self.validation_combined_frames_pil, title="LompeOSSE output (validation)", figsize=(15,10))
 
 
 
