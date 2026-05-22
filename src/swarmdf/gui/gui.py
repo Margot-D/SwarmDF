@@ -30,7 +30,7 @@ from swarmdf.gui.ui.input_panels import build_input_panels
 from swarmdf.gui.ui.output_panels import build_output_panels
 from swarmdf.gui.ui.validation_window import open_validation_window
 from swarmdf.gui.ui.display_helpers import compute_widget_size, pil_to_ctk_images, open_interactive_window, combine_validation_frames
-from swarmdf.gui.ui.utils import validate_entry, make_error_frame, resize_keep_aspect
+from swarmdf.gui.ui.helpers.utils import validate_entry, make_error_frame, resize_keep_aspect
 from swarmdf.gui.ui.animation_manager import AnimationManager
 
 import warnings
@@ -266,22 +266,22 @@ class SwarmDFGUI(customtkinter.CTk):
         # demo mode
         demo_flag = bool(self.switch_demo.get())
 
-        return SwarmDFConfig(sat_id,
-                             start_time, end_time, timestep,
-                             datasets2download,
-                             conductance_method,
-                             conductance_params,
-                             grid_params,
-                             run_lompe_flag,
-                             l1, l2,
-                             speed,
-                             figw, figh,
-                             mag,
-                             show_data,
-                             run_validation_flag,
-                             timeoff, snapshot,
-                             generate_script_flag, 
-                             demo_flag)
+        return SwarmDFConfig(sat_id=sat_id,
+                             start_time=start_time, end_time=end_time, timestep=timestep,
+                             datasets2download=datasets2download,
+                             grid_params=grid_params,
+                             run_lompe_flag=run_lompe_flag,
+                             conductance_method=conductance_method,
+                             conductance_params=conductance_params,
+                             regularization_l1=l1, regularization_l2=l2,
+                             run_validation_flag=run_validation_flag,
+                             time_offset=timeoff, snapshot=snapshot,
+                             generate_script_flag=generate_script_flag, 
+                             demo_flag=demo_flag,
+                             gif_speed=speed,
+                             figw=figw, figh=figh,
+                             mag_coords_flag=mag,
+                             show_all_data_flag=show_data)
 
     def get_start_end_times(self):
 
@@ -378,17 +378,17 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.checkbox_magcoords.configure(state="disabled")
         self.update_idletasks()
-        self.config.mag = bool(self.checkbox_magcoords.get())
+        self.config.mag_coords_flag = bool(self.checkbox_magcoords.get())
 
         try:
-            lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag)
+            lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag_coords_flag)
             input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
                                                         self.input_results.analysis_times,
                                                         self.input_results.data_objects_per_grid,
                                                         self.config.figh,
                                                         self.config.figw,
                                                         self.config.gif_speed,
-                                                        self.config.show_data)
+                                                        self.config.show_all_data_flag)
             self.input_results.input_PILframes = input_frames
             self.display_lompe_input(self.input_results)
 
@@ -588,7 +588,10 @@ class SwarmDFGUI(customtkinter.CTk):
 # Helper functions 
         
     def keep_ratio(self, event):
-
+        """
+        Maintain fixed aspect ratio for the output frames 
+        when the container is resized.
+        """
         container_w = event.width
         container_h = event.height
 
@@ -647,8 +650,8 @@ class SwarmDFGUI(customtkinter.CTk):
     def apply_new_regularization(self):
 
         # Get updated slider values
-        self.config.l1 = 10 ** self.slider_l1.get()
-        self.config.l2 = 10 ** self.slider_l2.get()
+        self.config.regularization_l1 = 10 ** self.slider_l1.get()
+        self.config.regularization_l2 = 10 ** self.slider_l2.get()
 
         # Run lompe with new parameters
         self.trigger_lompe_analysis()
