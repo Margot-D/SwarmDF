@@ -423,9 +423,9 @@ class SwarmDFGUI(customtkinter.CTk):
         self.button_interactive_wdw_output.configure(state="disabled")
         self.set_buttons_state("disabled")
 
-        def worker():
+        def lompe_worker():
             try:
-                self.output_results = compute_swarmdf_output(self.config, self.input_results)
+                self.output_results = compute_swarmdf_output(self.config, self.input_results) 
                 self.after(0, lambda: self.display_lompe_output(self.output_results)) # plotting and GUI update must go through after
 
             except Exception as e:
@@ -433,7 +433,7 @@ class SwarmDFGUI(customtkinter.CTk):
                 # messagebox.showerror("Lompe run failed", str(e))
                 self.stop_pb(self.progress_output)
 
-        threading.Thread(target=worker, daemon=True).start()
+        threading.Thread(target=lompe_worker, daemon=True).start()
 
 
     def wait_for_lompe_then_validate(self):
@@ -477,15 +477,16 @@ class SwarmDFGUI(customtkinter.CTk):
         self.config.show_all_data_flag = bool(self.checkbox_showdata.get())
 
         try:
-            lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag_coords_flag)
-            input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
-                                                        self.input_results.analysis_times,
-                                                        self.input_results.data_objects_per_grid,
-                                                        self.config.figh,
-                                                        self.config.figw,
-                                                        self.config.gif_speed,
-                                                        self.config.show_all_data_flag)
-            self.input_results.input_PILframes = input_frames
+            # lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag_coords_flag)
+            # input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
+            #                                             self.input_results.analysis_times,
+            #                                             self.input_results.data_objects_per_grid,
+            #                                             self.config.mag_coords_flag,
+            #                                             self.config.figh,
+            #                                             self.config.figw,
+            #                                             self.config.gif_speed,
+            #                                             self.config.show_all_data_flag)
+            # self.input_results.input_PILframes = input_frames
             self.display_lompe_input(self.input_results)
 
         except Exception as e:
@@ -513,7 +514,7 @@ class SwarmDFGUI(customtkinter.CTk):
         try: 
             # Extract PIL images
             # self.data_frames_pil = input_results.input_PILframes
-            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_results).input_PILframes
+            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_results) #.input_PILframes
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -557,8 +558,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            # self.lompe_frames_pil = output_PILframes
-            self.lompe_frames_pil = render_swarmdf_output(self.config, output_results).output_PILframes
+            self.lompe_frames_pil = render_swarmdf_output(self.config, output_results)
 
         except Exception as e:
             print("Can't load PIL images", e)
