@@ -47,7 +47,7 @@ def build_right_sidebar(gui):
         CustomTooltip(gui.entry_figw, "Figure width (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
 
         # Option to switch between geographic and magnetic coords (polar plot)
-        gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords', command=gui.replot_lompe_input)
+        gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords') #, command=gui.replot_lompe_input
         gui.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(30, 0), sticky="ew")
         CustomTooltip(gui.checkbox_magcoords, "The polar plot (top panel) will be shown in magnetic coordinates. Default is geographic") #TODO change that to opposite
 
@@ -56,9 +56,11 @@ def build_right_sidebar(gui):
         gui.checkbox_showdata.grid(row=3, column=0, columnspan=2, padx=20, pady=(30, 0), sticky="ew")
         gui.checkbox_showdata.select()
 
-        # Re-run SwarmDF button
-        gui.button_runSwarmDF2 = customtkinter.CTkButton(gui.tab_plot, command=gui.run_swarmdf, text='Run SwarmDF')
-        gui.button_runSwarmDF2.grid(row=4, column=0, columnspan=2, pady=(35, 10))
+        # Apply button (replot SwarmDF input)
+        gui.button_replot_input = customtkinter.CTkButton(gui.tab_plot, command=gui.update_lompe_input, text='Apply')
+        gui.button_replot_input.grid(row=4, column=0, columnspan=2, pady=(35, 10))
+        CustomTooltip(gui.button_replot_input, "Apply changes to input plot (top panel)")
+        gui.button_replot_input.configure(state="disabled")
 
         # TAB2
         # GIF speed parameter 
@@ -73,6 +75,8 @@ def build_right_sidebar(gui):
         # Apply button
         gui.button_apply = customtkinter.CTkButton(gui.tab_gif, text="Apply", command=gui.apply_gif_parameters)
         gui.button_apply.grid(row=3, column=0, pady=(45, 10))
+        CustomTooltip(gui.button_apply, text="Apply new speed to both panels.")
+        gui.button_apply.configure(state="disabled")
 
         ######
         # Regularization parameters
@@ -123,9 +127,10 @@ def build_right_sidebar(gui):
         gui.label_value_l2.grid(row=2, column=2, padx=(5,10), pady=(15,0), sticky="w")
 
         # Apply button (re-run SwarmDF)
-        gui.lompe_button2 = customtkinter.CTkButton(master=gui.regul_section, text="Apply", command=gui.apply_new_regularization)
-        gui.lompe_button2.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(50,10))
-        CustomTooltip(gui.lompe_button2, "This will re-run Lompe \n with the new regularizaton parameters")
+        gui.button_runlompe = customtkinter.CTkButton(master=gui.regul_section, text="Apply", command=gui.apply_new_regularization)
+        gui.button_runlompe.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(50,10))
+        CustomTooltip(gui.button_runlompe, "This will re-run Lompe \n with the new regularizaton parameters")
+        gui.button_runlompe.configure(state="disabled")
 
         ######
         # Validation
@@ -157,6 +162,7 @@ def build_right_sidebar(gui):
         gui.button_validate = customtkinter.CTkButton(gui.validation_section, text="Validation", command=gui.trigger_lompeosse_analysis)
         gui.button_validate.grid(row=4, column=0, pady=(50, 10))       
         CustomTooltip(gui.button_validate, "This will run LompeOSSE \n (validation routine for experiment setup)")
+        gui.button_validate.configure(state="disabled")
 
         # Link to LompeOSSE documentation TODO fix link!
         gui.link_lompeosse_docu = customtkinter.CTkLabel(gui.validation_section, text="LompeOSSE documentation", text_color="green", cursor="hand2")

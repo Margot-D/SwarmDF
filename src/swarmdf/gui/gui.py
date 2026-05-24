@@ -20,7 +20,7 @@ customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark
 customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "green", "dark-blue"
 
 from swarmdf import * # core functions
-from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation, render_swarmdf_input, render_swarmdf_output
+from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation, render_swarmdf_input, render_swarmdf_output, render_swarmdf_validation
 
 from swarmdf.config import SwarmDFConfig
 from swarmdf.gui.ui.sidebar_left import build_left_sidebar
@@ -77,8 +77,6 @@ class SwarmDFGUI(customtkinter.CTk):
             entry.bind("<FocusOut>", lambda e, entry=entry, name=name, default=default, min_val=min_val, max_val=max_val: 
                         self.validate_entry(entry, name, default, min_val, max_val))
 
-#TODO add same validation system in start/end times
-
     #################
     # Run SwarmDF
 
@@ -96,10 +94,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.switch_pythoncode.get():
-            if self.entry_codename.get():
-                fn= self.entry_codename.get()
-            else:
-                fn= 'SwarmDF_script.py' # default file name
+            fn = self.entry_codename.get() if self.entry_codename.get() else 'SwarmDF_script.py' # default file name
             generate_python_code(self.config, fn)
 
         # Progress bar for Lompe input panel
@@ -245,6 +240,11 @@ class SwarmDFGUI(customtkinter.CTk):
         # Run lompe with new parameters
         self.trigger_lompe_analysis()
         
+    def update_lompe_input(self):
+        self.config.mag_coords_flag = bool(self.checkbox_magcoords.get())
+        self.config.show_all_data_flag = bool(self.checkbox_showdata.get())
+        self.display_swarmdf_input(self.input_results)
+
 ####################
 ####################
 # # Functions for collecting GUI input
@@ -385,10 +385,16 @@ class SwarmDFGUI(customtkinter.CTk):
         
     def set_buttons_state(self, state):
         self.button_runSwarmDF.configure(state=state)
-        self.button_runSwarmDF2.configure(state=state)
+        self.button_replot_input.configure(state=state)
         self.button_apply.configure(state=state)
-        self.lompe_button2.configure(state=state)
+        self.button_runlompe.configure(state=state)
         self.button_validate.configure(state=state)
+
+    def stop_pb(self, widget):
+        """Stop and destroy progressbar if it exists"""
+        if widget is not None:
+            widget.stop()
+            widget.destroy()
 
 ####################
 ####################
@@ -438,14 +444,13 @@ class SwarmDFGUI(customtkinter.CTk):
 
     def trigger_lompeosse_analysis(self):
         """Runs LompeOSSE when requested"""
-        # TODO probably have to fix this in a similar way 
 
         open_validation_window(self)
         self.update_idletasks()
 
         self.set_buttons_state("disabled")
         
-        def worker():
+        def lompeOSSE_worker():
             try:
                 validation_results = compute_swarmdf_validation(self.config, self.output_results) #TODO replace with lompe_models
                 self.after(0, lambda: self.display_lompeosse_validation(validation_results))
@@ -453,59 +458,20 @@ class SwarmDFGUI(customtkinter.CTk):
             except Exception as e:
                 self.after(0, lambda: messagebox.showerror("LompeOSSE failed", str(e)))
 
-        threading.Thread(target=worker, daemon=True).start()
-        
-
-    def replot_lompe_input(self):
-        """Rebuild Lompe input plots from the latest input results."""
-
-        if not hasattr(self, "input_results") or not hasattr(self, "datasets") or getattr(self, "config", None) is None:
-            return
-
-        self.checkbox_magcoords.configure(state="disabled")
-        self.update_idletasks()
-        self.config.mag_coords_flag = bool(self.checkbox_magcoords.get())
-        self.config.show_all_data_flag = bool(self.checkbox_showdata.get())
-
-        try:
-            # lompe_input = LompeInput(self.config.sat_id, self.config.start_time, self.config.end_time, self.datasets, self.config.mag_coords_flag)
-            # input_frames = lompe_input.plot_lompe_input(self.input_results.grids,
-            #                                             self.input_results.analysis_times,
-            #                                             self.input_results.data_objects_per_grid,
-            #                                             self.config.mag_coords_flag,
-            #                                             self.config.figh,
-            #                                             self.config.figw,
-            #                                             self.config.gif_speed,
-            #                                             self.config.show_all_data_flag)
-            # self.input_results.input_PILframes = input_frames
-            self.display_swarmdf_input(self.input_results)
-
-        except Exception as e:
-            print("Lompe input replot failed:", e)
-            messagebox.showerror("Lompe input replot failed", str(e))
-
-        finally:
-            self.checkbox_magcoords.configure(state="normal")
-
-    def stop_pb(self, widget):
-        """Stop and destroy progressbar if it exists"""
-        if widget is not None:
-            widget.stop()
-            widget.destroy()
+        threading.Thread(target=lompeOSSE_worker, daemon=True).start()
+    
 
 ####################
 ####################
 # # Functions for displaying output animations in GUI
 
-    def display_swarmdf_input(self, input_results):
+    def display_swarmdf_input(self, input_to_lompe):
 
         self.stop_animation(getattr(self, "master_state", None))
         self.master_state = self.init_animation_state(self.after, self.after_cancel)
 
         try: 
-            # Extract PIL images
-            # self.data_frames_pil = input_results.input_PILframes
-            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_results) #.input_PILframes
+            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -545,11 +511,11 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.play_generic(state=self.master_state)
 
 
-    def display_swarmdf_output(self, output_results):
+    def display_swarmdf_output(self, lompe_models):
 
         try:
             # Extract PIL images 
-            self.lompe_frames_pil = render_swarmdf_output(self.config, output_results)
+            self.lompe_frames_pil = render_swarmdf_output(self.config, lompe_models)
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -587,8 +553,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            self.lompeosse_frames_pil = lompeosse_results.lompeosse_PILframes
-            self.gamera_frames_pil = lompeosse_results.gamera_PILframes
+            self.lompeosse_frames_pil, self.gamera_frames_pil = render_swarmdf_validation(self.config, lompeosse_results)
 
             # Combine PIL images from both sources into single frames (useful for the interactive window)
             self.validation_combined_frames_pil = combine_validation_frames(self.lompeosse_frames_pil, self.gamera_frames_pil)

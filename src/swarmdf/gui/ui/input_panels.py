@@ -296,19 +296,38 @@ class DateTimeEntry(customtkinter.CTkFrame):
         if text == "":
             event.widget.insert(0, placeholder)
             # event.widget.configure(text_color="gray70")
-        else:
-            # --- Automatic zero-padding ---
-            if index > 0:  # skip year
-                lengths = [4, 2, 2, 2, 2, 2]
-                if text.isdigit() and len(text) < lengths[index]:
-                    text = text.zfill(lengths[index])
-                    event.widget.delete(0, "end")
-                    event.widget.insert(0, text)
-            # event.widget.configure(text_color="white")
+            return 
+        
+        # Must be integer
+        if not text.isdigit():
+            messagebox.showerror("Invalid input", f"{placeholder} must be a number.")
+
+            event.widget.delete(0, "end")
+            event.widget.insert(0, placeholder)
+
+            event.widget.focus_set()
+            event.widget.icursor(0)
+
+            return
+
+        # --- Automatic zero-padding ---
+        if index > 0:  # skip year
+            lengths = [4, 2, 2, 2, 2, 2]
+            if text.isdigit() and len(text) < lengths[index]:
+                text = text.zfill(lengths[index])
+                event.widget.delete(0, "end")
+                event.widget.insert(0, text)
+        # event.widget.configure(text_color="white")
 
     def auto_advance(self, event, index):
+
+        # Ignore navigation keys
+        if event.keysym in ("Tab", "Left", "Right", "Up", "Down"):
+            return
+
         lengths = [4, 2, 2, 2, 2, 2]
-        if event.widget.get().isdigit() and len(event.widget.get()) >= lengths[index] and index < len(self.entries) - 1:
+
+        if (event.widget.get().isdigit() and len(event.widget.get()) >= lengths[index] and index < len(self.entries) - 1):
             self.entries[index + 1].focus()
 
     def open_calendar(self):
@@ -360,7 +379,7 @@ class DateTimeEntry(customtkinter.CTkFrame):
             top.destroy()
 
         customtkinter.CTkButton(top, text="OK", command=set_date).pack(pady=(0, 10))
-
+            
     def get_datetime(self):
         try:
             vals = [e.get() for e in self.entries]
