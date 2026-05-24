@@ -12,7 +12,7 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-from swarmdf.gui.config import SwarmDFConfig
+from swarmdf.config import SwarmDFConfig
 from swarmdf import *
 
 matplotlib.rcParams['figure.dpi'] = 300
@@ -45,7 +45,6 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        run_validation_flag=False,
                        time_offset=0,
                        snapshot=0,
-                       generate_script_flag=True,
                        demo_flag=demo)
 
 ######################

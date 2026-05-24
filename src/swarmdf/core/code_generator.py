@@ -42,7 +42,6 @@ config = SwarmDFConfig(sat_id={config.sat_id!r},
                        run_validation_flag={config.run_validation_flag!r},
                        timeoff={config.time_offset!r},
                        snapshot={config.snapshot!r},
-                       generate_script_flag={config.generate_script_flag!r}, 
                        demo_flag={config.demo_flag!r})
 """
 
@@ -156,20 +155,20 @@ if config.run_validation_flag:
 
 # results = run_swarmdf_pipeline(config)
 
-# for frame in results.input.input_PILframes:
+# for frame in result.plots.input_frames:
 #     plt.figure(figsize=(8, 6))
 #     plt.imshow(np.array(frame))
 #     plt.axis("off")
 #     plt.show()
 
 # if config.run_lompe_flag:
-#     for frame in results.output.output_PILframes:
+#     for frame in result.plots.output_frames:
 #         plt.figure(figsize=(8, 6))
 #         plt.imshow(np.array(frame))
 #         plt.axis("off")
 #         plt.show()
 
-# if config.run_validation_flag:
+# if config.run_validation_flag: # use result.plots.validation_frames
 #     for framea, frameb in zip(results.validation.lompeOSSE_PILframes, results.validation.gamera_PILframes):
 #         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 #         ax[0].imshow(np.array(framea))

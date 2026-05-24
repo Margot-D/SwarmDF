@@ -39,7 +39,8 @@ class DataManager:
             print(f"Using sample datasets for example event {start_time} -- {end_time}")
         else:
             self.data_path = str(package_root / "data") + "/"
-                
+            print("Downloading/retrieving data...")
+
         # List of dates covering the full time interval
         self.event_dates = pd.date_range(start=start_time, end=end_time, freq="D")
         self.event_dates = [d.strftime("%Y-%m-%d") for d in self.event_dates]
@@ -65,8 +66,6 @@ class DataManager:
 
     def fetch_data(self, event_date, selected_sources):
         """ Check if data files for selected sources already exist in the user data folder; download them if needed"""
-
-        print("Downloading/retrieving data...")
 
         required_sources = {''}  # always needed
         sources_to_fetch = set(selected_sources) | required_sources

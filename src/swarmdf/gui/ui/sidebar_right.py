@@ -57,7 +57,7 @@ def build_right_sidebar(gui):
         gui.checkbox_showdata.select()
 
         # Re-run SwarmDF button
-        gui.button_runSwarmDF2 = customtkinter.CTkButton(gui.tab_plot, command=gui.run_swarm_df, text='Run SwarmDF')
+        gui.button_runSwarmDF2 = customtkinter.CTkButton(gui.tab_plot, command=gui.run_swarmdf, text='Run SwarmDF')
         gui.button_runSwarmDF2.grid(row=4, column=0, columnspan=2, pady=(35, 10))
 
         # TAB2

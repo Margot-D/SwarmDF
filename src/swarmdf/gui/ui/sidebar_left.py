@@ -34,7 +34,7 @@ def build_left_sidebar(gui):
 
     # "Run SwarmDF" button
     gui.button_runSwarmDF = customtkinter.CTkButton(gui.frame_sidebar, 
-                                                        command=gui.run_swarm_df, 
+                                                        command=gui.run_swarmdf, 
                                                         text='Run SwarmDF',
                                                         width=160, height=80, font=("Arial", 18))
     gui.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=(100,10))
