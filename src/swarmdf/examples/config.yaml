@@ -1,0 +1,45 @@
+#TODO add comments? 
+
+sat_id: "Swarm A"
+
+start_time: "2014-12-15 01:19:00"
+end_time: "2014-12-15 01:20:00"
+
+timestep: 30.0
+
+datasets2download:
+  - swarm_mag
+  - superdarn
+  - supermag
+  - iridium_ampere
+  - dmsp_ssies17
+  - dmsp_ssies18
+
+conductance_method: "Zhang & Paxton model"
+conductance_params:
+  kp: 6.0
+  f107: 100.0
+  background: 2.0
+
+grid_params:
+  L: 2000.0
+  W: 1500.0
+  Lres: 200.0
+  Wres: 200.0
+  wshift: 0.0
+
+# run_lompe_flag: true
+# regularization_l1: 1.0
+# regularization_l2: 1.0
+
+# run_validation_flag: false
+# time_offset: 0
+# snapshot: 0
+
+# gif_speed: 550
+# figw: 12.2
+# figh: 9.0
+# mag_coords_flag: false
+# show_all_data_flag: true
+
+# demo_flag: false
