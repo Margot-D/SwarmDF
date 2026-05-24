@@ -102,6 +102,6 @@ def compute_swarmdf_validation(config, swarmdf_output : SwarmDFOutput):
 
 def render_swarmdf_validation(config, swarmdf_validation: SwarmDFValidation):
     
-    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(swarmdf_validation.lompeosse_models, swarmdf_validation.gamera_output, config.figh, config.gif_speed)
+    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(swarmdf_validation.lompeosse_PILframes, swarmdf_validation.gamera_PILframes, config.figh, config.gif_speed)
     
     return lompeosse_PILframes, gamera_PILframes
