@@ -75,7 +75,7 @@ def build_right_sidebar(gui):
         # Apply button
         gui.button_apply = customtkinter.CTkButton(gui.tab_gif, text="Apply", command=gui.apply_gif_parameters)
         gui.button_apply.grid(row=3, column=0, pady=(45, 10))
-        CustomTooltip(gui.button_apply, text="Apply new speed to both panels.")
+        CustomTooltip(gui.button_apply, text="Apply new speed to GIFs")
         gui.button_apply.configure(state="disabled")
 
         ######
@@ -126,8 +126,8 @@ def build_right_sidebar(gui):
         gui.label_value_l2 = customtkinter.CTkLabel(gui.regul_section, text=f"{gui.slider_l2.get():.1f}")
         gui.label_value_l2.grid(row=2, column=2, padx=(5,10), pady=(15,0), sticky="w")
 
-        # Apply button (re-run SwarmDF)
-        gui.button_runlompe = customtkinter.CTkButton(master=gui.regul_section, text="Apply", command=gui.apply_new_regularization)
+        # Rerun Lompe button
+        gui.button_runlompe = customtkinter.CTkButton(master=gui.regul_section, text="Run Lompe", command=gui.apply_new_regularization)
         gui.button_runlompe.grid(row=3, column=0, columnspan=3, padx=(10,10), pady=(50,10))
         CustomTooltip(gui.button_runlompe, "This will re-run Lompe \n with the new regularizaton parameters")
         gui.button_runlompe.configure(state="disabled")
