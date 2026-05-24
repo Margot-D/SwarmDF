@@ -1,38 +1,21 @@
 """
-SwarmDF command-line entrypoint (allows SwarmDF to be executed from a terminal or scripts
-without launching the graphical interface).
+SwarmDF command-line entry point.
 
-Runs the full SwarmDF pipeline outside the GUI.
+Run the full SwarmDF pipeline from a terminal or script without
+launching the graphical interface.
 
-Configuration TODO NO
--------------
-A fully defined SwarmDFConfig object is required.
-
-It can be created in one of two ways:
-- manually in Python:
-    config = SwarmDFConfig(...)
-- using a YAML file (see config.yaml for an example)
-
-Alternatively, a built-in demonstration configuration can be used:
-    config = SwarmDFConfig.demo()
-
-Command-line usage
-------------------
-
-Run with a YAML configuration:
+A SwarmDFConfig object is required. The pipeline can be executed 
+using either:
+- a YAML configuration file (see `examples/config.yaml`): 
     python run_swarmdf.py --config config.yaml
-
-Or run demo mode:
+- demo mode:
     python run_swarmdf.py --demo
 
-Outputs
+Returns
 -------
 SwarmDFResults
-    Structured container holding:
-    - input data products
-    - Lompe inversion results
-    - optional LompeOSSE validation results
-    - generated visualization frames (PIL images / GIFs)
+    Container holding input data products, Lompe inversion results, optional
+    validation results, and generated visualization frames (PIL images and GIFs).
 """
 
 from swarmdf.config import SwarmDFConfig
@@ -42,7 +25,10 @@ import argparse
 import datetime
 
 def load_config(path):
-    "" ""
+    """
+    Load a YAML configuration file into a SwarmDFConfig object.
+    Missing parameters are filled using SwarmDFConfig.default().
+    """
 
     with open(path, "r") as f:
         user_cfg = yaml.safe_load(f)
