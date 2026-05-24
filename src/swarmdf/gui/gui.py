@@ -98,7 +98,8 @@ class SwarmDFGUI(customtkinter.CTk):
             generate_python_code(self.config, fn)
 
         # Progress bar for Lompe input panel
-        self.progress_input.start() #TODO maybe go back to defining it all here? does not work on re-run right now
+        self.progress_input.grid()
+        self.progress_input.start()
 
         # Initialize animation manager
         self.anim_mgr = AnimationManager()
@@ -123,7 +124,7 @@ class SwarmDFGUI(customtkinter.CTk):
             if self.config.run_lompe_flag:
                 self.trigger_lompe_analysis()
             else:
-                self.button_runlompe_temp.grid(row=1, column=0, pady=(0, 20))
+                self.button_runlompe_temp.grid()
                 self.set_buttons_state("normal")
 
             # LompeOSSE validation (once Lompe is done)
@@ -386,10 +387,10 @@ class SwarmDFGUI(customtkinter.CTk):
         self.button_validate.configure(state=state)
 
     def stop_pb(self, widget):
-        """Stop and destroy progressbar if it exists"""
+        """Stop and hide progressbar if it exists"""
         if widget is not None:
             widget.stop()
-            widget.destroy()
+            widget.grid_remove()
 
 ####################
 ####################
@@ -403,11 +404,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Remove intermediate "Run Lompe" button if it exists
         if self.button_runlompe_temp:
-            self.button_runlompe_temp.grid_forget()
+            self.button_runlompe_temp.grid_remove()
 
-        # Progress bar for Lompe output panel #TODO see if i can move this to output_panels.py (make input progress bar work first)
-        self.progress_output = customtkinter.CTkProgressBar(self.frame_output, mode="indeterminate")
-        self.progress_output.grid(row=1, column=0, pady=(30, 10))
+        # Progress bar for Lompe output panel
+        self.progress_output.grid()
         self.progress_output.start()
 
         # Disable buttons until Lompe is done running
@@ -565,7 +565,7 @@ class SwarmDFGUI(customtkinter.CTk):
             self.stop_pb(self.progress_validation)
 
             # Display error frame
-            for label in (self.lompe_label, self.gamera_label):
+            for label in (self.label_lompeosse, self.label_gamera):
                 error_img = make_error_frame(label)
                 label.configure(image=error_img, text="An error occurred...")
                 label.image = error_img
@@ -573,8 +573,8 @@ class SwarmDFGUI(customtkinter.CTk):
         # Convert to CTkinter images and register frames
         self.lompeosse_ctk_frames = pil_to_ctk_images(self.lompeosse_pil_frames, self.frame_lompeosse)
         self.gamera_ctk_frames = pil_to_ctk_images(self.gamera_pil_frames, self.frame_gamera)
-        self.anim_mgr.register_track(self.lompeosse_ctk_frames, self.lompe_label,  self.validation_state)
-        self.anim_mgr.register_track(self.gamera_ctk_frames,    self.gamera_label, self.validation_state)
+        self.anim_mgr.register_track(self.lompeosse_ctk_frames, self.label_lompeosse, self.validation_state)
+        self.anim_mgr.register_track(self.gamera_ctk_frames, self.label_gamera, self.validation_state)
 
         self.stop_pb(self.progress_validation)
 

@@ -31,10 +31,11 @@ def build_plot_panels(gui):
     # GIF controls and interactive window
     gui.input_ui = create_plot_controls(gui, gui.frame_input, "input")
 
-    # Progress bar #TODO fix 
+    # Progress bar 
     gui.progress_input = customtkinter.CTkProgressBar(gui.frame_input, mode="indeterminate")
     gui.progress_input.grid(row=1, column=0, pady=(30, 10))
-    
+    gui.progress_input.grid_remove()
+
     ##############
     # Output panel
 
@@ -58,8 +59,12 @@ def build_plot_panels(gui):
     # Run Lompe (temporary button)
     gui.button_runlompe_temp = customtkinter.CTkButton(master=gui.frame_output, text="Run Lompe analysis", command=gui.trigger_lompe_analysis, width=170, height=40)
     gui.button_runlompe_temp.grid(row=1, column=0, pady=(0, 20))
-    gui.button_runlompe_temp.grid_forget()
+    gui.button_runlompe_temp.grid_remove()
 
+    # Progress bar
+    gui.progress_output = customtkinter.CTkProgressBar(gui.frame_output, mode="indeterminate")
+    gui.progress_output.grid(row=1, column=0, pady=(30, 10))
+    gui.progress_output.grid_remove()
 
 def create_plot_controls(gui, parent, kind):
 
