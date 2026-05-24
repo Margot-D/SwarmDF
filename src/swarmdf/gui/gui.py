@@ -19,11 +19,10 @@ import customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "green", "dark-blue"
 
-from swarmdf import *
-
+from swarmdf import * # core functions
 from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation, render_swarmdf_input, render_swarmdf_output
 
-from swarmdf.gui.config import SwarmDFConfig
+from swarmdf.config import SwarmDFConfig
 from swarmdf.gui.ui.sidebar_left import build_left_sidebar
 from swarmdf.gui.ui.sidebar_right import build_right_sidebar
 from swarmdf.gui.ui.input_panels import build_input_panels
@@ -31,9 +30,6 @@ from swarmdf.gui.ui.output_panels import build_output_panels
 from swarmdf.gui.ui.validation_window import open_validation_window
 from swarmdf.gui.ui.helpers.image_display import *
 from swarmdf.gui.ui.helpers.animation_manager import AnimationManager
-
-import warnings
-# warnings.filterwarnings("ignore", category=UserWarning)
 
 class SwarmDFGUI(customtkinter.CTk):
     def __init__(self):
@@ -81,10 +77,12 @@ class SwarmDFGUI(customtkinter.CTk):
             entry.bind("<FocusOut>", lambda e, entry=entry, name=name, default=default, min_val=min_val, max_val=max_val: 
                         self.validate_entry(entry, name, default, min_val, max_val))
 
-    #################
-    # Run SwarmDF analysis
+#TODO add same validation system in start/end times
 
-    def run_swarm_df(self):
+    #################
+    # Run SwarmDF
+
+    def run_swarmdf(self):
 
         # Disable buttons when SwarmDF starts running 
         self.set_buttons_state("disabled")
@@ -94,20 +92,14 @@ class SwarmDFGUI(customtkinter.CTk):
             self.validate_entry(entry, name, default, min_val, max_val)
 
        # Collect user input
-        self.config = self.collect_user_config()
-        # if self.config is None: #TODO check if useful
-        #     self.button_runSwarmDF.configure(state="normal")
-        #     return
+        self.config = self.build_config_from_gui()
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
-        if self.config.generate_script_flag:
-
-            # filename
+        if self.switch_pythoncode.get():
             if self.entry_codename.get():
                 fn= self.entry_codename.get()
             else:
-                fn= 'SwarmDF_script.py'
-        
+                fn= 'SwarmDF_script.py' # default file name
             generate_python_code(self.config, fn)
 
         # Progress bar for Lompe input panel
@@ -118,11 +110,11 @@ class SwarmDFGUI(customtkinter.CTk):
         # Initialize animation manager
         self.anim_mgr = AnimationManager()
 
-        # Schedule heavy part of SwarmDF AFTER letting the GUI update
-        self.after(100, self._do_swarm_df)
+        # Schedule heavy part of SwarmDF after letting the GUI update
+        self.after(100, self._do_swarmdf)
     
-    def _do_swarm_df(self):
-        """SwarmDF pipeline"""
+    def _do_swarmdf(self):
+        """SwarmDF pipeline for GUI"""
 
         print("--- Running SwarmDF --- ")
 
@@ -132,7 +124,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
             # Input to Lompe
             self.input_results = compute_swarmdf_input(self.config, self.datasets) 
-            self.display_lompe_input(self.input_results)
+            self.display_swarmdf_input(self.input_results)
 
             # Lompe output
             if self.config.run_lompe_flag:
@@ -257,7 +249,7 @@ class SwarmDFGUI(customtkinter.CTk):
 ####################
 # # Functions for collecting GUI input
 
-    def collect_user_config(self):
+    def build_config_from_gui(self):
 
         # satellite ID
         sat_id = self.optmenu_satellite.get()
@@ -341,9 +333,6 @@ class SwarmDFGUI(customtkinter.CTk):
         timeoff = int(self.entry_Gtimeoff.get())
         snapshot = int(self.entry_Gsnapshot.get())
 
-        # Python script flag
-        generate_script_flag = bool(self.switch_pythoncode.get())
-            
         # demo mode
         demo_flag = bool(self.switch_demo.get())
 
@@ -357,7 +346,6 @@ class SwarmDFGUI(customtkinter.CTk):
                              regularization_l1=l1, regularization_l2=l2,
                              run_validation_flag=run_validation_flag,
                              time_offset=timeoff, snapshot=snapshot,
-                             generate_script_flag=generate_script_flag, 
                              demo_flag=demo_flag,
                              gif_speed=speed,
                              figw=figw, figh=figh,
@@ -407,9 +395,12 @@ class SwarmDFGUI(customtkinter.CTk):
 ## Functions for triggering lompe and lompeOSSE analyses in GUI
             
     def trigger_lompe_analysis(self):
-        """Runs Lompe when requested"""
+        """
+        Runs Lompe when requested
+        A thread is used so that the SwarmDF input results can be displayed in the GUI before Lompe is done running
+        """
 
-        # Remove intermediate "Run Lompe" button
+        # Remove intermediate "Run Lompe" button if it exists
         if self.lompe_button:
             self.lompe_button.grid_forget()
 
@@ -418,7 +409,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.progress_output.grid(row=1, column=0, pady=(30, 10))
         self.progress_output.start()
 
-        # Disable interactive window buttons until Lompe is done running
+        # Disable buttons until Lompe is done running
         self.button_interactive_wdw_input.configure(state="disabled")
         self.button_interactive_wdw_output.configure(state="disabled")
         self.set_buttons_state("disabled")
@@ -426,7 +417,7 @@ class SwarmDFGUI(customtkinter.CTk):
         def lompe_worker():
             try:
                 self.output_results = compute_swarmdf_output(self.config, self.input_results) 
-                self.after(0, lambda: self.display_lompe_output(self.output_results)) # plotting and GUI update must go through after
+                self.after(0, lambda: self.display_swarmdf_output(self.output_results)) # plotting and GUI update must go through after
 
             except Exception as e:
                 print("Lompe run failed:", e)
@@ -487,7 +478,7 @@ class SwarmDFGUI(customtkinter.CTk):
             #                                             self.config.gif_speed,
             #                                             self.config.show_all_data_flag)
             # self.input_results.input_PILframes = input_frames
-            self.display_lompe_input(self.input_results)
+            self.display_swarmdf_input(self.input_results)
 
         except Exception as e:
             print("Lompe input replot failed:", e)
@@ -506,7 +497,7 @@ class SwarmDFGUI(customtkinter.CTk):
 ####################
 # # Functions for displaying output animations in GUI
 
-    def display_lompe_input(self, input_results):
+    def display_swarmdf_input(self, input_results):
 
         self.stop_animation(getattr(self, "master_state", None))
         self.master_state = self.init_animation_state(self.after, self.after_cancel)
@@ -554,7 +545,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.play_generic(state=self.master_state)
 
 
-    def display_lompe_output(self, output_results):
+    def display_swarmdf_output(self, output_results):
 
         try:
             # Extract PIL images 
