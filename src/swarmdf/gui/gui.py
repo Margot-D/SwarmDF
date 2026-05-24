@@ -26,7 +26,7 @@ from swarmdf.config import SwarmDFConfig
 from swarmdf.gui.ui.sidebar_left import build_left_sidebar
 from swarmdf.gui.ui.sidebar_right import build_right_sidebar
 from swarmdf.gui.ui.input_panels import build_input_panels
-from swarmdf.gui.ui.output_panels import build_output_panels
+from swarmdf.gui.ui.output_panels import build_plot_panels
 from swarmdf.gui.ui.validation_window import open_validation_window
 from swarmdf.gui.ui.helpers.image_display import *
 from swarmdf.gui.ui.helpers.animation_manager import AnimationManager
@@ -52,7 +52,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         build_left_sidebar(self)
         build_input_panels(self)
-        build_output_panels(self)     
+        build_plot_panels(self)     
         build_right_sidebar(self)
 
         #############
@@ -93,14 +93,12 @@ class SwarmDFGUI(customtkinter.CTk):
         self.config = self.build_config_from_gui()
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
-        if self.switch_pythoncode.get():
+        if self.switch_pythonscript.get():
             fn = self.entry_codename.get() if self.entry_codename.get() else 'SwarmDF_script.py' # default file name
             generate_python_code(self.config, fn)
 
         # Progress bar for Lompe input panel
-        self.progress_input = customtkinter.CTkProgressBar(self.frame_data, mode="indeterminate")
-        self.progress_input.grid(row=1, column=0, pady=(30, 10))
-        self.progress_input.start()
+        self.progress_input.start() #TODO maybe go back to defining it all here? does not work on re-run right now
 
         # Initialize animation manager
         self.anim_mgr = AnimationManager()
@@ -123,12 +121,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
             # Lompe output
             if self.config.run_lompe_flag:
-                self.lompe_button = None
                 self.trigger_lompe_analysis()
             else:
-                # Button for triggering Lompe
-                self.lompe_button = customtkinter.CTkButton(master=self.lompe_frame, text="Run Lompe analysis", command=self.trigger_lompe_analysis, width=170, height=40)
-                self.lompe_button.grid(row=1, column=0, pady=(0, 20))
+                self.button_runlompe_temp.grid(row=1, column=0, pady=(0, 20))
                 self.set_buttons_state("normal")
 
             # LompeOSSE validation (once Lompe is done)
@@ -165,8 +160,8 @@ class SwarmDFGUI(customtkinter.CTk):
             w = container_w
             h = int(w / self.aspect_ratio)
 
-        self.frame_data.configure(width=w, height=h)
-        self.lompe_frame.configure(width=w, height=h)
+        self.frame_input.configure(width=w, height=h)
+        self.frame_output.configure(width=w, height=h)
         
     def validate_entry(self, entry, name, default=None, min_val=None, max_val=None):
         """Read and validate a float value from an entry widget"""
@@ -224,12 +219,12 @@ class SwarmDFGUI(customtkinter.CTk):
 
     def update_l1_label(self, slider_val):
             log_val = 10 ** slider_val # log scale
-            self.label_value_l1.configure(text=f"{log_val:.2f}")
+            self.value_l1.configure(text=f"{log_val:.2f}")
             # TODO is l1 = exponent or 1**exponent ??
 
     def update_l2_label(self, slider_val):
             log_val = 10 ** slider_val # log scale
-            self.label_value_l2.configure(text=f"{log_val:.2f}")
+            self.value_l2.configure(text=f"{log_val:.2f}")
             
     def apply_new_regularization(self):
 
@@ -385,7 +380,7 @@ class SwarmDFGUI(customtkinter.CTk):
         
     def set_buttons_state(self, state):
         self.button_runSwarmDF.configure(state=state)
-        self.button_replot_input.configure(state=state)
+        self.button_replotinput.configure(state=state)
         self.button_apply.configure(state=state)
         self.button_runlompe.configure(state=state)
         self.button_validate.configure(state=state)
@@ -407,17 +402,17 @@ class SwarmDFGUI(customtkinter.CTk):
         """
 
         # Remove intermediate "Run Lompe" button if it exists
-        if self.lompe_button:
-            self.lompe_button.grid_forget()
+        if self.button_runlompe_temp:
+            self.button_runlompe_temp.grid_forget()
 
-        # Progress bar for Lompe output panel
-        self.progress_output = customtkinter.CTkProgressBar(self.lompe_frame, mode="indeterminate")
+        # Progress bar for Lompe output panel #TODO see if i can move this to output_panels.py (make input progress bar work first)
+        self.progress_output = customtkinter.CTkProgressBar(self.frame_output, mode="indeterminate")
         self.progress_output.grid(row=1, column=0, pady=(30, 10))
         self.progress_output.start()
 
         # Disable buttons until Lompe is done running
-        self.button_interactive_wdw_input.configure(state="disabled")
-        self.button_interactive_wdw_output.configure(state="disabled")
+        self.input_ui["button_interactive"].configure(state="disabled")
+        self.output_ui["button_interactive"].configure(state="disabled")
         self.set_buttons_state("disabled")
 
         def lompe_worker():
@@ -471,7 +466,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.master_state = self.init_animation_state(self.after, self.after_cancel)
 
         try: 
-            self.data_frames_pil = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
+            self.input_pil_frames = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -480,32 +475,37 @@ class SwarmDFGUI(customtkinter.CTk):
             self.stop_pb(self.progress_input)
 
             # Display error frame
-            error_img = make_error_frame(self.label_data_gif)
-            self.label_data_gif.configure(image=error_img, text="An error occurred...")
-            self.label_data_gif.image = error_img
+            error_img = make_error_frame(self.label_input)
+            self.label_input.configure(image=error_img, text="An error occurred...")
+            self.label_input.image = error_img
 
-            if hasattr(self, "label_lompe_gif"):
-                self.label_lompe_gif.configure(image=error_img, text="An error occurred...")
-                self.label_lompe_gif.image = error_img
+            if hasattr(self, "label_output"):
+                self.label_output.configure(image=error_img, text="An error occurred...")
+                self.label_output.image = error_img
                     
         # Convert to CTkinter images and register frames
-        self.data_frames_tk = pil_to_ctk_images(self.data_frames_pil, self.label_data_gif)
-        self.anim_mgr.register_track(self.data_frames_tk, self.label_data_gif, self.master_state)
+        self.input_ctk_frames = pil_to_ctk_images(self.input_pil_frames, self.label_input)
+        self.anim_mgr.register_track(self.input_ctk_frames, self.label_input, self.master_state)
         
-        if hasattr(self, "lompe_frames_tk"):
-            self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
+        if hasattr(self, "frame_outputs_tk"):
+            self.anim_mgr.register_track(self.output_ctk_frames, self.label_output, self.master_state)
 
         self.stop_pb(self.progress_input)
 
         # Reset play/pause buttons to match new state (useful for re-runs)
-        buttons = [self.btn_play_pause_data]
-        if hasattr(self, "btn_play_pause_lompe"):
-            buttons.append(self.btn_play_pause_lompe)
+        # buttons = [self.button_playpause_input]
+        # if hasattr(self, "btn_play_pause_lompe"):
+        #     buttons.append(self.btn_play_pause_lompe)
+        # self.update_play_pause_icons(buttons, self.master_state["playing"])
+
+        buttons = [self.input_ui["playpause"]]
+        if hasattr(self, "output_ui"):
+            buttons.append(self.output_ui["playpause"])
         self.update_play_pause_icons(buttons, self.master_state["playing"])
 
         # Place frame controls and interactive window button
-        self.data_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
-        self.interactive_wdw_data.place(relx=0.98, rely=0.97, anchor="e")
+        self.input_ui["frame_controls"].place(relx=0.5, rely=0.97, anchor="center")
+        self.input_ui["frame_interactive"].place(relx=0.98, rely=0.97, anchor="e")
 
         # Play animation
         self.anim_mgr.play_generic(state=self.master_state)
@@ -515,7 +515,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            self.lompe_frames_pil = render_swarmdf_output(self.config, lompe_models)
+            self.output_pil_frames = render_swarmdf_output(self.config, lompe_models)
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -524,23 +524,23 @@ class SwarmDFGUI(customtkinter.CTk):
             self.stop_pb(self.progress_output)
 
             # Display error frame
-            error_img = make_error_frame(self.label_lompe_gif)
-            self.label_lompe_gif.configure(image=error_img, text="An error occurred...")
-            self.label_lompe_gif.image = error_img
+            error_img = make_error_frame(self.label_output)
+            self.label_output.configure(image=error_img, text="An error occurred...")
+            self.label_output.image = error_img
 
         # Convert to CTkinter images and register frames
-        self.lompe_frames_tk = pil_to_ctk_images(self.lompe_frames_pil, self.label_lompe_gif)
-        self.anim_mgr.register_track(self.lompe_frames_tk, self.label_lompe_gif, self.master_state)
+        self.output_ctk_frames = pil_to_ctk_images(self.output_pil_frames, self.label_output)
+        self.anim_mgr.register_track(self.output_ctk_frames, self.label_output, self.master_state)
         
         self.stop_pb(self.progress_output)
 
         # Place frame controls and interactive window button
-        self.lompe_frame_controls.place(relx=0.5, rely=0.97, anchor="center")
-        self.interactive_wdw_lompe.place(relx=0.98, rely=0.97, anchor="e")
+        self.output_ui["frame_controls"].place(relx=0.5, rely=0.97, anchor="center")
+        self.output_ui["frame_interactive"].place(relx=0.98, rely=0.97, anchor="e")
         
         # Enable buttons for interactive views once Lompe is finished
-        self.button_interactive_wdw_input.configure(state="normal")
-        self.button_interactive_wdw_output.configure(state="normal")
+        self.input_ui["button_interactive"].configure(state="normal")
+        self.output_ui["button_interactive"].configure(state="normal")
 
         if not self.config.run_validation_flag:
             self.set_buttons_state("normal")
@@ -553,10 +553,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            self.lompeosse_frames_pil, self.gamera_frames_pil = render_swarmdf_validation(self.config, lompeosse_results)
+            self.lompeosse_pil_frames, self.gamera_pil_frames = render_swarmdf_validation(self.config, lompeosse_results)
 
             # Combine PIL images from both sources into single frames (useful for the interactive window)
-            self.validation_combined_frames_pil = combine_validation_frames(self.lompeosse_frames_pil, self.gamera_frames_pil)
+            self.validation_combined_pil_frames = combine_validation_frames(self.lompeosse_pil_frames, self.gamera_pil_frames)
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -571,16 +571,16 @@ class SwarmDFGUI(customtkinter.CTk):
                 label.image = error_img
         
         # Convert to CTkinter images and register frames
-        self.lompeosse_frames_tk = pil_to_ctk_images(self.lompeosse_frames_pil, self.lompe_plot_frame)
-        self.gamera_frames_tk = pil_to_ctk_images(self.gamera_frames_pil, self.gamera_plot_frame)
-        self.anim_mgr.register_track(self.lompeosse_frames_tk, self.lompe_label,  self.validation_state)
-        self.anim_mgr.register_track(self.gamera_frames_tk,    self.gamera_label, self.validation_state)
+        self.lompeosse_ctk_frames = pil_to_ctk_images(self.lompeosse_pil_frames, self.frame_lompeosse)
+        self.gamera_ctk_frames = pil_to_ctk_images(self.gamera_pil_frames, self.frame_gamera)
+        self.anim_mgr.register_track(self.lompeosse_ctk_frames, self.lompe_label,  self.validation_state)
+        self.anim_mgr.register_track(self.gamera_ctk_frames,    self.gamera_label, self.validation_state)
 
         self.stop_pb(self.progress_validation)
 
         # Place frame controls and interactive window button
         self.validation_controls.pack(side="bottom", pady=5)
-        self.interactive_wdw_validation.place(relx=0.97, rely=0.92, anchor="e")
+        self.frame_interactive_window_val.place(relx=0.97, rely=0.92, anchor="e")
 
         self.set_buttons_state("normal")
 
@@ -620,16 +620,21 @@ class SwarmDFGUI(customtkinter.CTk):
         """
         Run the play/pause function
         """
-        buttons = [self.btn_play_pause_data]
-        if hasattr(self, "btn_play_pause_lompe"):
-            buttons.append(self.btn_play_pause_lompe)
+        # buttons = [self.button_playpause_input]
+        # if hasattr(self, "btn_play_pause_lompe"):
+        #     buttons.append(self.btn_play_pause_lompe)
+
+        buttons = [self.input_ui["playpause"]]
+        if hasattr(self, "output_ui"):
+            buttons.append(self.output_ui["playpause"])
+
 
         is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.master_state)
         self.update_play_pause_icons(buttons, is_playing)
             
     def toggle_play_pause_validation(self):
         
-        buttons=[self.btn_play_pause_validation]
+        buttons=[self.button_playpause_val]
         is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.validation_state)
         self.update_play_pause_icons(buttons, is_playing)
 
@@ -648,13 +653,13 @@ class SwarmDFGUI(customtkinter.CTk):
 # # Functions for opening matplotlib viewers
 
     def interactive_window_input(self):
-        open_interactive_window(self.data_frames_pil, title="Lompe input")
+        open_interactive_window(self.input_pil_frames, title="Lompe input")
 
     def interactive_window_output(self):
-        open_interactive_window(self.lompe_frames_pil, title="Lompe output")
+        open_interactive_window(self.output_pil_frames, title="Lompe output")
 
     def interactive_window_validation(self):
-        open_interactive_window(self.validation_combined_frames_pil, title="LompeOSSE output (validation)", figsize=(15,10))
+        open_interactive_window(self.validation_combined_pil_frames, title="LompeOSSE output (validation)", figsize=(15,10))
 
 
 
