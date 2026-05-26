@@ -232,7 +232,7 @@ class DateTimeEntry(customtkinter.CTkFrame):
         CustomTooltip(lab, "User-defined time interval is used to define grid centers; \n actual data intervals are determined dynamically per grid.")
 
         # Placeholder setup
-        self.placeholders = ["YYYY", "MM", "DD", "HH", "MM", "SS"]
+        self.placeholders = ["YYYY", "MM", "DD", "HH", "MIN", "SS"]
         self.widths = [47, 35, 32, 32, 35, 32]
         self.entries = []
 
