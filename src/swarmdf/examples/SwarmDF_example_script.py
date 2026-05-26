@@ -59,8 +59,8 @@ datasets = datahandler.datasets
 ######################
 
 # Define individual analysis frames (grid)
-lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, datasets, config.mag_coords_flag)
-grids, analysis_times = lompe_input.build_grids_around_swarm(config.timestep, config.grid_params)
+lompe_input = LompeInput(config.sat_id, config.start_time, config.end_time, config.timestep, datasets, config.mag_coords_flag)
+grids, analysis_times = lompe_input.build_grids_around_swarm(config.grid_params)
 
 # Prepare data objects for each analysis frame
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
