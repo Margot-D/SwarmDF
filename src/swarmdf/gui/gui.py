@@ -98,7 +98,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.switch_pythonscript.get():
-            fn = self.entry_codename.get() if self.entry_codename.get() else 'SwarmDF_script.py' # default file name
+            fn = self.entry_filename.get() if self.entry_filename.get() else 'SwarmDF_script.py' # default file name
             generate_python_code(self.config, fn)
 
         # Progress bar for Lompe input panel
