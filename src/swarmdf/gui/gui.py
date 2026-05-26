@@ -58,38 +58,42 @@ class SwarmDFGUI(customtkinter.CTk):
         #############
         # Check/validate user entries
 
-        self.validators = [(self.entry_timestep, "Timestep", 30, 5, None),
-                           (self.entry_kp, "Kp index", 4, 0, 9), 
-                           (self.entry_f107, "F107 value (s.f.u)", 100, 30, 400), #TODO values ok Kalle? 
-                           (self.entry_background, "Background value", 2, 0, None), # TODO what's a good range Kalle?
-                           (self.entry_L, "Grid length (km)", 2000, None, None),
-                           (self.entry_W, "Grid width (km)", 1500, None, None),
-                           (self.entry_Lres, "Grid length resolution (km)", 200, None, None),
-                           (self.entry_Wres, "Grid width resolution (km)", 200, None, None),
-                           (self.entry_wshift, "Cross-track shift value (km)", 0, None, None),
-                           (self.entry_gifspeed, "Animation speed", 550, 0, None),
-                           (self.entry_Gsnapshot, "Gamera snapshot", 0, None, None),
-                           (self.entry_Gtimeoff, "Time offset", 0, 0, 23), #TODO ok?
+        self.validators = [("satellite",self.optmenu_satellite), 
+                           ("time interval",self.entry_start_time, self.entry_end_time),
+                           ("other entries",self.entry_timestep, "Timestep", 30, 5, None),
+                           ("other entries",self.entry_kp, "Kp index", 4, 0, 9), 
+                           ("other entries",self.entry_f107, "F107 value (s.f.u)", 100, 30, 400), #TODO values ok Kalle? 
+                           ("other entries",self.entry_background, "Background value", 2, 0, None), # TODO what's a good range Kalle?
+                           ("other entries",self.entry_L, "Grid length (km)", 2000, None, None),
+                           ("other entries",self.entry_W, "Grid width (km)", 1500, None, None),
+                           ("other entries",self.entry_Lres, "Grid length resolution (km)", 200, None, None),
+                           ("other entries",self.entry_Wres, "Grid width resolution (km)", 200, None, None),
+                           ("other entries",self.entry_wshift, "Cross-track shift value (km)", 0, None, None),
+                           ("other entries",self.entry_gifspeed, "Animation speed", 550, 0, None),
+                           ("other entries",self.entry_Gsnapshot, "Gamera snapshot", 0, None, None),
+                           ("other entries",self.entry_Gtimeoff, "Time offset", 0, 0, 23), #TODO ok?
                            ]
-        
+
         # Check and validate values from entries as the user types
-        for entry, name, default, min_val, max_val in self.validators:
-            entry.bind("<FocusOut>", lambda e, entry=entry, name=name, default=default, min_val=min_val, max_val=max_val: 
-                        self.validate_entry(entry, name, default, min_val, max_val))
+        for args in self.validators:
+            kind = args[0]
+            if kind == "other entries":
+                entry, name, default, min_val, max_val = args[1:]
+                entry.bind("<FocusOut>", lambda e, entry=entry, name=name, default=default, min_val=min_val, max_val=max_val: 
+                            self.validate_entry("other entries", entry, name, default, min_val, max_val))
 
     #################
     # Run SwarmDF
 
     def run_swarmdf(self):
 
-        # Disable buttons when SwarmDF starts running 
-        self.set_buttons_state("disabled")
-
         # Check and validate values from all entries before running SwarmDF
-        for entry, name, default, min_val, max_val in self.validators:
-            self.validate_entry(entry, name, default, min_val, max_val)
-
-       # Collect user input
+        for validator in self.validators:
+            ok = self.validate_entry(*validator)
+            if not ok: # pauses SwarmDF
+                return
+            
+        # Collect user input
         self.config = self.build_config_from_gui()
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
@@ -111,6 +115,9 @@ class SwarmDFGUI(customtkinter.CTk):
         """SwarmDF pipeline for GUI"""
 
         print("--- Running SwarmDF --- ")
+
+        # Disable buttons when SwarmDF starts running 
+        self.set_buttons_state("disabled")
 
         try: 
             # Data
@@ -144,6 +151,28 @@ class SwarmDFGUI(customtkinter.CTk):
 ####################
 # # GUI callback and update helpers
         
+    def set_buttons_state(self, state):
+        self.button_runSwarmDF.configure(state=state)
+        self.button_replotinput.configure(state=state)
+        self.button_apply.configure(state=state)
+        self.button_runlompe.configure(state=state)
+        self.button_validate.configure(state=state)
+
+    def stop_pb(self, widget):
+        """Stop and hide progressbar if it exists"""
+        
+        if widget is None:
+            return
+        
+        widget.stop()
+
+        if widget.winfo_manager() == "grid":
+            widget.grid_remove()
+        elif widget.winfo_manager() == "pack":
+            widget.pack_forget()
+        elif widget.winfo_manager() == "place":
+            widget.place_forget()
+
     def keep_ratio(self, event):
         """
         Maintain fixed aspect ratio for the output frames 
@@ -163,29 +192,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.frame_input.configure(width=w, height=h)
         self.frame_output.configure(width=w, height=h)
-        
-    def validate_entry(self, entry, name, default=None, min_val=None, max_val=None):
-        """Read and validate a float value from an entry widget"""
-
-        try:
-            value = float(entry.get())
-        except ValueError:
-            value = default
-            messagebox.showwarning("Invalid input", f"{name} is invalid. Using default value: {default}")
-
-        if min_val is not None and value < min_val:
-            messagebox.showwarning("Invalid input", f"{name} must be ≥ {min_val}. Using default: {default}")
-            value = default
-        if max_val is not None and value > max_val:
-            messagebox.showwarning("Invalid input", f"{name} must be ≤ {max_val}. Using default: {default}")
-            value = default
-
-        # Reflect corrected value in UI
-        if default is not None and value == default:
-            entry.delete(0, "end")
-            entry.insert(0, str(default))
-
-        return # wrong if value is returned!
 
     def apply_gif_parameters(self, update_state=True):
         """
@@ -243,22 +249,96 @@ class SwarmDFGUI(customtkinter.CTk):
 
 ####################
 ####################
-# # Functions for collecting GUI input
+# # Functions for validating and collecting GUI input
+
+    def validate_entry(self, kind, *args):
+        """Read and validate values from entry widgets"""
+
+        if kind == "satellite":
+
+            widget = args[0]
+            value = widget.get()
+
+            if value == "Satellite ID":
+                messagebox.showerror("Invalid input", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
+                return False
+            
+            return True # if no issue is detected
+        
+
+        elif kind == "time interval":
+
+            start_widget, end_widget = args
+
+            start = start_widget.get_datetime()
+            end = end_widget.get_datetime()
+
+            if not start or not end:
+                messagebox.showerror("Invalid input", "⚠️ Please enter valid start and end times.")
+                return False
+
+            if start >= end:
+                messagebox.showerror("Invalid input", "⚠️ Start time must be earlier than end time.")
+                return False
+
+            min_seconds = 10 # TODO what should be the minimum time? frame_length + 1s at least, but should it be a few minutes? it should be at least 10 sec (swarm measurement frequency)
+
+            if (end - start).total_seconds() < min_seconds:
+                messagebox.showerror("Invalid input", f"⚠️ Time interval must be at least " f"{min_seconds} seconds.")
+                return False
+
+            return True # if no issue is detected
+        
+
+        elif kind == "other entries":
+
+            entry, name, default, min_val, max_val = args
+
+            try:
+                value = float(entry.get())
+            except ValueError:
+                value = default
+                messagebox.showwarning("Invalid input", f"{name} is invalid. Using default value: {default}")
+                
+                # Reflect corrected value in UI
+                entry.delete(0, "end")
+                entry.insert(0, str(default))
+
+                return False
+
+            if min_val is not None and value < min_val:
+                messagebox.showwarning("Invalid input", f"{name} must be ≥ {min_val}. Using default: {default}")
+                value = default
+
+                entry.delete(0, "end")
+                entry.insert(0, str(default))
+
+                return False
+            
+            if max_val is not None and value > max_val:
+                messagebox.showwarning("Invalid input", f"{name} must be ≤ {max_val}. Using default: {default}")
+                value = default
+
+                entry.delete(0, "end")
+                entry.insert(0, str(default))
+
+                return False
+
+        return True
+    
 
     def build_config_from_gui(self):
 
         # satellite ID
         sat_id = self.optmenu_satellite.get()
-        if sat_id == "Satellite ID":
-            messagebox.showerror("Error", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
-            return
-
+        
         # time interval
-        start_time, end_time = self.get_start_end_times()
+        start_time = self.entry_start_time.get_datetime()
+        end_time   = self.entry_end_time.get_datetime()
         
         # time step (between frames)
         timestepp = float(self.entry_timestep.get())
-        unit = self.timestep_unit_var.get()
+        unit = self.var_timestep_unit.get()
 
         if unit == "min":
             timestepp *= 60
@@ -297,12 +377,14 @@ class SwarmDFGUI(customtkinter.CTk):
 
         conductance_params = {"kp": kp_value, "f107": f107_value, "background": background_value}
         conductance_method = str(self.optmenu_conductance.get())
-        print(repr(conductance_method))
+        print(repr(conductance_method)) #TODO fix issue with Hardy method
 
         # grid 
-        grid_params = self.get_grid_parameters()
-        if grid_params is None:
-            return
+        grid_params = {'L': float(self.entry_L.get()), 
+                       'W': float(self.entry_W.get()),
+                       'Lres': float(self.entry_Wres.get()),
+                       'Wres': float(self.entry_Lres.get()),
+                       'wshift': float(self.entry_wshift.get())}
 
         # Figure size
         figw = float(self.entry_figw.get())
@@ -348,49 +430,8 @@ class SwarmDFGUI(customtkinter.CTk):
                              mag_coords_flag=mag,
                              show_all_data_flag=show_data)
 
-    def get_start_end_times(self):
 
-        input_start = self.entry_start_time.get_datetime()
-        input_end   = self.entry_end_time.get_datetime()
 
-        if not input_start or not input_end:
-            messagebox.showerror("Error", "⚠️ Please enter valid start and end times.")
-            return None, None
-
-        if input_start >= input_end:
-            messagebox.showerror("Error", "⚠️ Start time must be earlier than end time.")
-            return None, None
-
-        min_seconds = 10 # TODO what should be the minimum time? frame_length + 1s at least, but should it be a few minutes? it should be at least 10 sec (swarm measurement frequency)
-        if (input_end - input_start).total_seconds() < min_seconds:
-            messagebox.showerror("Error", f"⚠️ Time interval must be at least {min_seconds} seconds.")
-            return None, None
-
-        return input_start, input_end
-
-    def get_grid_parameters(self):
-        try:
-            return{'L': float(self.entry_L.get()), 
-                   'W': float(self.entry_W.get()),
-                   'Lres': float(self.entry_Wres.get()),
-                   'Wres': float(self.entry_Lres.get()),
-                   'wshift': float(self.entry_wshift.get())}
-        except ValueError:
-            print("Invalid manual input")
-            return None
-        
-    def set_buttons_state(self, state):
-        self.button_runSwarmDF.configure(state=state)
-        self.button_replotinput.configure(state=state)
-        self.button_apply.configure(state=state)
-        self.button_runlompe.configure(state=state)
-        self.button_validate.configure(state=state)
-
-    def stop_pb(self, widget):
-        """Stop and hide progressbar if it exists"""
-        if widget is not None:
-            widget.stop()
-            widget.grid_remove()
 
 ####################
 ####################
@@ -492,12 +533,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.stop_pb(self.progress_input)
 
-        # Reset play/pause buttons to match new state (useful for re-runs)
-        # buttons = [self.button_playpause_input]
-        # if hasattr(self, "btn_play_pause_lompe"):
-        #     buttons.append(self.btn_play_pause_lompe)
-        # self.update_play_pause_icons(buttons, self.master_state["playing"])
-
         buttons = [self.input_ui["playpause"]]
         if hasattr(self, "output_ui"):
             buttons.append(self.output_ui["playpause"])
@@ -580,6 +615,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # Place frame controls and interactive window button
         self.validation_controls.pack(side="bottom", pady=5)
+        self.validation_window.update_idletasks()
         self.frame_interactive_window_val.place(relx=0.97, rely=0.92, anchor="e")
 
         self.set_buttons_state("normal")

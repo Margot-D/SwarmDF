@@ -1,6 +1,6 @@
 import customtkinter
 from ui.helpers.tooltip import CustomTooltip
-from ui.input_panels import load_example_date
+from ui.input_panels import apply_example_date
 
 
 def build_left_sidebar(gui):
@@ -36,7 +36,7 @@ def build_left_sidebar(gui):
     gui.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=(100,10))
 
     # Demo mode
-    gui.switch_demo = customtkinter.CTkSwitch(master=gui.left_sidebar, text=f"Demo mode", command=lambda: load_example_date(gui)) 
+    gui.switch_demo = customtkinter.CTkSwitch(master=gui.left_sidebar, text=f"Demo mode", command=lambda: apply_example_date(gui)) 
     gui.switch_demo.grid(row=8, column=0, padx=20, pady=(10,100))
     CustomTooltip(gui.switch_demo, "Use sample datasets for example event and skip data downloading")
 
