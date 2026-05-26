@@ -32,15 +32,15 @@ config = SwarmDFConfig(sat_id={config.sat_id!r},
                        conductance_params={config.conductance_params!r},
                        grid_params={config.grid_params!r},
                        run_lompe_flag={config.run_lompe_flag!r},
-                       l1={config.regularization_l1!r},
-                       l2={config.regularization_l2!r},
+                       regularization_l1={config.regularization_l1!r},
+                       regularization_l2={config.regularization_l2!r},
                        gif_speed={config.gif_speed!r},
                        figw={config.figw!r},
                        figh={config.figh!r},
-                       mag={config.mag_coords_flag!r},
-                       show_data={config.show_all_data_flag!r},
+                       mag_coords_flag={config.mag_coords_flag!r},
+                       show_all_data_flag={config.show_all_data_flag!r},
                        run_validation_flag={config.run_validation_flag!r},
-                       timeoff={config.time_offset!r},
+                       time_offset={config.time_offset!r},
                        snapshot={config.snapshot!r},
                        demo_flag={config.demo_flag!r})
 """
@@ -57,7 +57,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import pandas as pd
 import numpy as np
-from swarmdf.gui.config import SwarmDFConfig
+from swarmdf.config import SwarmDFConfig
 from swarmdf.pipeline import run_swarmdf_pipeline
 from swarmdf import *
 
