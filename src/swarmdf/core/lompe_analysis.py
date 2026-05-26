@@ -31,8 +31,6 @@ package_root = Path(__file__).resolve().parents[3]
 output_dir = package_root / "outputs"
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
-# TODO find good name for output file
-# TODO finish cleanup (see chatgpt)
 # TODO fix the lon_label thing again 
 
 def run_lompe(time_bounds, grids, data_objects_per_grid, SHs, SPs, l1=1, l2=1):
@@ -99,9 +97,9 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
         l2 = entry["l2"]
 
         # Save to PNG
-        lompe_fn = f'lompe-output_swarm{sat_id[-1]}' #TODO do we want swarm id in filename?
-        fn = tmpdir / f"{lompe_fn}_{ct:%Y%m%d_%H%M%S}.png"
-        savekw = {"fname": fn, "dpi": 400}
+        fn = f'lompe_sw{sat_id[-1]}'
+        fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
+        savekw = {"fname": fn_ct, "dpi": 400}
 
         # Lompe plot
         fig = lompe.lompeplot(user_model, 
@@ -124,7 +122,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
         fig.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
 
         # Save PNG (with title)
-        fig.savefig(fn, dpi=400)
+        fig.savefig(fn_ct, dpi=400)
 
         # Convert figure to PIL (used for the UI GIF)
         fig.canvas.draw()
@@ -138,7 +136,12 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
     print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
 
     # Path to save the GIF
-    output = output_dir / f"{lompe_fn}.gif"
+    t00 = models[0]["t0"]
+    t11 = models[-1]["t1"]
+    fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
+    output = fn_time
+
+    # output = output_dir / f"{lompe_fn}.gif"
 
     with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
         for frame in frames_pil:

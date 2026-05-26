@@ -957,9 +957,9 @@ class LompeInput:
 
             # Save to PNG
             tmpdir.mkdir(parents=True, exist_ok=True)
-            swarm_fn = f'lompe-input_swarm{self.sat_id[-1]}'
-            fn = tmpdir / f"{swarm_fn}_{ct:%Y%m%d_%H%M%S}.png"
-            plt.savefig(fn, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
+            fn = f'input_sw{self.sat_id[-1]}'
+            fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
+            plt.savefig(fn_ct, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
 
             # Convert figure to PIL (used for the UI GIF)
             fig.canvas.draw()
@@ -973,7 +973,10 @@ class LompeInput:
         print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
 
         # Save GIF
-        output = output_dir / f"{swarm_fn}.gif" 
+        t00 = time_bounds['t0'][0]
+        t11 = time_bounds['t1'][-1]
+        fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
+        output = fn_time
 
         with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
             for frame in frames_pil:
