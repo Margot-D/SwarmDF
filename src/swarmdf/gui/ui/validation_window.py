@@ -24,6 +24,15 @@ def open_validation_window(gui):
     gui.label_gamera = customtkinter.CTkLabel(gui.frame_gamera, text="")
     gui.label_gamera.pack(fill="both", expand=True)
 
+    # Progress bar
+    gui.progress_validation = customtkinter.CTkProgressBar(gui.validation_window, mode="indeterminate")
+    gui.progress_validation.pack(side="bottom", pady=15)
+    gui.progress_validation.start()
+
+    # Status label
+    gui.status_label = customtkinter.CTkLabel(gui.validation_window, text="Running LompeOSSE…", font=customtkinter.CTkFont(size=14, weight="bold"))
+    gui.status_label.pack(side='bottom', pady=2)
+
     # GIF controls 
 
     gui.validation_controls = customtkinter.CTkFrame(gui.validation_window, fg_color="transparent")
@@ -68,11 +77,3 @@ def open_validation_window(gui):
     gui.button_intwdw_val.pack(side="right", padx=5)
     gui.frame_interactive_window_val.place_forget()
 
-    # Progress bar
-    gui.progress_validation = customtkinter.CTkProgressBar(gui.validation_window, mode="indeterminate")
-    gui.progress_validation.pack(side="bottom", pady=15)
-    gui.progress_validation.start()
-
-    # Status label
-    gui.status_label = customtkinter.CTkLabel(gui.validation_window, text="Running LompeOSSE…", font=customtkinter.CTkFont(size=14, weight="bold"))
-    gui.status_label.pack(side='bottom', pady=2)
