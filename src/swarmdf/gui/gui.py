@@ -371,13 +371,12 @@ class SwarmDFGUI(customtkinter.CTk):
                 messagebox.showwarning("Lompe unavailable", "No valid datasets available for Lompe inversion.")
 
         # conductance
-        kp_value = float(self.entry_kp.get()) 
+        kp_value = int(self.entry_kp.get()) 
         f107_value = float(self.entry_f107.get())
         background_value = float(self.entry_background.get())
 
         conductance_params = {"kp": kp_value, "f107": f107_value, "background": background_value}
         conductance_method = str(self.optmenu_conductance.get())
-        print(repr(conductance_method)) #TODO fix issue with Hardy method
 
         # grid 
         grid_params = {'L': float(self.entry_L.get()), 

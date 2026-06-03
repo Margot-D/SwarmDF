@@ -56,7 +56,7 @@ class SwarmDFConfig:
                    timestep=30.0,
                    datasets2download=['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                    conductance_method='Zhang & Paxton model',
-                   conductance_params={'kp': 4.0, 'f107': 100.0, 'background': 2.0},
+                   conductance_params={'kp': 4, 'f107': 100.0, 'background': 2.0},
                    grid_params={'L': 2000.0, 'W': 1500.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0},
                    run_lompe_flag=True,
                    regularization_l1=1.0,
