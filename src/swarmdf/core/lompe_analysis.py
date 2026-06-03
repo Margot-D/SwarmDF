@@ -102,6 +102,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
         savekw = {"fname": fn_ct, "dpi": 400}
 
         # Lompe plot
+        suptitle = f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}"
         fig = lompe.lompeplot(user_model, 
                               include_data=True, time=ct, apex=apx,
                               colorscales={"fac": np.linspace(-2, 2, 40) * 1e-6 * 2,
@@ -112,17 +113,18 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
                             #                "space_mag_fac":    600e-9,
                             #                "space_mag_full":   600e-9,
                             #                "electric_current": 1}
+                                suptitle = suptitle,
                                 quiverscales = QUIVERSCALES,
                                 figheight = figheight,
                                 savekw=savekw)
 
-        fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-                fontsize=22, color="black", y=0.98)
-        
-        fig.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
+        # fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}",
+        #           y=0.98) #fontsize=22, color="black",
+
+        # fig.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
 
         # Save PNG (with title)
-        fig.savefig(fn_ct, dpi=400)
+        fig.savefig(fn_ct, dpi=400, pad_inches=0.2)
 
         # Convert figure to PIL (used for the UI GIF)
         fig.canvas.draw()
