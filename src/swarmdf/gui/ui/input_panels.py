@@ -193,8 +193,8 @@ def build_input_panels(gui):
 
     gui.entry_L.insert(0, "2000")
     gui.entry_W.insert(0, "1500")
-    gui.entry_Lres.insert(0, "200")
-    gui.entry_Wres.insert(0, "200")
+    gui.entry_Lres.insert(0, "80")
+    gui.entry_Wres.insert(0, "80")
 
     gui.label_wshift = customtkinter.CTkLabel(gui.frame_gridparam, text="Shift center (km):", anchor='center')
     gui.label_wshift.grid(row=6, column=0, padx=(10,0), pady=30, sticky='e')
