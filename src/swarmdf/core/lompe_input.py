@@ -112,18 +112,10 @@ class LompeInput:
             lt = lon/15
             pax.scatter(lat, lt, **kwargs)
 
-    # TODO fix this now
     def _plotpins(self, pax, lat, lon, east, north, central_time, hemisign, **kwrds):
         """ plot pins in polar coords, converting to magnetic if necessary """
 
-        # # i don't think this works
-        # quiver_scale = kwrds.pop('SCALE', None)
-        # if quiver_scale is not None:
-        #     bbox = pax.ax.get_window_extent().transformed(pax.ax.figure.dpi_scale_trans.inverted())
-        #     x0, x1 = pax.ax.get_xlim()
-        #     y0, y1 = pax.ax.get_ylim()
-        #     data_units_per_inch = min(abs(x1 - x0)/bbox.width, abs(y1 - y0)/bbox.height)
-        #     kwrds['SCALE'] = 0.1 * quiver_scale / data_units_per_inch
+        quiver_scale = kwrds.pop('scale', None)
 
         if self.mag: # convert coordinates and components to magnetic and plot
             f1, f2 = self.apx.basevectors_qd(lat, lon, HEIGHT, coords = 'geo')
@@ -133,11 +125,11 @@ class LompeInput:
             mlt = self.dpl.mlon2mlt(mlon, central_time)
             east = f1[0] * east + f1[1] * north
             north = f2[0] * east + f2[1] * north
-            pax.plotpins(np.abs(mlat), mlt, north*hemisign, east, **kwrds)
+            pax.plotpins(np.abs(mlat), mlt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
         else: # keep geographic
             lt = lon/15
-            pax.plotpins(np.abs(lat), lt, north*hemisign, east, **kwrds)
-
+            pax.plotpins(np.abs(lat), lt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
+            # pax.quiver(np.abs(lat), lt, north*hemisign, east, scale_units='inches', units='inches', **kwrds) #scale_units='inches', units='inches',
 
     # ------------------------------------------------------------------
     # Swarm pass handling # TODO put that in datadownloader I think
@@ -288,7 +280,7 @@ class LompeInput:
             swarm_inside_grid = swarm_pass.loc[mask] # portion of the Swarm trajectory that falls inside the grid
             t0, t1 = swarm_inside_grid.index[0], swarm_inside_grid.index[-1]
 
-            # print(f'Time interval around Swarm center time ({ct_swarm}): {t0} - {t1}') #TODO remove eventually?
+            # print(f'Time interval around Swarm center time ({ct_swarm}): {t0} - {t1}') #TODO remove eventually
             dt0 = (ct_swarm - t0).total_seconds()
             dt1 = (t1 - ct_swarm).total_seconds()
 
@@ -336,7 +328,9 @@ class LompeInput:
         grid = CSgrid(projection, grid_params["W"]*1e3, grid_params["L"]*1e3, grid_params["Lres"]*1e3, grid_params["Wres"]*1e3, wshift = grid_params["wshift"]*1e3, R = RI*1e3) # in [m]
         # swapped L/W here on purpose; there's an issue coming from CSgrid... With the swapping the GUI remains intuitive. 
 
-        return grid
+        print(grid)
+
+        return grid 
 
     # ------------------------------------------------------------------
     # Lompe data preparation
@@ -568,13 +562,33 @@ class LompeInput:
         axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8*self.marker_scale, color='grey')
         axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
         axs['polar'].coastlines(time=central_time if self.mag else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if self.mag else None)
-
         axs['polar_title'].text(0.5, 0.5, f"Polar projection\nin {coords} coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['polar_title'].transAxes)
 
-        # lt_label = (one_swarm_pass['Longitude'][0] + 6) % 24 # place latitude labels away from grid/satellite track (compute once per pass)
-        # axs['polar'].writeLATlabels(lt=lt_label, **textargs) #TODO fix!!
+        # Get LT position for latitude labels
+
+        one_swarm_pass, _ = self.get_current_pass(self.one_swarm, central_time) 
+
+        # convert to polar coordinates
+        theta = np.deg2rad(one_swarm_pass['Longitude'].values)  
+        r = 90 - one_swarm_pass['Latitude'].values              
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+
+        # estimate local trajectory direction near middle
+        mid = len(x) // 2
+        window = min(20, mid - 1, len(x) - mid - 1)
+
+        dx = x[mid + window] - x[mid - window]
+        dy = y[mid + window] - y[mid - window]
+
+        track_angle = np.arctan2(dy, dx)
+
+        label_angle = track_angle + np.pi / 2  # perpendicular direction (+90°)
+        lt_pos = (np.rad2deg(label_angle) / 15) % 24 # convert angle -> local time
+        axs['polar'].writeLATlabels(lt=lt_pos, **textargs, zorder=1)
         
         # Grid outline
+        
         xs = (grid.lon_mesh[0, :], grid.lon_mesh[-1, :], grid.lon_mesh[:, 0], grid.lon_mesh[:, -1]) # geographic
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
 
@@ -594,6 +608,7 @@ class LompeInput:
         sh = True if hem == 'south' else False # view the cubed sphere projection from above/below in NH/SH
         csax0 = CSplot(axs['zoom'], grid, gridtype='geo', view_from_below=sh)
         csax0.add_coastlines(color='darkgrey')
+        csax0.add_spherical_grid(gridtype='geo', color='lightgrey')
         axs['zoom'].spines['bottom'].set_linewidth(5) # bottom of grid frame 
         axs['zoom_title'].text(0.5, 0.5, "Cubed sphere projection\nin geographic coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['zoom_title'].transAxes)
 
@@ -605,7 +620,7 @@ class LompeInput:
         # Current pass data and ID
         one_swarm_pass, current_pass_id = self.get_current_pass(self.one_swarm, central_time)
 
-        # All three Swarm tracks (thin lightred lines) -- current pass only 
+        # All three Swarm tracks (thin lightred lines) - current pass only 
         all_swarm_pass = self.all_swarm[self.all_swarm['pass_id'] == current_pass_id]        
 
         for satid in ['A', 'B', 'C']:
@@ -656,6 +671,7 @@ class LompeInput:
 
         spol = 2*self.marker_scale
         lwpol = .5*self.marker_scale
+        quiwidth = 0.002*self.marker_scale
 
         # SuperDARN
         if (dataset == 'superdarn'): 
@@ -674,8 +690,8 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
             
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, SCALE = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
-            cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
+            cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
 
             # Add to legend once
             if dataset not in added:
@@ -700,8 +716,8 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, SCALE = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches')
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
+            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches')#, units='inches')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='^', color=c, lw=0, markersize=8, label='SuperMAG'))
@@ -725,10 +741,10 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, SCALE=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
-            # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], central_time, hemisign, SCALE=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches')#, units='inches') 
+            # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches' ) 
             # print('my quiver magnitude', np.sqrt(Be[1]**2 + Bn[1]**2) )
 
             if dataset not in added:
@@ -753,13 +769,13 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
             
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, SCALE =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.004, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches') 
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Be, Bn, lon, lat, width=quiwidth, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches')#, units='inches') 
 
             # # highlight central point
-            sc_lat0 = self.one_swarm.loc[central_time, 'Latitude'] 
-            sc_lon0 = self.one_swarm.loc[central_time, 'Longitude']
-            cs_ax.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
+            # sc_lat0 = self.one_swarm.loc[central_time, 'Latitude'] 
+            # sc_lon0 = self.one_swarm.loc[central_time, 'Longitude']
+            # cs_ax.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='Swarm mag'))
@@ -786,8 +802,8 @@ class LompeInput:
             Ee = data_object.values[0]
             En = data_object.values[1]
 
-            self._plotpins(polar_ax, lat, lon, Ee, En, central_time, hemisign, SCALE = quiverscales['efield'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Ee, En, lon, lat, width=0.004, color=c, scale=quiverscales['efield'], scale_units='inches') 
+            self._plotpins(polar_ax, lat, lon, Ee, En, central_time, hemisign, scale = quiverscales['efield'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Ee, En, lon, lat, width=quiwidth, color=c, scale=quiverscales['efield'], scale_units='inches')#, units='inches') 
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='p', color=c, lw=0, markersize=8, label='Swarm elec'))
@@ -816,8 +832,8 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
 
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, SCALE=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label=label))
@@ -902,7 +918,7 @@ class LompeInput:
 
             ############
             # Handles
-            ncol = 8 if self.ar > 1.5 else 5
+            ncol = 8 if self.ar > 1.3 else 5
             fig.legend(handles=legend_stuff['legend_handles'], loc="lower center", bbox_to_anchor=(0.5, 0.005), markerfirst=True, ncol=ncol, columnspacing=.5, fontsize=15*self.font_scale)    
 
             ############
@@ -915,42 +931,45 @@ class LompeInput:
             arrowpolax.set_axis_off()
 
             xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
-            xarrow = 0.25 - xshift
+            xarrow = 0.2 - xshift
             text_offset = np.clip(0.18 - 0.08*(self.ar - 1), 0.10, 0.18)
             xtext = xarrow + text_offset
 
-            arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            # arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
             
             # cs axis
             arrowcsax = axes["zoom_scale"]
             arrowcsax.set_xlim(0, 1) 
             arrowcsax.set_ylim(0, 1) 
-            arrowcsax.set_axis_off()
+            # arrowcsax.set_axis_off()
 
-            arrowcsax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+            arrowcsax.quiver(xarrow, 0.62, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
 
             # measurement types and scales
             groups = defaultdict(list)
+            
             for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
                 groups[label].append((value, unit))
             labels = list(groups.items())
+
             if len(labels) == 1:
-                y_positions = [0.55]
+                y_positions = [0.62]
             elif len(labels) == 2:
-                y_positions = [0.65, 0.45]
+                y_positions = [0.70, 0.54]
             else:
-                y_positions = np.linspace(0.78, 0.34, len(labels))
-            # y_positions = np.linspace(0.78, 0.34, len(labels)) if len(labels) > 1 else [0.65]
+                y_positions = np.linspace(0.88, 0.44, len(labels))
+
             for (label, items), y in zip(labels, y_positions):
                 value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
-                arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
-                             transform=arrowpolax.transAxes,
-                             fontsize=14*self.font_scale,
-                             va='center')
+                # arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}", 
+                #                 transform=arrowpolax.transAxes,
+                #                 fontsize=14*self.font_scale,
+                #                 va='center')
                 arrowcsax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
-                             transform=arrowcsax.transAxes,
-                             fontsize=14*self.font_scale,
-                             va='center')
+                               transform=arrowcsax.transAxes,
+                               fontsize=14*self.font_scale,
+                               va='center')
+
 
             # --------------- # 
             # Save output
