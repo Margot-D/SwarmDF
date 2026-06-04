@@ -41,6 +41,8 @@ def build_input_panels(gui):
     # End time
     gui.entry_end_time = DateTimeEntry(gui.tabview.tab(tab1), label="End time:        ⓘ")
     gui.entry_end_time.grid(row=2, column=0, padx=20, pady=10, sticky="w")
+
+    # Link entries
     gui.entry_start_time.link_datetime_entries(gui.entry_end_time)
 
     # Time step
@@ -427,16 +429,57 @@ class DateTimeEntry(customtkinter.CTkFrame):
             entry.insert(0, ph)
 
     def link_datetime_entries(self, other):
-        """Mirror start datetime fields into end fields"""
+        """Link start and end time entries"""
 
-        def mirror(idx):
-            val = self.entries[idx].get()
-            ph = self.placeholders[idx]
-
-            if val != ph:
-                other.entries[idx].delete(0, "end")
-                other.entries[idx].insert(0, val)
-                other.entries[idx].configure(text_color="white")
+        self.other = other
+        n = len(self.entries)
 
         for i, entry in enumerate(self.entries):
-            entry.bind("<KeyRelease>", lambda e, i=i: mirror(i))
+
+            # Mirror start datetime fields into end fields
+            def mirror(idx):
+                val = self.entries[idx].get()
+                ph = self.placeholders[idx]
+
+                if val != ph:
+                    other.entries[idx].delete(0, "end")
+                    other.entries[idx].insert(0, val)
+                    other.entries[idx].configure(text_color="white")
+
+            entry.bind("<KeyRelease>", lambda e, i=i: mirror(i) if e.keysym not in ("Left", "Right", "Up", "Down") else None)
+
+            # Bind navigation between start and end time fields
+            self.bind_navigation(other)
+            other.bind_navigation(self)
+
+    def bind_navigation(self, other):
+        
+        n = len(self.entries)
+        for i, entry in enumerate(self.entries):
+
+            def right(e, i=i):
+                if i < n - 1:
+                    self.entries[i + 1].focus_set()
+                else:
+                    other.entries[0].focus_set()
+                return "break"
+
+            def left(e, i=i):
+                if i > 0:
+                    self.entries[i - 1].focus_set()
+                else:
+                    other.entries[-1].focus_set()
+                return "break"
+
+            def down(e, i=i):
+                other.entries[i].focus_set()
+                return "break"
+
+            def up(e, i=i):
+                other.entries[i].focus_set()
+                return "break"
+
+            entry.bind("<Right>", right)
+            entry.bind("<Left>", left)
+            entry.bind("<Down>", down)
+            entry.bind("<Up>", up)
