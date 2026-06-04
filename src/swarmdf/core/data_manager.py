@@ -76,8 +76,8 @@ class DataManager:
                     swarm.download_swarm_mag(event_date, tempfile_path=self.data_path)
                     
                 # TODO work on this
-                # if source == 'swarm_efield':
-                #     datadownloader.download_swarmE(event_date, tempfile_path=self.data_path)
+                if source == 'swarm_efi':
+                    swarm.download_swarm_efi(event_date, tempfile_path=self.data_path)
 
                 if source == 'superdarn':
                     superdarn.download_sdarn(event_date, tempfile_path=self.data_path)
@@ -105,7 +105,7 @@ class DataManager:
 
         # File paths for all supported datasets
         paths = {'swarm_mag': os.path.join(self.data_path, f'{event_date}_swarm_mag.h5'),
-                'swarm_efield': os.path.join(self.data_path, f'{event_date}_swarmE.h5'), #TODO fix
+                'swarm_efi': os.path.join(self.data_path, f'{event_date}_swarm_efi_tct.h5'), #TODO fix
                 'superdarn': os.path.join(self.data_path, f'{event_date}_superdarn_grdmap.h5'),
                 'supermag': os.path.join(self.data_path, f'{event_date}_supermag.h5'),
                 'iridium_ampere': os.path.join(self.data_path, f'{event_date}_iridium.h5'), 

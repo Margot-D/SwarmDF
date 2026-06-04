@@ -349,11 +349,11 @@ class SwarmDFGUI(customtkinter.CTk):
 
         # datasets
         datasets2download = []
-        # if self.checkbox_swarm_efield.get():
-        #     datasets2download.append('swarm_efield')
-        #TODO add ion flow
-        if self.checkbox_swarm_bfield.get():
+
+        if self.checkbox_swarm_mag.get():
             datasets2download.append('swarm_mag')
+        if self.checkbox_swarm_efi.get():
+            datasets2download.append('swarm_efi')
         if self.checkbox_superdarn.get():
             datasets2download.append('superdarn')
         if self.checkbox_supermag.get():

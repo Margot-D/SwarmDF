@@ -81,13 +81,13 @@ def build_input_panels(gui):
 
     # TAB 2: Datasets 
 
-    gui.checkbox_swarm_bfield = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm mag')
-    gui.checkbox_swarm_bfield.grid(row=3, column=0, pady=(60, 20), padx=10, sticky="n")
-    CustomTooltip(gui.checkbox_swarm_bfield, "Space magnetic field")
+    gui.checkbox_swarm_mag = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm mag')
+    gui.checkbox_swarm_mag.grid(row=3, column=0, pady=(60, 20), padx=10, sticky="n")
+    CustomTooltip(gui.checkbox_swarm_mag, "Space magnetic field")
 
-    gui.checkbox_swarm_conv = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm ion flow')
-    gui.checkbox_swarm_conv.grid(row=3, column=1, pady=(60, 20), padx=10, sticky="n")
-    CustomTooltip(gui.checkbox_swarm_conv, "Cross-track ion drift")
+    gui.checkbox_swarm_efi = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm ion flow')
+    gui.checkbox_swarm_efi.grid(row=3, column=1, pady=(60, 20), padx=10, sticky="n")
+    CustomTooltip(gui.checkbox_swarm_efi, "Cross-track ion drift")
 
     # gui.checkbox_swarm_efield = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm elec')
     # gui.checkbox_swarm_efield.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
@@ -117,8 +117,8 @@ def build_input_panels(gui):
     # gui.entry_data.grid(row=5, column=1, columnspan=1, pady=(20, 20), padx=10, sticky="n")
 
     # gui.checkbox_swarm_efield.select()
-    gui.checkbox_swarm_bfield.select()
-    # gui.checkbox_swarm_conv.select()
+    gui.checkbox_swarm_mag.select()
+    gui.checkbox_swarm_efi.select()
     gui.checkbox_supermag.select()
     gui.checkbox_superdarn.select()
     gui.checkbox_iridium_ampere.select()

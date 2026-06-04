@@ -328,8 +328,6 @@ class LompeInput:
         grid = CSgrid(projection, grid_params["W"]*1e3, grid_params["L"]*1e3, grid_params["Lres"]*1e3, grid_params["Wres"]*1e3, wshift = grid_params["wshift"]*1e3, R = RI*1e3) # in [m]
         # swapped L/W here on purpose; there's an issue coming from CSgrid... With the swapping the GUI remains intuitive. 
 
-        print(grid)
-
         return grid 
 
     # ------------------------------------------------------------------
@@ -410,22 +408,33 @@ class LompeInput:
                 error = 30e-9
 
             # Electric field data from Swarm satellites (A, B and C)
-            elif key in ['swarm_efield']: #TODO check/fix everything
-
-                print('! need to fix Swarm elec function in prepare_data')
+            elif key in ['swarm_efi']: #TODO check/fix everything
 
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.Longitude, sub.Latitude)]
 
                 if sub.empty:
                     continue
+
+                values = sub['Viy'].astype(float).values
+                coords = np.vstack((sub['Longitude'].values, sub['Latitude'].values))
+                LOS = np.vstack((sub['le'].values, sub['ln'].values))
+                datatype = 'convection' 
+                iweight = 1.0 #TODO ??
+                error = 50  # m/s typical EFI uncertainty #TODO ??
+                
+                # sub = df.loc[t0:t1]
+                # sub = sub[grid.ingrid(sub.Longitude, sub.Latitude)]
+
+                # if sub.empty:
+                #     continue
                     
-                values = np.vstack((sub.Evx.values, sub.Evy.values, sub.Evz.values))
-                coords = np.vstack((sub.Longitude.values, sub.Latitude.values, sub.Radius.values))
-                LOS = None
-                datatype = 'efield' 
-                iweight = 1.0
-                error = 10e-9
+                # values = np.vstack((sub.Evx.values, sub.Evy.values, sub.Evz.values))
+                # coords = np.vstack((sub.Longitude.values, sub.Latitude.values, sub.Radius.values))
+                # LOS = None
+                # datatype = 'efield' 
+                # iweight = 1.0
+                # error = 10e-9
 
             # Ground magnetometer data from SuperMAG 
             elif key in ['supermag']:
@@ -672,9 +681,83 @@ class LompeInput:
         spol = 2*self.marker_scale
         lwpol = .5*self.marker_scale
         quiwidth = 0.002*self.marker_scale
+        
+        # Swarm magnetic field
+        if (dataset == 'swarm_mag'): 
 
+            c='mediumpurple'
+
+            lat = data_object.coords['lat']
+            lon = data_object.coords['lon']
+            Be = data_object.values[0] #*1e9 # T
+            Bn = data_object.values[1] #*1e9
+            
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Be, Bn, lon, lat, width=quiwidth, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=1, alpha=1)#, units='inches') 
+
+            # # highlight central point
+            # sc_lat0 = self.one_swarm.loc[central_time, 'Latitude'] 
+            # sc_lon0 = self.one_swarm.loc[central_time, 'Longitude']
+            # cs_ax.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
+
+            if dataset not in added:
+                legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='Swarm mag'))
+                added.add(dataset)
+
+            cs_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT', 'Space mag')
+            polar_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT')
+
+        # Swarm cross-track ion flow
+        elif (dataset == 'swarm_efi'): 
+
+            c='mediumaquamarine'
+
+            lat = data_object.coords['lat']
+            lon = data_object.coords['lon']
+            Ve = data_object.values * data_object.los[0]
+            Vn = data_object.values * data_object.los[1]
+
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, color=c, scale=quiverscales['convection'], scale_units='inches', zorder=2, alpha=0.3)#, units='inches') 
+
+            if dataset not in added:
+                legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='Swarm EFI'))
+                added.add(dataset)
+            
+            cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection") #'V/m', "Efield"
+            polar_quivers[dataset] = (c, quiverscales['convection'], 'm/s')
+
+        # DMSP/SSIES 17 & 18
+        elif dataset in ['dmsp_ssies17', 'dmsp_ssies18']:
+
+            if dataset == 'dmsp_ssies17':
+                c = 'green'
+                label = 'DMSP17'
+            else:
+                c = 'limegreen'
+                label = 'DMSP18'
+
+            if show_global_data:
+                sub = ds.loc[t0:t1]
+                sub = sub[sub.gdlat > 0] if hem == 'north' else sub[sub.gdlat < 0]
+                self._scatter(polar_ax, sub.gdlat, sub.glon, central_time, color=c, s=spol, marker='o')
+
+            lat = data_object.coords['lat'] #actually gdlat
+            lon = data_object.coords['lon'] #actually glon
+            Ve = data_object.values * data_object.los[0] # m/s
+            Vn = data_object.values * data_object.los[1]
+
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
+
+            if dataset not in added:
+                legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label=label))
+                added.add(dataset)
+
+            # cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection")
+            
         # SuperDARN
-        if (dataset == 'superdarn'): 
+        elif (dataset == 'superdarn'): 
 
             c='C2'
 
@@ -742,7 +825,7 @@ class LompeInput:
             Bn = data_object.values[1] #*1e9
 
             self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches')#, units='inches') 
+            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=1)#, units='inches') 
             # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches' ) 
             # print('my quiver magnitude', np.sqrt(Be[1]**2 + Bn[1]**2) )
@@ -754,93 +837,7 @@ class LompeInput:
             cs_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT', "Space mag")
             polar_quivers[dataset] = (c, 300, 'nT')
 
-        # Swarm magnetic field
-        elif (dataset == 'swarm_mag'): 
 
-            c='mediumpurple'
-
-            if show_global_data:
-                sub = ds.loc[t0:t1]
-                sub = sub[sub.Latitude >0] if hem=='north' else sub[sub.Latitude <0]
-                self._scatter(polar_ax, sub.Latitude, sub.Longitude, central_time, color=c, s=spol, marker='o')
-
-            lat = data_object.coords['lat']
-            lon = data_object.coords['lon']
-            Be = data_object.values[0] #*1e9 # T
-            Bn = data_object.values[1] #*1e9
-            
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Be, Bn, lon, lat, width=quiwidth, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches')#, units='inches') 
-
-            # # highlight central point
-            # sc_lat0 = self.one_swarm.loc[central_time, 'Latitude'] 
-            # sc_lon0 = self.one_swarm.loc[central_time, 'Longitude']
-            # cs_ax.scatter(sc_lon0, sc_lat0, c='blue', s=400, marker='.')
-
-            if dataset not in added:
-                legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label='Swarm mag'))
-                added.add(dataset)
-
-            cs_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT', 'Space mag')
-            polar_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT')
-
-        # Swarm electric field #TODO fix when I have data
-        elif (dataset == 'swarm_efield'): 
-
-            print("fix swarm electric field file! \n")
-
-            c='cyan'
-
-            if show_global_data:
-                sub = ds.loc[t0:t1]
-                sub = sub[sub.Latitude >0] if hem=='north' else sub[sub.Latitude <0]
-                self._scatter(polar_ax, sub.Latitude, sub.Longitude, central_time, color =c, s=spol, marker='o')
-
-            # electric field data from all three Swarm satellites
-            lat = data_object.coords['lat']
-            lon = data_object.coords['lon']
-            Ee = data_object.values[0]
-            En = data_object.values[1]
-
-            self._plotpins(polar_ax, lat, lon, Ee, En, central_time, hemisign, scale = quiverscales['efield'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Ee, En, lon, lat, width=quiwidth, color=c, scale=quiverscales['efield'], scale_units='inches')#, units='inches') 
-
-            if dataset not in added:
-                legend_handles.append(Line2D([0], [0], marker='p', color=c, lw=0, markersize=8, label='Swarm elec'))
-                added.add(dataset)
-            
-            cs_quivers[dataset] = (c, quiverscales['efield'], 'V/m', "Efield")
-            polar_quivers[dataset] = (c, quiverscales['efield'], 'V/m')
-
-        # DMSP/SSIES 17 & 18
-        elif dataset in ['dmsp_ssies17', 'dmsp_ssies18']:
-
-            if dataset == 'dmsp_ssies17':
-                c = 'green'
-                label = 'DMSP17'
-            else:
-                c = 'limegreen'
-                label = 'DMSP18'
-
-            if show_global_data:
-                sub = ds.loc[t0:t1]
-                sub = sub[sub.gdlat > 0] if hem == 'north' else sub[sub.gdlat < 0]
-                self._scatter(polar_ax, sub.gdlat, sub.glon, central_time, color=c, s=spol, marker='o')
-
-            lat = data_object.coords['lat'] #actually gdlat
-            lon = data_object.coords['lon'] #actually glon
-            Ve = data_object.values * data_object.los[0] # m/s
-            Vn = data_object.values * data_object.los[1]
-
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
-
-            if dataset not in added:
-                legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label=label))
-                added.add(dataset)
-
-            # cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection")
-            
     def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, figheight=9, figwidth=12.2, gif_speed=550, show_global_data=True):
         """
         Visualize Lompe input data along a Swarm satellite trajectory.
@@ -914,7 +911,6 @@ class LompeInput:
 
             # --------------- # 
             # Draw legend
-            # TODO add legend for both plots (polar and cs)
 
             ############
             # Handles
@@ -924,11 +920,17 @@ class LompeInput:
             ############
             # Vectors 
 
-            # polar axis
-            arrowpolax = axes["polar_scale"]
-            arrowpolax.set_xlim(0, 1) 
-            arrowpolax.set_ylim(0, 1) 
-            arrowpolax.set_axis_off()
+            # # polar axis
+            # arrowpolax = axes["polar_scale"]
+            # arrowpolax.set_xlim(0, 1) 
+            # arrowpolax.set_ylim(0, 1) 
+            # arrowpolax.set_axis_off()
+
+            # cs axis
+            arrowcsax = axes["zoom_scale"]
+            arrowcsax.set_xlim(0, 1) 
+            arrowcsax.set_ylim(0, 1) 
+            arrowcsax.set_axis_off()
 
             xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
             xarrow = 0.2 - xshift
@@ -936,13 +938,6 @@ class LompeInput:
             xtext = xarrow + text_offset
 
             # arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
-            
-            # cs axis
-            arrowcsax = axes["zoom_scale"]
-            arrowcsax.set_xlim(0, 1) 
-            arrowcsax.set_ylim(0, 1) 
-            # arrowcsax.set_axis_off()
-
             arrowcsax.quiver(xarrow, 0.62, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
 
             # measurement types and scales
@@ -969,7 +964,6 @@ class LompeInput:
                                transform=arrowcsax.transAxes,
                                fontsize=14*self.font_scale,
                                va='center')
-
 
             # --------------- # 
             # Save output
