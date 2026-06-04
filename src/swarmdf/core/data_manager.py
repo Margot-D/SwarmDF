@@ -142,6 +142,10 @@ class DataManager:
                     if all_nan_cols:
                         print(f"⚠️ {key}: columns with only NaNs: {all_nan_cols}")
 
+                # DMSP only: filter points close to magnetic pole to avoid weird interpolated data
+                if key in ['dmsp_ssies17', 'dmsp_ssies18']:
+                    df = df[(df.gdlat >= 0) | ((df.gdlat < 0) & (df.gdlat > -72))]
+                    
                 datasets[key] = df
 
                 print(f"{key} dataset loaded.")
