@@ -12,6 +12,8 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+from PIL import Image 
+
 from swarmdf.config import SwarmDFConfig
 from swarmdf import *
 
@@ -37,15 +39,15 @@ config = SwarmDFConfig(sat_id='Swarm A',
                        run_lompe_flag=True,
                        regularization_l1=1.0,
                        regularization_l2=1.0,
-                       gif_speed=550,
-                       figw=12.2,
                        figh=9.0,
                        mag_coords_flag=False,
                        show_all_data_flag=True,
                        run_validation_flag=False,
                        time_offset=0,
                        snapshot=0,
-                       demo_flag=demo)
+                       demo_flag=demo,
+                       save_gif_flag=True,
+                       gif_speed=550)
 
 ######################
 # Retrieve and load data
@@ -66,12 +68,12 @@ grids, analysis_times = lompe_input.build_grids_around_swarm(config.grid_params)
 data_objects_per_grid = lompe_input.prepare_lompe_input(grids, analysis_times) 
 
 # Plot input (analysis grids along satellite tracks and data distribution)
-input_figs = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.figw, config.gif_speed, show_global_data=config.show_all_data_flag)
+input_paths = lompe_input.plot_lompe_input(grids, analysis_times, data_objects_per_grid, config.figh, config.show_all_data_flag, config.save_gif_flag, config.gif_speed)
 
 %matplotlib inline
-for frame in input_figs:
+for input_fig in input_paths:
     plt.figure(figsize=(8, 6))
-    plt.imshow(np.array(frame))
+    plt.imshow(Image.open(input_fig))
     plt.axis("off")
     plt.show()
 
@@ -91,11 +93,11 @@ if config.run_lompe_flag:
     lompe_models = run_lompe(analysis_times, grids, data_objects_per_grid, SHs, SPs, l1, l2)
 
     # Plot output (reconstructed electrodynamics)
-    output_figs = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.gif_speed)    
+    output_paths = plot_lompe_output(lompe_models, config.sat_id, config.figh, config.save_gif_flag, config.gif_speed)    
 
-    for frame in output_figs:
+    for output_fig in output_paths:
         plt.figure(figsize=(8, 6))
-        plt.imshow(np.array(frame))
+        plt.imshow(Image.open(output_fig))
         plt.axis("off")
         plt.show()
 
@@ -105,13 +107,13 @@ if config.run_lompe_flag:
 
 if config.run_validation_flag:
     lompeOSSE_models, gamera_quantities = run_lompeOSSE(lompe_models, config.time_offset, config.snapshot)
-    lompeosse_figs, gamera_figs = plot_lompeOSSE_output(lompeOSSE_models, gamera_quantities, config.figh, config.gif_speed)
+    lompeosse_paths, gamera_paths = plot_lompeOSSE_output(lompeOSSE_models, gamera_output, config.figh, config.save_gif_flag, config.gif_speed)
 
-    for osse_frame, gamera_frame in zip(lompeosse_figs, gamera_figs):
+    for lompeosse_fig, gamera_fig in zip(lompeosse_paths, gamera_paths):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-        ax[0].imshow(np.array(osse_frame))
+        ax[0].imshow(Image.open(lompeosse_fig))
         ax[0].axis("off")
-        ax[1].imshow(np.array(gamera_frame))
+        ax[1].imshow(Image.open(gamera_fig))
         ax[1].axis("off")
         plt.tight_layout()
         plt.show()

@@ -37,9 +37,9 @@ class SwarmDFConfig:
     snapshot: int
 
     # plotting
-    gif_speed: int
-    figw: float
     figh: float
+    save_gif_flag: bool
+    gif_speed: int
 
     # plot options
     mag_coords_flag: bool
@@ -64,12 +64,12 @@ class SwarmDFConfig:
                    run_validation_flag=False,
                    time_offset=0,
                    snapshot=0,
-                   gif_speed=550,
-                   figw=12.2,
                    figh=9.0,
                    mag_coords_flag=False,
                    show_all_data_flag=True,
-                   demo_flag=False)
+                   demo_flag=False, 
+                   save_gif_flag=True,
+                   gif_speed=550)
     
     @classmethod
     def demo(cls): 

@@ -71,29 +71,26 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
         # Run inversion
         osse_Emodel.run_inversion(l1 = l1, l2 = l2)
         
-        # Save model for use in lompeOSSE_output function
+        # Save osse model for use in plotting function
         osse_models.append({"osse_model": copy.deepcopy(osse_Emodel),
                             "t0": entry["t0"],
                             "t1": entry["t1"],
                             "ct": ct,
                             "apex": entry["apex"],
-                            # "l1": l1,
-                            # "l2": l2, 
                             "time_offset": osse_object.time_offset})
 
     return osse_models, gamera_outputs
 
 
-def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=550):
+def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True, gif_speed=550):
     """ 
     input: osse models
     output: lompe plot
     explain that the plot of the origianl gamera electrodynamics is considered as ground truth. The lompeOSSE plot can be compared to that ground truth
     """
 
-    # temp_filenames = []
-    frames_pil_lompeosse = []
-    frames_pil_gamera = []
+    lompeosse_frame_paths = []
+    gamera_frame_paths = []
 
     for entry, entry2  in zip(osse_models, gamera_outputs):
 
@@ -116,43 +113,41 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         print("##", ntime, "##")
 
         # Save to PNG
-        lompeosse_fn = f'lompeOSSE_electrodynamics'
+        lompeosse_fn = f'lompeOSSE'
         fn = tmpdir / f"{lompeosse_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         savekw = {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
+        lompeosse_frame_paths.append(fn)
 
-        fig_lompeosse = lompe.lompeplot(osse_model,
-                                        include_data=True,
-                                        time=ntime,
-                                        apex=apx,
+        # Lompe plot
+        suptitle = f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}"
+        suptitle = f"OSSE-reconstructed electrodynamics \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}"
+        fig_lompeosse = lompe.lompeplot(osse_model,include_data=True,
+                                        time=ntime, apex=apx,
                                         colorscales={"fac": np.linspace(-2, 2, 40) * 1e-6 * 2,
                                                     "ground_mag": np.linspace(-500, 500, 50) * 1e-9 / 3,
                                                     "hall":       np.linspace(0, 20, 32),
                                                     "pedersen":   np.linspace(0, 20, 32)},
-                                        quiverscales={"ground_mag":       600e-9,
-                                                    "space_mag_fac":    600e-9,
-                                                    "space_mag_full":   600e-9,
-                                                    "electric_current": 1}, 
-                                        figheight=figheight,
-                                        savekw=savekw)
+                                        suptitle=suptitle, figheight=figheight, savekw=savekw)
 
-        fig_lompeosse.suptitle(f"OSSE-reconstructed electrodynamics \n {(t0).strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-                fontsize=22, color="black", y=0.98)
+
         # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
-        
-        fig_lompeosse.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
 
-        # Save PNG (with title)
-        fig_lompeosse.savefig(fn, dpi=400)
+        fig_lompeosse.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
+        #TODO save fig again after adjust? 
+
+    # top = np.clip(0.91 - 0.06*(1/ar - 1) - 0.018*np.exp(-((ar - 1.33)/0.18)**2), 0.82, 0.91)
+    # plt.subplots_adjust(top=top, bottom=0.065, left=0.01, right=0.98) 
 
         t22 = tt.perf_counter()
         print("lompeosseplot:", t22 - t11)
 
-        # Convert figure to PIL (chatGPT) (used for the UI GIF)
-        fig_lompeosse.canvas.draw()
-        buf = np.asarray(fig_lompeosse.canvas.buffer_rgba())[:, :, :3]
-        pil_img = Image.fromarray(buf)
-        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
-        frames_pil_lompeosse.append(pil_img.copy())
+        # if savegif:
+        #     # Convert figure to PIL
+        #     fig_lompeosse.canvas.draw()
+        #     buf = np.asarray(fig_lompeosse.canvas.buffer_rgba())[:, :, :3]
+        #     pil_img = Image.fromarray(buf)
+        #     pil_img = ImageOps.expand(pil_img, border=15, fill="white")
+        #     frames_pil_lompeosse.append(pil_img.copy())
 
         plt.close(fig_lompeosse)
 
@@ -162,7 +157,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
 
         gamera_output = entry2['gamera_output']
 
-        grid = osse_model.grid_J # TODO OK???
+        grid = osse_model.grid_J
         gridE = osse_model.grid_E
 
         # Plotting grid (from lompe.visualiation.lompeplot)
@@ -176,7 +171,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         xi, eta = np.meshgrid(np.linspace(ximin, ximax, sh[1]), np.linspace(etamin, etamax, sh[1]))
         lo, la = grid.projection.cube2geo(xi, eta)
 
-        # GAMERA QUANTITIES
+        # GAMERA QUANTITIES at lo, la 
 
         # Electric potential
         EpotG = gamera_output.get_potential(lo, la, ntime)
@@ -209,8 +204,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
         EeG, EnG = gamera_output.get_E(lo, la, ntime)
         x, y, Ex, Ey = grid.projection.vector_cube_projection(EeG, EnG, lo, la)
 
-        # FIGURE
-        figheight = 9
+        # FIGURE (reproduce lompeplot)
         ar = gridE.shape[1] / gridE.shape[0] # aspect ratio
         nrows, ncols = 2, 3
         subplot_height = figheight / nrows
@@ -303,35 +297,42 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, gif_speed=55
 
         plt.subplots_adjust(top=0.86, bottom=0.065, left=0.01, right=0.99, hspace=0.1, wspace=0.01) 
         fig_gamera.suptitle(f'"Truth" electrodynamics \n {t0.strftime("%Y-%m-%d %H:%M:%S")}  -  {t1.strftime("%Y-%m-%d %H:%M:%S")}',
-                fontsize=22, color="black", y=0.98)
+                            fontsize=22, color="black", y=0.98)
         
         # Save to PNG
-        gamera_fn = f'GAMERA_electrodynamics'
+        gamera_fn = f'Gamera'
         fn = tmpdir / f"{gamera_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         fig_gamera.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
+        gamera_frame_paths.append(fn)
 
-        fig_gamera.canvas.draw()
-        buf = np.asarray(fig_gamera.canvas.buffer_rgba())[:, :, :3]
-        pil_img = Image.fromarray(buf)
-        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
-        frames_pil_gamera.append(pil_img.copy())
+        # if savegif:
+        #     # Convert figure to PIL
+        #     fig_gamera.canvas.draw()
+        #     buf = np.asarray(fig_gamera.canvas.buffer_rgba())[:, :, :3]
+        #     pil_img = Image.fromarray(buf)
+        #     pil_img = ImageOps.expand(pil_img, border=15, fill="white")
+        #     frames_pil_gamera.append(pil_img.copy())
 
         plt.close(fig_gamera)
 
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 
-    # Path to save the GIFs
-    output_gam = output_dir / f"{gamera_fn}.gif"
-    output_lomp = output_dir / f"{lompeosse_fn}.gif"
+    # Save GIF
+    if savegif:
 
-    with imageio.get_writer(output_lomp, mode="I", duration=gif_speed, loop=0) as writer:
-        for frame in frames_pil_lompeosse:
-            writer.append_data(np.array(frame))  # convert PIL → numpy
+        t00 = osse_models[0]["t0"]
+        t11 = osse_models[-1]["t1"]
+        output_gam = output_dir / f"{gamera_fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
+        output_lomp = output_dir / f"{lompeosse_fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
 
-    with imageio.get_writer(output_gam, mode="I", duration=gif_speed, loop=0) as writer:
-        for frame in frames_pil_gamera:
-            writer.append_data(np.array(frame))  # convert PIL → numpy
+        with imageio.get_writer(output_lomp, mode="I", duration=gif_speed, loop=0) as writer:
+            for frame in lompeosse_frame_paths:
+                writer.append_data(imageio.imread(frame))
 
-    print(f"GIF saved in outputs directory: {output_lomp} and {output_gam}") # TODO fix path to indicate the user directory 
+        with imageio.get_writer(output_gam, mode="I", duration=gif_speed, loop=0) as writer:
+            for frame in gamera_frame_paths:
+                writer.append_data(imageio.imread(frame))
 
-    return frames_pil_lompeosse, frames_pil_gamera 
+        print(f"GIF saved in outputs directory: {output_lomp} and {output_gam}") # TODO fix path to indicate the user directory 
+
+    return lompeosse_frame_paths, gamera_frame_paths #frames_pil_lompeosse, frames_pil_gamera 

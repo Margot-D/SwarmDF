@@ -35,12 +35,12 @@ def build_right_sidebar(gui):
         gui.entry_figh.insert(0, 9)
         CustomTooltip(gui.entry_figh, "Figure height (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
 
-        gui.label_figw = customtkinter.CTkLabel(gui.frame_figsize, text="Fig width:")
-        gui.label_figw.grid(row=0, column=1, pady=(0, 3))
-        gui.entry_figw = customtkinter.CTkEntry(gui.frame_figsize, width=40)
-        gui.entry_figw.grid(row=1, column=1, padx=5)
-        gui.entry_figw.insert(0, 12.2)
-        CustomTooltip(gui.entry_figw, "Figure width (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
+        # gui.label_figw = customtkinter.CTkLabel(gui.frame_figsize, text="Fig width:")
+        # gui.label_figw.grid(row=0, column=1, pady=(0, 3))
+        # gui.entry_figw = customtkinter.CTkEntry(gui.frame_figsize, width=40)
+        # gui.entry_figw.grid(row=1, column=1, padx=5)
+        # gui.entry_figw.insert(0, 12.2)
+        # CustomTooltip(gui.entry_figw, "Figure width (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
 
         # Polar plot coordinates (mag vs. geo)
         gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords') #, command=gui.replot_lompe_input

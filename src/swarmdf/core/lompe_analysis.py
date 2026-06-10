@@ -75,7 +75,7 @@ def run_lompe(time_bounds, grids, data_objects_per_grid, SHs, SPs, l1=1, l2=1):
 
     return models
 
-def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
+def plot_lompe_output(models, sat_id, figheight=9, savegif=True, gif_speed=550):
     """
     Gives Lompe plot for each grid frame along Swarm trajectory
 
@@ -85,7 +85,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
         list of PIL images for animation in GUI    
     """
 
-    frames_pil = []
+    frame_paths = []
 
     for entry in models:
         user_model = entry["model"]
@@ -99,6 +99,7 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
         # Save to PNG
         fn = f'lompe_sw{sat_id[-1]}'
         fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
+        frame_paths.append(fn_ct)
         savekw = {"fname": fn_ct, "dpi": 400}
 
         # Lompe plot
@@ -118,31 +119,24 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
                                 figheight = figheight,
                                 savekw=savekw)
 
-        # Convert figure to PIL (used for the UI GIF)
-        fig.canvas.draw()
-        buf = np.asarray(fig.canvas.buffer_rgba())[:, :, :3]
-        pil_img = Image.fromarray(buf)
-        pil_img = ImageOps.expand(pil_img, border=15, fill="white")
-        frames_pil.append(pil_img.copy())
-
         plt.close(fig)
 
     print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
 
-    # Path to save the GIF
-    t00 = models[0]["t0"]
-    t11 = models[-1]["t1"]
-    fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
-    output = fn_time
+    # Save GIF
+    if savegif:
 
-    # output = output_dir / f"{lompe_fn}.gif"
+        t00 = models[0]["t0"]
+        t11 = models[-1]["t1"]
+        fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
+        output = fn_time
 
-    with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
-        for frame in frames_pil:
-            writer.append_data(np.array(frame))  # convert PIL → numpy
+        with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
+            for frame in frame_paths:
+                writer.append_data(imageio.imread(frame))
 
-    print(f"GIF saved in outputs directory: {output}")
+        print(f"GIF saved in outputs directory: {output}")
 
-    return frames_pil
+    return frame_paths
 
 

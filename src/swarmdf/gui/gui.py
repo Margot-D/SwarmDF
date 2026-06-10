@@ -11,6 +11,8 @@ entry point for interacting with the toolbox.
 import matplotlib
 matplotlib.use("TkAgg")
 
+from PIL import Image, ImageOps
+
 from tkinter import messagebox
 import threading
 import traceback
@@ -386,7 +388,6 @@ class SwarmDFGUI(customtkinter.CTk):
                        'wshift': float(self.entry_wshift.get())}
 
         # Figure size
-        figw = float(self.entry_figw.get())
         figh = float(self.entry_figh.get())
 
         # Polar plot magnetic coordinates
@@ -424,10 +425,11 @@ class SwarmDFGUI(customtkinter.CTk):
                              run_validation_flag=run_validation_flag,
                              time_offset=timeoff, snapshot=snapshot,
                              demo_flag=demo_flag,
-                             gif_speed=speed,
-                             figw=figw, figh=figh,
+                             figh=figh,
                              mag_coords_flag=mag,
-                             show_all_data_flag=show_data)
+                             show_all_data_flag=show_data,
+                             save_gif_flag=True, # always true when running GUI
+                             gif_speed=speed)
 
 
 
@@ -506,8 +508,11 @@ class SwarmDFGUI(customtkinter.CTk):
         self.master_state = self.init_animation_state(self.after, self.after_cancel)
 
         try: 
-            self.input_pil_frames = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
-
+           # Extract PIL images
+            # self.input_pil_frames = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
+           input_frame_paths = render_swarmdf_input(self.config, self.datasets, input_to_lompe) #TODO what is the point of render function?
+           self.input_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in input_frame_paths]
+            
         except Exception as e:
             print("Can't load PIL images", e)
             traceback.print_exc()
@@ -549,7 +554,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            self.output_pil_frames = render_swarmdf_output(self.config, lompe_models)
+            # self.output_pil_frames = render_swarmdf_output(self.config, lompe_models)
+           output_frame_paths = render_swarmdf_output(self.config, lompe_models) #TODO what is the point of render function?
+           self.output_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in output_frame_paths]
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -587,7 +594,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Extract PIL images 
-            self.lompeosse_pil_frames, self.gamera_pil_frames = render_swarmdf_validation(self.config, lompeosse_results)
+            # self.lompeosse_pil_frames, self.gamera_pil_frames = render_swarmdf_validation(self.config, lompeosse_results)
+            lompeosse_frame_paths, gamera_frame_paths = render_swarmdf_validation(self.config, lompeosse_results)
+            self.lompeosse_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in lompeosse_frame_paths]
+            self.gamera_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in gamera_frame_paths]
 
             # Combine PIL images from both sources into single frames (useful for the interactive window)
             self.validation_combined_pil_frames = combine_validation_frames(self.lompeosse_pil_frames, self.gamera_pil_frames)

@@ -77,9 +77,9 @@ def compute_swarmdf_input(config, datasets):
 def render_swarmdf_input(config, datasets, swarmdf_input: SwarmDFInput):
     
     lompe_ctx = LompeInput(config.sat_id, config.start_time, config.end_time, config.timestep, datasets, config.mag_coords_flag)
-    input_pil_frames = lompe_ctx.plot_lompe_input(swarmdf_input.grids, swarmdf_input.analysis_times, swarmdf_input.data_objects_per_grid, config.figh, config.figw, config.gif_speed, config.show_all_data_flag)
+    input_paths = lompe_ctx.plot_lompe_input(swarmdf_input.grids, swarmdf_input.analysis_times, swarmdf_input.data_objects_per_grid, config.figh, config.show_all_data_flag, config.save_gif_flag, config.gif_speed)
     
-    return input_pil_frames
+    return input_paths
 
 def compute_swarmdf_output(config, swarmdf_input: SwarmDFInput):
 
@@ -90,9 +90,9 @@ def compute_swarmdf_output(config, swarmdf_input: SwarmDFInput):
 
 def render_swarmdf_output(config, swarmdf_output: SwarmDFOutput):
     
-    output_pil_frames = plot_lompe_output(swarmdf_output.lompe_models, config.sat_id, config.figh, config.gif_speed)
+    output_paths = plot_lompe_output(swarmdf_output.lompe_models, config.sat_id, config.figh, config.save_gif_flag, config.gif_speed)
     
-    return output_pil_frames
+    return output_paths
 
 def compute_swarmdf_validation(config, swarmdf_output : SwarmDFOutput):
 
@@ -102,6 +102,6 @@ def compute_swarmdf_validation(config, swarmdf_output : SwarmDFOutput):
 
 def render_swarmdf_validation(config, swarmdf_validation: SwarmDFValidation):
     
-    lompeosse_PILframes, gamera_PILframes = plot_lompeOSSE_output(swarmdf_validation.lompeosse_PILframes, swarmdf_validation.gamera_PILframes, config.figh, config.gif_speed)
+    lompeosse_paths, gamera_paths = plot_lompeOSSE_output(swarmdf_validation.lompeosse_PILframes, swarmdf_validation.gamera_PILframes, config.figh, config.save_gif_flag, config.gif_speed)
     
-    return lompeosse_PILframes, gamera_PILframes
+    return lompeosse_paths, gamera_paths

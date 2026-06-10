@@ -504,7 +504,7 @@ class LompeInput:
     # Plotting input (data and grids)
     # ------------------------------------------------------------------
 
-    def _init_figure(self, t0, t1, grid, figheight, figwidth):
+    def _init_figure(self, t0, t1, grid, figheight):
         """Create figure and base axes."""
 
         self.ar = grid.shape[1] / grid.shape[0] # aspect ratio
@@ -825,7 +825,7 @@ class LompeInput:
             polar_quivers[dataset] = (c, 300, 'nT')
 
 
-    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, figheight=9, figwidth=12.2, gif_speed=550, show_global_data=True):
+    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, figheight=9, show_global_data=True, savegif=True, gif_speed=550):
         """
         Visualize Lompe input data along a Swarm satellite trajectory.
 
@@ -855,7 +855,8 @@ class LompeInput:
         -------
         frames_pil : list
             List of PIL images corresponding to each frame, useful for GUI display.
-
+            #TODO change that! create gif in gui 
+            
         Notes
         -----
         - Figures are saved as PNG files in a temporary directory.
@@ -864,8 +865,7 @@ class LompeInput:
         
         print("Plotting Lompe input...")
 
-        
-        frames_pil = []
+        frame_paths = []
 
         legend_stuff = {"legend_handles": [], # matplotlib legend entries
                         "added": set(), # track which datasets are already in legend
@@ -881,7 +881,7 @@ class LompeInput:
             # --------------- # 
             # Initialize figure and axes
 
-            fig, axes = self._init_figure(t0, t1, grid, figheight, figwidth)
+            fig, axes = self._init_figure(t0, t1, grid, figheight)
             polax, csax = self._setup_plot_frames(axes, grid, ct, hem)
             
             # --------------- # 
@@ -959,32 +959,28 @@ class LompeInput:
             tmpdir.mkdir(parents=True, exist_ok=True)
             fn = f'input_sw{self.sat_id[-1]}'
             fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
-            plt.savefig(fn_ct, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
+            frame_paths.append(fn_ct)
 
-            # Convert figure to PIL (used for the UI GIF)
-            fig.canvas.draw()
-            buf = np.asarray(fig.canvas.buffer_rgba())[:, :, :3]
-            pil_img = Image.fromarray(buf)
-            pil_img = ImageOps.expand(pil_img, border=15, fill="white")
-            frames_pil.append(pil_img.copy())
-            
+            plt.savefig(fn_ct, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
             plt.close(fig)
 
         print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
 
         # Save GIF
-        t00 = time_bounds['t0'][0]
-        t11 = time_bounds['t1'][-1]
-        fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
-        output = fn_time
+        if savegif:
 
-        with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
-            for frame in frames_pil:
-                writer.append_data(np.array(frame))  # convert PIL → numpy
+            t00 = time_bounds['t0'][0]
+            t11 = time_bounds['t1'][-1]
+            fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
+            output = fn_time
 
-        print(f"GIF saved in outputs directory as: {output}") 
+            with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
+                for fn in frame_paths:
+                    writer.append_data(imageio.imread(fn))
 
-        return frames_pil # returns PIL images for display in GUI
+            print(f"GIF saved in outputs directory as: {output}") 
+
+        return frame_paths # TODO fix this: returns PIL images for display in GUI
 
 def show_error_popup(msg):
     root = tk._default_root
