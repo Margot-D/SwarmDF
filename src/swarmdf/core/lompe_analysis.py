@@ -118,14 +118,6 @@ def plot_lompe_output(models, sat_id, figheight=9, gif_speed=550):
                                 figheight = figheight,
                                 savekw=savekw)
 
-        # fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}",
-        #           y=0.98) #fontsize=22, color="black",
-
-        # fig.subplots_adjust(left=0.08, right=0.95, hspace=.8, wspace=0.2)
-
-        # Save PNG (with title)
-        fig.savefig(fn_ct, dpi=400, pad_inches=0.2)
-
         # Convert figure to PIL (used for the UI GIF)
         fig.canvas.draw()
         buf = np.asarray(fig.canvas.buffer_rgba())[:, :, :3]
