@@ -404,11 +404,11 @@ class LompeInput:
                 coords = np.vstack((sub.Longitude.values, sub.Latitude.values, sub.Radius.values))
                 LOS = None
                 datatype = 'space_mag_fac' 
-                iweight = 0.5 #1.0
+                iweight = 1.0 # 0.5
                 error = 30e-9
 
             # Electric field data from Swarm satellites (A, B and C)
-            elif key in ['swarm_efi']: #TODO check/fix everything
+            elif key in ['swarm_efi']:
 
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.Longitude, sub.Latitude)]
@@ -420,21 +420,8 @@ class LompeInput:
                 coords = np.vstack((sub['Longitude'].values, sub['Latitude'].values))
                 LOS = np.vstack((sub['le'].values, sub['ln'].values))
                 datatype = 'convection' 
-                iweight = 1.0 #TODO ??
-                error = 50  # m/s typical EFI uncertainty #TODO ??
-                
-                # sub = df.loc[t0:t1]
-                # sub = sub[grid.ingrid(sub.Longitude, sub.Latitude)]
-
-                # if sub.empty:
-                #     continue
-                    
-                # values = np.vstack((sub.Evx.values, sub.Evy.values, sub.Evz.values))
-                # coords = np.vstack((sub.Longitude.values, sub.Latitude.values, sub.Radius.values))
-                # LOS = None
-                # datatype = 'efield' 
-                # iweight = 1.0
-                # error = 10e-9
+                iweight = 0.1
+                error = 50  # m/s
 
             # Ground magnetometer data from SuperMAG 
             elif key in ['supermag']:
