@@ -15,9 +15,15 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 
 ## Installation
 
-`git clone https://github.com/Margot-D/SwarmDF.git`<br>
+<!-- `git clone https://github.com/Margot-D/SwarmDF.git`<br>
 `cd SwarmDF`<br>
-`pip install .`
+`pip install .` -->
+
+```bash
+git clone https://github.com/Margot-D/SwarmDF.git
+cd SwarmDF
+pip install .
+```
 
 ### Dependencies 
 
@@ -25,8 +31,10 @@ SwarmDF requires several external Python packages.
 If you already have Lompe installed, you may still need the following dependencies:
 `pip install customtkinter tkcalendar imageio pillow`
 
-SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:
+SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:<br>
 `git clone https://github.com/Margot-D/lompe_osse.git` (not functional yet)
+`cd lompe_osse`<br>
+`pip install .`
 
 <!-- ### Environment setup (recommended)
 
@@ -57,7 +65,7 @@ The config file can be located anywhere, you only need to provide its path:
 
 The repository also includes examples to help users get started:
 
-Jupyter demo notebook: `SwarmDF_demo.ipynb`
+Jupyter demo notebook: `SwarmDF_demo.ipynb`<br>
 Python script: `SwarmDF_example_script.py`
 
 These provide a walkthrough of the full SwarmDF workflow. 
