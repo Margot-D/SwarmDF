@@ -2,7 +2,7 @@
 [project]
 name = "swarmdf"
 version = "0.0.0"
-description = "Data Fusion toolbox designed to analyse the local high-latitude ionosphere electrodynamics "
+description = "Data Fusion toolbox for analysing high-latitude ionosphere electrodynamics along a Swarm satellite trajectory."
 authors = [
     { name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }
 ]
