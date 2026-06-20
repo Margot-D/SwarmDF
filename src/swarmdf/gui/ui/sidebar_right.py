@@ -1,5 +1,5 @@
 import customtkinter
-from ui.helpers.tooltip import CustomTooltip
+from swarmdf.gui.ui.helpers.tooltip import CustomTooltip
 import webbrowser
 
 def build_right_sidebar(gui):

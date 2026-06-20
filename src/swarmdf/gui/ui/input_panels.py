@@ -1,7 +1,7 @@
 import customtkinter
 from tkinter import messagebox
 from tkcalendar import Calendar
-from ui.helpers.tooltip import CustomTooltip
+from swarmdf.gui.ui.helpers.tooltip import CustomTooltip
 import webbrowser
 from datetime import datetime, date
 

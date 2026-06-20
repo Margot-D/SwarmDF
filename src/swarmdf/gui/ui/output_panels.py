@@ -1,5 +1,5 @@
 import customtkinter
-from ui.helpers.icons import Icons
+from swarmdf.gui.ui.helpers.icons import Icons
 
 def build_plot_panels(gui):
 

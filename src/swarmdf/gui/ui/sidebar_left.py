@@ -1,6 +1,6 @@
 import customtkinter
-from ui.helpers.tooltip import CustomTooltip
-from ui.input_panels import apply_example_date
+from swarmdf.gui.ui.helpers.tooltip import CustomTooltip
+from swarmdf.gui.ui.input_panels import apply_example_date
 
 
 def build_left_sidebar(gui):
