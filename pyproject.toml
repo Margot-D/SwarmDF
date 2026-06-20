@@ -1,19 +1,17 @@
-
 [project]
 name = "swarmdf"
 version = "0.0.0"
 description = "Data Fusion toolbox for analysing high-latitude ionosphere electrodynamics along a Swarm satellite trajectory."
-authors = [
-    { name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }
-]
+authors = [{ name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }]
 readme = "README.md"
 requires-python = ">=3.9"
 
-
-dependencies = [
-
-]
+dependencies = []
 
 [build-system]
 requires = ["setuptools", "setuptools_scm[toml]"]
 build-backend = "setuptools.build_meta"
+
+[project.scripts]
+swarmdf = "swarmdf.cli.main:main"
+swarmdf-gui = "swarmdf.gui.app:main"
