@@ -15,10 +15,6 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 
 ## Installation
 
-<!-- `git clone https://github.com/Margot-D/SwarmDF.git`<br>
-`cd SwarmDF`<br>
-`pip install .` -->
-
 ```bash
 git clone https://github.com/Margot-D/SwarmDF.git
 cd SwarmDF
@@ -31,10 +27,12 @@ SwarmDF requires several external Python packages.
 If you already have Lompe installed, you may still need the following dependencies:
 `pip install customtkinter tkcalendar imageio pillow`
 
-SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:<br>
-`git clone https://github.com/Margot-D/lompe_osse.git` (not functional yet)
-`cd lompe_osse`<br>
-`pip install .`
+<!-- SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:<br>
+```bash
+git clone https://github.com/Margot-D/lompe_osse.git (not functional yet)
+cd lompe_osse
+pip install .
+``` -->
 
 <!-- ### Environment setup (recommended)
 
@@ -43,17 +41,23 @@ An environment file (swarmdf_environment.yml) is provided to install all depende
 
 ## Getting started 
 
-Once installed, SwarmDF can be run from anywhere in your environment.
+Once installed, the commands `swarmdf-gui` and `swarmdf` are available from any terminal within the active Python environment.
 
-For a quickstart, run built-in demo using sample datasets:
-`swarmdf --demo`
+For a quick start, run the built-in demo using sample datasets:
+```bash
+swarmdf --demo
+```
 
 ### Graphical user interface (recommended)
-`swarmdf-gui`
+```bash
+swarmdf-gui
+```
 
 ### Command-line interface
-Run a full SwarmDF analysis using a configuration file:
-`swarmdf --config path/to/config.yaml`
+Run a full SwarmDF analysis using a configuration file:<br>
+```bash
+swarmdf --config path/to/config.yaml
+```
 
 <!-- ### Configuration
 
@@ -64,9 +68,8 @@ The config file can be located anywhere, you only need to provide its path:
 ## Examples
 
 The repository also includes examples to help users get started:
-
-Jupyter demo notebook: `SwarmDF_demo.ipynb`<br>
-Python script: `SwarmDF_example_script.py`
+- Jupyter demo notebook: `SwarmDF_demo.ipynb`<br>
+- Python script: `SwarmDF_example_script.py`
 
 These provide a walkthrough of the full SwarmDF workflow. 
 
