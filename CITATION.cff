@@ -2,11 +2,13 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: LompeOSSE
+title: SwarmDF
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
+version:
+date-released: 
 authors:
   - given-names: 'Margot '
     family-names: Decotte
@@ -18,17 +20,21 @@ authors:
     email: karl.laundal@uib.no
     affiliation: 'Technical University of Denmark, University of Bergen'
     orcid: 'https://orcid.org/0000-0001-5028-4943'
-  - given-names: Andreas S
-    family-names: Skeidsvoll
-    email: andreas.skeidsvoll@uib.no
+  - given-names: 'Fasil T'
+    family-names: Kebede
+    email: fasil.kebede@uib.no
     affiliation: University of Bergen
-    orcid: 'https://orcid.org/0000-0001-7515-9436'
-repository-code: 'https://github.com/Margot-D/lompe_osse.git'
+    orcid:
+repository-code: 'https://github.com/Margot-D/SwarmDF.git'
 abstract: >-
-  LompeOSSE generates a synthetic electric field model from
-  Gamera simulations, enabling controlled Observation System
-  Simulation Experiments (OSSEs) for assessing how well the
-  Local Mapping of Polar Ionospheric Electrodynamics (Lompe)
-  technique reconstructs ionospheric electrodynamics under
-  different measurement configurations.
+  SwarmDF is an open-source Python toolbox for analysing high-latitude 
+  ionospheric electrodynamics using Swarm satellite observations and 
+  complementary ionospheric-thermospheric datasets.
+  It provides an end-to-end automated workflow for data retrieval, 
+  electrodynamic reconstruction along a Swarm satellite trajectory 
+  using Lompe, and validation through the integrated LompeOSSE module. 
+  By combining multi-instrument observations, SwarmDF enables well-constrained
+  studies of high-latitude ionospheric electrodynamics.
+  The toolbox provides automated access to various ionospheric-thermospheric 
+  datasets, facilitating accessible and reproducible analyses. 
 license: MIT
