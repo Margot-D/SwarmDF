@@ -15,8 +15,8 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 
 ## Installation
 
-`git clone https://github.com/Margot-D/SwarmDF.git`
-`cd SwarmDF`
+`git clone https://github.com/Margot-D/SwarmDF.git`<br>
+`cd SwarmDF`<br>
 `pip install .`
 
 ### Dependencies 
