@@ -63,7 +63,8 @@ swarmdf --config path/to/config.yaml
 
 SwarmDF can also be used directly from Python, which allows full control over the workflow and direct access to results and plots.
 
-### Run a demo analysis
+### Run a demo analysis:
+
 ```python
 from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
 from swarmdf.pipeline import *
@@ -76,7 +77,6 @@ results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_s
 ### Access results and plots:
 
 ```python
-
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -96,6 +96,18 @@ if config.run_lompe_flag:
         plt.imshow(Image.open(output_fig))
         plt.axis("off")
         plt.show()
+
+
+# if config.run_validation_flag: # use result.plots.validation_frames
+#     # %matplotlib inline
+#     for framea, frameb in zip(results.validation.lompeOSSE_PILframes, results.validation.gamera_PILframes):
+#         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+#         ax[0].imshow(np.array(framea))
+#         ax[0].axis("off")
+#         ax[1].imshow(np.array(frameb))
+#         ax[1].axis("off")
+#         plt.tight_layout()
+#         plt.show()
 ```
 
 <!-- ### Configuration
