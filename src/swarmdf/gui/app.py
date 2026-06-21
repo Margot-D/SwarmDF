@@ -24,7 +24,7 @@ customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "gr
 from swarmdf import * # core functions
 from swarmdf.pipeline import get_data, compute_swarmdf_input, compute_swarmdf_output, compute_swarmdf_validation, render_swarmdf_input, render_swarmdf_output, render_swarmdf_validation
 
-from swarmdf.config import SwarmDFConfig
+from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
 from swarmdf.gui.ui.sidebar_left import build_left_sidebar
 from swarmdf.gui.ui.sidebar_right import build_right_sidebar
 from swarmdf.gui.ui.input_panels import build_input_panels
@@ -62,7 +62,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.validators = [("satellite",self.optmenu_satellite), 
                            ("time interval",self.entry_start_time, self.entry_end_time),
-                           ("other entries",self.entry_timestep, "Timestep", 30, 5, None),
+                           ("other entries",self.entry_timestep, "Timestep", 30, None, None),
                            ("other entries",self.entry_kp, "Kp index", 4, 0, 9), 
                            ("other entries",self.entry_f107, "F107 value (s.f.u)", 100, 30, 400), #TODO values ok Kalle? 
                            ("other entries",self.entry_background, "Background value", 2, 0, None), # TODO what's a good range Kalle?
@@ -97,11 +97,12 @@ class SwarmDFGUI(customtkinter.CTk):
             
         # Collect user input
         self.config = self.build_config_from_gui()
+        self.plot_settings = self.build_plotsettings_from_gui()
 
         # Generate a Python script reproducing the SwarmDF workflow from the current configuration
         if self.switch_pythonscript.get():
             fn = self.entry_filename.get() if self.entry_filename.get() else 'SwarmDF_script.py' # default file name
-            generate_python_code(self.config, fn)
+            generate_python_code(self.config, self.plot_settings, fn)
 
         # Progress bar for Lompe input panel
         self.progress_input.grid()
@@ -123,10 +124,11 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try: 
             # Data
-            self.datasets = get_data(self.config)
+            is_demo = bool(self.switch_demo.get())
+            self.datasets = get_data(self.config, use_sample_data=is_demo)
 
             # Input to Lompe
-            self.input_results = compute_swarmdf_input(self.config, self.datasets) 
+            self.input_results = compute_swarmdf_input(self.datasets, self.config) 
             self.display_swarmdf_input(self.input_results)
 
             # Lompe output
@@ -265,7 +267,7 @@ class SwarmDFGUI(customtkinter.CTk):
                 messagebox.showerror("Invalid input", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
                 return False
             
-            return True # if no issue is detected
+            return True
         
 
         elif kind == "time interval":
@@ -283,14 +285,15 @@ class SwarmDFGUI(customtkinter.CTk):
                 messagebox.showerror("Invalid input", "⚠️ Start time must be earlier than end time.")
                 return False
 
-            min_seconds = 10 # TODO what should be the minimum time? frame_length + 1s at least, but should it be a few minutes? it should be at least 10 sec (swarm measurement frequency)
+            min_seconds = 5 # TODO what should be the minimum time? frame_length + 1s at least, but should it be a few minutes? it should be at least 5 sec (swarm measurement frequency)
 
             if (end - start).total_seconds() < min_seconds:
                 messagebox.showerror("Invalid input", f"⚠️ Time interval must be at least " f"{min_seconds} seconds.")
                 return False
 
-            return True # if no issue is detected
+            return True
         
+        #TODO add specific validation for time step? at least 5 sec
 
         elif kind == "other entries":
 
@@ -387,17 +390,17 @@ class SwarmDFGUI(customtkinter.CTk):
                        'Wres': float(self.entry_Lres.get()),
                        'wshift': float(self.entry_wshift.get())}
 
-        # Figure size
-        figh = float(self.entry_figh.get())
+        # # Figure size
+        # figh = float(self.entry_figh.get())
 
-        # Polar plot magnetic coordinates
-        mag = bool(self.checkbox_magcoords.get())
+        # # Polar plot magnetic coordinates
+        # mag = bool(self.checkbox_magcoords.get())
 
-        # Show global data (outside grid)
-        show_data = bool(self.checkbox_showdata.get())
+        # # Show global data (outside grid)
+        # show_data = bool(self.checkbox_showdata.get())
 
-        # GIF speed
-        speed = self.apply_gif_parameters(update_state=False) # ms/frame
+        # # GIF speed
+        # speed = self.apply_gif_parameters(update_state=False) # ms/frame
 
         # Lompe flag
         run_lompe_flag = bool(self.checkbox_runlompe.get())
@@ -412,7 +415,7 @@ class SwarmDFGUI(customtkinter.CTk):
         snapshot = int(self.entry_Gsnapshot.get())
 
         # demo mode
-        demo_flag = bool(self.switch_demo.get())
+        # demo_flag = bool(self.switch_demo.get())
 
         return SwarmDFConfig(sat_id=sat_id,
                              start_time=start_time, end_time=end_time, timestep=timestep,
@@ -424,14 +427,33 @@ class SwarmDFGUI(customtkinter.CTk):
                              regularization_l1=l1, regularization_l2=l2,
                              run_validation_flag=run_validation_flag,
                              time_offset=timeoff, snapshot=snapshot,
-                             demo_flag=demo_flag,
-                             figh=figh,
-                             mag_coords_flag=mag,
-                             show_all_data_flag=show_data,
-                             save_gif_flag=True, # always true when running GUI
-                             gif_speed=speed)
+                            #  demo_flag=demo_flag,
+                            #  figh=figh,
+                            #  mag_coords_flag=mag,
+                            #  show_all_data_flag=show_data,
+                            #  save_gif_flag=True, # always true when running GUI
+                            #  gif_speed=speed
+                             )
 
 
+    def build_plotsettings_from_gui(self):
+
+        # Figure size
+        figh = float(self.entry_figh.get())
+
+        # Polar plot magnetic coordinates
+        mag = bool(self.checkbox_magcoords.get())
+
+        # Show global data (outside grid)
+        show_data = bool(self.checkbox_showdata.get())
+
+        # GIF speed
+        speed = self.apply_gif_parameters(update_state=False) # ms/frame
+
+        return SwarmDFPlotSettings(mag_coords_flag=mag,
+                                   figh=figh,
+                                   show_all_data_flag=show_data,
+                                   gif_speed=speed)
 
 
 ####################
@@ -459,7 +481,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         def lompe_worker():
             try:
-                self.output_results = compute_swarmdf_output(self.config, self.input_results) 
+                self.output_results = compute_swarmdf_output(self.input_results, self.config) 
                 self.after(0, lambda: self.display_swarmdf_output(self.output_results)) # plotting and GUI update must go through after
 
             except Exception as e:
@@ -489,7 +511,7 @@ class SwarmDFGUI(customtkinter.CTk):
         
         def lompeOSSE_worker():
             try:
-                validation_results = compute_swarmdf_validation(self.config, self.output_results) #TODO replace with lompe_models
+                validation_results = compute_swarmdf_validation(self.output_results, self.config)
                 self.after(0, lambda: self.display_lompeosse_validation(validation_results))
 
             except Exception as e:
@@ -503,16 +525,16 @@ class SwarmDFGUI(customtkinter.CTk):
 # # Functions for displaying output animations in GUI
 
     def display_swarmdf_input(self, input_to_lompe):
+        """TODO fix: Convert png to Tkinter PhotoImage frames and prepare GIF animation for display in GUI"""
 
         self.stop_animation(getattr(self, "master_state", None))
         self.master_state = self.init_animation_state(self.after, self.after_cancel)
 
         try: 
            # Extract PIL images
-            # self.input_pil_frames = render_swarmdf_input(self.config, self.datasets, input_to_lompe)
-           input_frame_paths = render_swarmdf_input(self.config, self.datasets, input_to_lompe) #TODO what is the point of render function?
-           self.input_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in input_frame_paths]
-            
+           input_png_frames = render_swarmdf_input(input_to_lompe, self.plot_settings)
+           self.input_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in input_png_frames]
+
         except Exception as e:
             print("Can't load PIL images", e)
             traceback.print_exc()
@@ -550,13 +572,12 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.play_generic(state=self.master_state)
 
 
-    def display_swarmdf_output(self, lompe_models):
+    def display_swarmdf_output(self, lompe_output):
 
         try:
             # Extract PIL images 
-            # self.output_pil_frames = render_swarmdf_output(self.config, lompe_models)
-           output_frame_paths = render_swarmdf_output(self.config, lompe_models) #TODO what is the point of render function?
-           self.output_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in output_frame_paths]
+            output_png_frames = render_swarmdf_output(lompe_output, self.plot_settings)
+            self.output_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in output_png_frames]
 
         except Exception as e:
             print("Can't load PIL images", e)
@@ -587,17 +608,16 @@ class SwarmDFGUI(customtkinter.CTk):
             self.set_buttons_state("normal")
 
 
-    def display_lompeosse_validation(self, lompeosse_results):
+    def display_lompeosse_validation(self, swarmdf_validation):
 
         self.stop_animation(getattr(self, "validation_state", None))
         self.validation_state = self.init_animation_state(self.validation_window.after, self.validation_window.after_cancel)
 
         try:
             # Extract PIL images 
-            # self.lompeosse_pil_frames, self.gamera_pil_frames = render_swarmdf_validation(self.config, lompeosse_results)
-            lompeosse_frame_paths, gamera_frame_paths = render_swarmdf_validation(self.config, lompeosse_results)
-            self.lompeosse_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in lompeosse_frame_paths]
-            self.gamera_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in gamera_frame_paths]
+            lompeosse_png_frames, gamera_png_frames = render_swarmdf_validation(swarmdf_validation, self.plot_settings)
+            self.lompeosse_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in lompeosse_png_frames]
+            self.gamera_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in gamera_png_frames]
 
             # Combine PIL images from both sources into single frames (useful for the interactive window)
             self.validation_combined_pil_frames = combine_validation_frames(self.lompeosse_pil_frames, self.gamera_pil_frames)
@@ -622,6 +642,9 @@ class SwarmDFGUI(customtkinter.CTk):
 
         self.stop_pb(self.progress_validation)
 
+        buttons = [self.button_playpause_val]
+        self.update_play_pause_icons(buttons, self.validation_state["playing"])
+
         # Place frame controls and interactive window button
         self.validation_controls.pack(side="bottom", pady=5)
         self.validation_window.update_idletasks()
@@ -637,7 +660,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
 
     def stop_animation(self, state):
-        """Stop a running animation loop for the given animation state."""
+        """Stop a running animation loop for the given animation state"""
         if state is not None and state.get("job") is not None:
             self.after_cancel(state["job"])
             # state["job"] = None
@@ -649,12 +672,12 @@ class SwarmDFGUI(customtkinter.CTk):
                 "frame_index": 0,
                 "playing": True,
                 "job": None,
-                "delay": self.config.gif_speed, 
-                "scheduler": self.after, 
-                "cancel": self.after_cancel}
+                "delay": self.plot_settings.gif_speed, 
+                "scheduler": scheduler, #self.after, 
+                "cancel": cancel} #self.after_cancel}
     
     def update_play_pause_icons(self, buttons, is_playing):
-        """Update play/pause button icons to match animation state."""
+        """Update play/pause button icons to match animation state"""
 
         new_icon = self.icons.pause if is_playing else self.icons.play
 
@@ -662,23 +685,18 @@ class SwarmDFGUI(customtkinter.CTk):
             btn.configure(image=new_icon)
 
     def toggle_play_pause(self):
-        """
-        Run the play/pause function
-        """
-        # buttons = [self.button_playpause_input]
-        # if hasattr(self, "btn_play_pause_lompe"):
-        #     buttons.append(self.btn_play_pause_lompe)
+        """Run the play/pause function"""
 
         buttons = [self.input_ui["playpause"]]
         if hasattr(self, "output_ui"):
             buttons.append(self.output_ui["playpause"])
 
-
         is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.master_state)
         self.update_play_pause_icons(buttons, is_playing)
             
     def toggle_play_pause_validation(self):
-        
+        """Run the play/pause function (validation window)"""
+
         buttons=[self.button_playpause_val]
         is_playing = self.anim_mgr.toggle_play_pause_generic(state=self.validation_state)
         self.update_play_pause_icons(buttons, is_playing)
@@ -689,9 +707,9 @@ class SwarmDFGUI(customtkinter.CTk):
         self.anim_mgr.step_frame_generic(state=self.master_state, step=+1, toggle_callback=self.toggle_play_pause)
 
     def prev_frame_validation(self):
-        self.anim_mgr.step_frame_generic(state=self.validation_state, step=-1, toggle_callback=self.toggle_play_pause)
+        self.anim_mgr.step_frame_generic(state=self.validation_state, step=-1, toggle_callback=self.toggle_play_pause_validation)
     def next_frame_validation(self):
-        self.anim_mgr.step_frame_generic(state=self.validation_state, step=+1, toggle_callback=self.toggle_play_pause)
+        self.anim_mgr.step_frame_generic(state=self.validation_state, step=+1, toggle_callback=self.toggle_play_pause_validation)
 
 ####################
 ####################
@@ -707,7 +725,9 @@ class SwarmDFGUI(customtkinter.CTk):
         open_interactive_window(self.validation_combined_pil_frames, title="LompeOSSE output (validation)", figsize=(15,10))
 
 
-
-if __name__ == "__main__":
+def main():
     app = SwarmDFGUI()
     app.mainloop()
+
+if __name__ == "__main__":
+    main()
