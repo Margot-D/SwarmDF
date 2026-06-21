@@ -13,7 +13,7 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 - Built-in validation tool (LompeOSSE, under development)
 - User-friendly graphical interface
 
-## Installation
+## Package installation
 
 ```bash
 git clone https://github.com/Margot-D/SwarmDF.git
@@ -57,6 +57,45 @@ swarmdf-gui
 Run a full SwarmDF analysis using a configuration file:<br>
 ```bash
 swarmdf --config path/to/config.yaml
+```
+
+## Python interface
+
+SwarmDF can also be used directly from Python, which allows full control over the workflow and direct access to results and plots.
+
+### Run a demo analysis
+```python
+from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
+from swarmdf.pipeline import *
+
+config = SwarmDFConfig.default()
+plot_settings = SwarmDFPlotSettings()
+
+results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_sample_data=True)
+```
+### Access results and plots:
+
+```python
+
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+from PIL import Image
+
+# %matplotlib inline
+for input_fig in results.plots.input_frames:
+    plt.figure(figsize=(8, 6))
+    plt.imshow(Image.open(input_fig))
+    plt.axis("off")
+    plt.show()
+
+if config.run_lompe_flag:
+    # %matplotlib inline
+    for output_fig in results.plots.output_frames:
+        plt.figure(figsize=(8, 6))
+        plt.imshow(Image.open(output_fig))
+        plt.axis("off")
+        plt.show()
 ```
 
 <!-- ### Configuration
