@@ -136,6 +136,7 @@ if config.run_validation_flag and config.run_lompe_flag is not None:
     
 
 # # Access individual Lompe model
+# lompe_models = swarmdf_output.lompe_models
 # models = [entry["model"] for entry in lompe_models]
 # model0 = models[0] 
 
