@@ -14,6 +14,7 @@ import pandas as pd
 from pathlib import Path
 import apexpy
 import dipole # github.com/klaundal/dipole
+import datetime
 
 import matplotlib
 matplotlib.use("Agg")
@@ -40,7 +41,7 @@ output_dir = package_root / "outputs"
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
-QUIVERSCALES = {'ground_mag':       600 * 1e-9 , # ground magnetic field scale [T]
+QUIVERSCALES = {'ground_mag':       200 * 1e-9 , # ground magnetic field scale [T]
                 'space_mag_fac':    200 * 1e-9 , # FAC magnetic field scale [T] # 600 * 1e-9
                 'convection':       1000       , # convection velocity scale [m/s] # 2000
                 'efield':           100  * 1e-3, # electric field scale [V/m]
@@ -48,7 +49,8 @@ QUIVERSCALES = {'ground_mag':       600 * 1e-9 , # ground magnetic field scale [
                 'secs_current':     1000 * 1e-3, # electric surface current density [A/m] SECS 
                 'space_mag_full':   600 * 1e-9 } # FAC magnetic field scale [T]
 
-class LompeInput:
+    
+class LompeInputBuilder:
     """
     Prepare Lompe input from multi-instrument datasets by:
         - extracting relevant segments of a Swarm trajectory
@@ -67,24 +69,17 @@ class LompeInput:
         End of the user-defined time interval used to generate analysis
         center times. The actual data extraction window may extend beyond
         this time depending on the selected grids and data availability.
+    #TODO ADD TIMESTEP
     datasets : dict
         Dictionary of pandas DataFrames containing all datasets.
         Keys correspond to dataset names (e.g. 'swarm_mag', 'superdarn').
     """
 
-    def __init__(self, sat_id, start_time, end_time, timestep, datasets, mag_coords=False):
+    def __init__(self, sat_id, start_time, end_time, timestep, datasets):
 
         self.sat_id = sat_id
-        self.start_time = start_time
-        self.end_time = end_time
-        self.center_times = pd.date_range(start=self.start_time, end=self.end_time, freq=f'{timestep}s', tz=None)
-
-        # self.mid_time = self.start_time + (self.end_time - self.start_time) / 2 # interpreting this as the time of the current snapshot
+        self.center_times = pd.date_range(start=start_time, end=end_time, freq=f'{timestep}s', tz=None)
         self.datasets = datasets
-
-        self.mag = mag_coords
-        self.apx = apexpy.Apex(self.start_time.year, refh = HEIGHT)
-        self.dpl = dipole.Dipole(self.start_time.year)
 
         # Select Swarm data within an extended time window (ensures full satellite pass is captured) and assign pass IDs per spacecraft
         window_start = pd.to_datetime(start_time) - pd.to_timedelta(45, 'm')
@@ -100,36 +95,6 @@ class LompeInput:
 
         # User-selected satellite only
         self.one_swarm = self.all_swarm[self.all_swarm['Spacecraft'] == sat_id[-1]].copy()
-
-    def _scatter(self, pax, lat, lon, central_time, **kwargs):
-        """ scatter plot in polar coordinates, converting to magnetic if necessary """
-
-        if self.mag: # convert to magnetic and plot
-            mlat, mlon = self.apx.geo2apex(lat.to_numpy(), lon.to_numpy(), HEIGHT)
-            mlt = self.dpl.mlon2mlt(mlon, central_time)
-            pax.scatter(mlat, mlt, **kwargs)
-        else: # plot in geographic
-            lt = lon/15
-            pax.scatter(lat, lt, **kwargs)
-
-    def _plotpins(self, pax, lat, lon, east, north, central_time, hemisign, **kwrds):
-        """ plot pins in polar coords, converting to magnetic if necessary """
-
-        quiver_scale = kwrds.pop('scale', None)
-
-        if self.mag: # convert coordinates and components to magnetic and plot
-            f1, f2 = self.apx.basevectors_qd(lat, lon, HEIGHT, coords = 'geo')
-            f1 = f1 / np.linalg.norm(f1, axis = 0) # normalize
-            f2 = f2 / np.linalg.norm(f2, axis = 0)
-            mlat, mlon = self.apx.geo2apex(lat, lon, HEIGHT)
-            mlt = self.dpl.mlon2mlt(mlon, central_time)
-            east = f1[0] * east + f1[1] * north
-            north = f2[0] * east + f2[1] * north
-            pax.plotpins(np.abs(mlat), mlt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
-        else: # keep geographic
-            lt = lon/15
-            pax.plotpins(np.abs(lat), lt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
-            # pax.quiver(np.abs(lat), lt, north*hemisign, east, scale_units='inches', units='inches', **kwrds) #scale_units='inches', units='inches',
 
     # ------------------------------------------------------------------
     # Swarm pass handling # TODO put that in datadownloader I think
@@ -248,6 +213,9 @@ class LompeInput:
 
         grids = []
         analysis_times = {'ct':[], 't0': [], 't1': []}
+        swarm_passes = []
+
+        skipped = 0
 
         # with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -255,7 +223,6 @@ class LompeInput:
         for ct in self.center_times: 
 
             # Nearest available satellite timestamp
-            # idx = self.one_swarm.index.get_loc(ct, method='nearest') #TODO make nearest the point before instead of after?
             idx = self.one_swarm.index.get_indexer([ct], method='nearest')[0] #TODO make nearest the point before instead of after?
             ct_swarm = self.one_swarm.index[idx]
 
@@ -268,25 +235,34 @@ class LompeInput:
             grid = self.get_grid(sc_lon0, sc_lat0, sc_ve0, sc_vn0, grid_params)
 
             # Reject low-latitude grids
-            skipped = 0
             if np.min(np.abs(grid.lat)) < 48:
                 # print(f"Grid centered at {grid.projection.lat0:.2f}° latitude extends equatorward of |48|°, skipping")
+                # print(f"Grid centered at {ct_swarm} extends equatorward of |48|°, skipping")
                 skipped += 1
                 continue
 
+
+            # TODO...
+            one_swarm_pass, pass_id = self.get_current_pass(self.one_swarm, ct_swarm)
+            all_swarm_pass = self.all_swarm[self.all_swarm['pass_id'] == pass_id]
+            swarm_passes.append({"one_swarm_pass": one_swarm_pass,
+                                 "all_swarm_pass": all_swarm_pass,
+                                 "current_pass_id": pass_id})
+
             # Determine data time bounds within grid
-            swarm_pass, _ = self.get_current_pass(self.one_swarm, ct_swarm)
-            mask = grid.ingrid(swarm_pass.Longitude.values, swarm_pass.Latitude.values) 
-            swarm_inside_grid = swarm_pass.loc[mask] # portion of the Swarm trajectory that falls inside the grid
+            mask = grid.ingrid(one_swarm_pass.Longitude.values, one_swarm_pass.Latitude.values) 
+            swarm_inside_grid = one_swarm_pass.loc[mask] # portion of the Swarm trajectory that falls inside the grid
             t0, t1 = swarm_inside_grid.index[0], swarm_inside_grid.index[-1]
 
-            # print(f'Time interval around Swarm center time ({ct_swarm}): {t0} - {t1}') #TODO remove eventually
-            dt0 = (ct_swarm - t0).total_seconds()
-            dt1 = (t1 - ct_swarm).total_seconds()
+            # print(f'Time interval around Swarm center time ({ct_swarm}): {t0} - {t1}')
+            # dt0 = (ct_swarm - t0).total_seconds()
+            # dt1 = (t1 - ct_swarm).total_seconds()
 
-            print(f'Distance from center time: '
-                f't0 → ct_swarm = {dt0:.1f} s, '
-                f'ct_swarm → t1 = {dt1:.1f} s')
+            # print(f'Distance from center time: '
+            #     f't0 → ct_swarm = {dt0:.1f} s, '
+            #     f'ct_swarm → t1 = {dt1:.1f} s')
+
+            # print(ct_swarm)
             
             grids.append(grid)
             analysis_times['ct'].append(ct_swarm)
@@ -294,14 +270,15 @@ class LompeInput:
             analysis_times['t1'].append(t1)
 
         if skipped > 0:
-            print(f"Skipped {skipped} low-latitude grid(s) (extending equatorward of |48|°)") #TODO remove?
-
+            s = "" if skipped == 1 else "s"
+            print(f"Skipped {skipped} low-latitude grid{s} (extending equatorward of |48|°)")
+            
         if not grids:
             msg = "⚠️ No valid grids were created. Try a different time interval."
             show_error_popup(msg)
             raise RuntimeError(msg)
         
-        return grids, analysis_times
+        return swarm_passes, grids, analysis_times
     
     def get_grid(self, sc_lon, sc_lat, sc_ve, sc_vn, grid_params, RI=RE+HEIGHT):
         """
@@ -355,7 +332,11 @@ class LompeInput:
 
         data_per_grid = []
 
+        total_frames = len(grids)
+        i = 1
         for grid, t0, t1 in zip(grids, time_bounds['t0'], time_bounds['t1']):
+            
+            # print(f'Frame {i}/{total_frames}')
 
             data_objects = self.make_data_objects(self.datasets, grid, t0, t1)
 
@@ -363,6 +344,10 @@ class LompeInput:
                 raise RuntimeError("No valid data available for Lompe inversion.")
             
             data_per_grid.append(data_objects)
+
+            i += 1
+
+        print('Done. Returning Lompe data objects.')
         
         return data_per_grid
     
@@ -405,7 +390,7 @@ class LompeInput:
                 LOS = None
                 datatype = 'space_mag_fac' 
                 iweight = 1.0 # 0.5
-                error = 30e-9
+                error = 30e-9 # nT
 
             # Electric field data from Swarm satellites (A, B and C)
             elif key in ['swarm_efi']:
@@ -426,7 +411,7 @@ class LompeInput:
             # Ground magnetometer data from SuperMAG 
             elif key in ['supermag']:
 
-                df.index = df.index.tz_localize(None)
+                # df.index = df.index.tz_localize(None)
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.lon, sub.lat)]
 
@@ -438,7 +423,7 @@ class LompeInput:
                 LOS = None
                 datatype = 'ground_mag'
                 iweight = 1.0 # or 0.4 ??
-                error = 10e-9
+                error = 10e-9 # nT
 
             # Convection data from SuperDARN
             elif key in ['superdarn']:
@@ -454,12 +439,12 @@ class LompeInput:
                 LOS = np.vstack((sub['le'].values, sub['ln'].values))     
                 datatype = 'convection'
                 iweight = 1.0
-                error = 50
+                error = 50 # m/s
 
             # Convection data from DMSP/SSIES (F17 & F18)
             elif key in ['dmsp_ssies17', 'dmsp_ssies18']:
 
-                df.index = df.index.tz_localize(None)
+                # df.index = df.index.tz_localize(None)
                 sub = df.loc[t0:t1]
                 sub = sub[grid.ingrid(sub.glon, sub.gdlat)]
 
@@ -471,7 +456,7 @@ class LompeInput:
                 LOS = np.vstack((sub['le'].values, sub['ln'].values))
                 datatype = 'convection'
                 iweight = 1.0
-                error = 100
+                error = 100 # m/s
 
                 # # Add large error for F18 poor measurements
                 # if key == 'dmsp_ssies18' and 'vyqual' in sub.columns:
@@ -493,7 +478,7 @@ class LompeInput:
                 LOS = None
                 datatype = 'space_mag_fac'
                 iweight = 1.0
-                error = 30e-9
+                error = 30e-9 # nT
 
             # Create and store Lompe data object for each dataset
             data_objects_for_lompe[key] = lompe.Data(values, coords, LOS=LOS, datatype=datatype, iweight=iweight, error=error)
@@ -504,8 +489,12 @@ class LompeInput:
     # Plotting input (data and grids)
     # ------------------------------------------------------------------
 
+class LompeInputPlotter:
+    # def __init__(self, swarm_passes):
+
+
     def _init_figure(self, t0, t1, grid, figheight):
-        """Create figure and base axes."""
+        """Create figure and base axes"""
 
         self.ar = grid.shape[1] / grid.shape[0] # aspect ratio
         figwidth=(3 * self.ar + 1)/2 * figheight * .8
@@ -543,11 +532,15 @@ class LompeInput:
 
         return fig, axs
     
-    def _setup_plot_frames(self, axs, grid, central_time, hem): #TODO decide if I want to keep magnetic coordinate stuff, if not remove comments
+    def _setup_plot_frames(self, axs, swarm_pass, grid, central_time, mag_coords, hem): #TODO decide if I want to keep magnetic coordinate stuff, if not remove comments
         """Configure polar and cubed-sphere axes. Write labels. Plot coastlines and grid outline."""
         
+        year = swarm_pass['one_swarm_pass'].index[0].year
+        self.apx = apexpy.Apex(year, refh = HEIGHT)
+        self.dpl = dipole.Dipole(year)
+
         nh = True if hem == 'north' else False
-        coords = 'magnetic' if self.mag else 'geographic'
+        coords = 'magnetic' if mag_coords else 'geographic'
 
         textargs = {'fontsize':12*self.font_scale, 'color':'grey'}
         outlineargs = {'color':'black', 'zorder':8}
@@ -556,13 +549,13 @@ class LompeInput:
         # POLAR PLOT
 
         axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8*self.marker_scale, color='grey')
-        axs['polar'].writeLTlabels(lat=49, degrees = not self.mag, **textargs)
-        axs['polar'].coastlines(time=central_time if self.mag else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if self.mag else None)
+        axs['polar'].writeLTlabels(lat=49, degrees = not mag_coords, **textargs)
+        axs['polar'].coastlines(time=central_time if mag_coords else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if mag_coords else None)
         axs['polar_title'].text(0.5, 0.5, f"Polar projection\nin {coords} coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['polar_title'].transAxes)
 
         # Get LT position for latitude labels
 
-        one_swarm_pass, _ = self.get_current_pass(self.one_swarm, central_time) 
+        one_swarm_pass = swarm_pass["one_swarm_pass"]
 
         # convert to polar coordinates
         theta = np.deg2rad(one_swarm_pass['Longitude'].values)  
@@ -589,7 +582,7 @@ class LompeInput:
         ys = (grid.lat_mesh[0, :], grid.lat_mesh[-1, :], grid.lat_mesh[:, 0], grid.lat_mesh[:, -1]) # geographic
 
         for i, (x, y) in enumerate(zip(xs, ys)):
-            if self.mag: # convert grid coordinates to mlat, mlt
+            if mag_coords: # convert grid coordinates to mlat, mlt
                 lat, mlon = self.apx.geo2apex(y, x, HEIGHT)
                 lt = self.dpl.mlon2mlt(mlon, central_time)
             else: # keep geographic, but divide longitudes by 15
@@ -610,19 +603,16 @@ class LompeInput:
 
         return axs['polar'], csax0
 
-    def _plot_swarm_tracks(self, polar_ax, cs_ax, central_time, legend_stuff):
+    def _plot_swarm_tracks(self, polar_ax, cs_ax, swarm_pass, central_time, mag_coords, legend_stuff):
         """Plot Swarm A/B/C tracks for the current pass around ct and highlight selected satellite."""
 
-        # Current pass data and ID
-        one_swarm_pass, current_pass_id = self.get_current_pass(self.one_swarm, central_time)
-
-        # All three Swarm tracks (thin lightred lines) - current pass only 
-        all_swarm_pass = self.all_swarm[self.all_swarm['pass_id'] == current_pass_id]        
+        one_swarm_pass = swarm_pass["one_swarm_pass"]
+        all_swarm_pass = swarm_pass["all_swarm_pass"]
 
         for satid in ['A', 'B', 'C']:
             sw = all_swarm_pass[all_swarm_pass['Spacecraft'] == satid]
 
-            if self.mag:
+            if mag_coords:
                 satlat, mlon = self.apx.geo2apex(sw.Latitude.to_numpy(), sw.Longitude.to_numpy(), HEIGHT)
                 satphi = self.dpl.mlon2mlt(mlon, central_time)
             else: # geographic
@@ -632,7 +622,7 @@ class LompeInput:
             cs_ax.plot(sw.Longitude, sw.Latitude, color='lightcoral', alpha=0.4, linewidth=1.5) 
 
         # Selected Swarm satellite track (thicker red line) -- current pass only
-        if self.mag: 
+        if mag_coords: 
             one_satlat, mlon = self.apx.geo2apex(one_swarm_pass.Latitude.to_numpy(), one_swarm_pass.Longitude.to_numpy(), HEIGHT)
             one_satphi = self.dpl.mlon2mlt(mlon, central_time)
         else:
@@ -647,10 +637,40 @@ class LompeInput:
 
         if 'swarm_tracks' not in added:
             legend_handles.append(Line2D([0], [0], color='lightcoral', alpha=0.5, lw=1.7, label='Swarm tracks'))
-            legend_handles.append(Line2D([0], [0], color='coral', lw=1.7, label=f'Swarm {self.sat_id[-1]}'))
+            legend_handles.append(Line2D([0], [0], color='coral', lw=1.7, label=f'Swarm {one_swarm_pass["Spacecraft"].values[0]}')) # one_swarm_pass['Spacecraft'] = sat_id
             added.update(['swarm_tracks'])
 
-    def _plot_dataset(self, dataset, ds, data_object, central_time, t0, t1, hem, show_global_data, polar_ax, cs_ax, legend_stuff, quiverscales):
+    def _scatter(self, pax, lat, lon, central_time, mag_coords, **kwargs): #TODO back to self.mag?
+        """ scatter plot in polar coordinates, converting to magnetic if necessary """
+
+        if mag_coords: # convert to magnetic and plot
+            mlat, mlon = self.apx.geo2apex(lat.to_numpy(), lon.to_numpy(), HEIGHT)
+            mlt = self.dpl.mlon2mlt(mlon, central_time)
+            pax.scatter(mlat, mlt, **kwargs)
+        else: # plot in geographic
+            lt = lon/15
+            pax.scatter(lat, lt, **kwargs)
+
+    def _plotpins(self, pax, lat, lon, east, north, central_time, mag_coords, hemisign, **kwrds):
+        """ plot pins in polar coords, converting to magnetic if necessary """
+
+        quiver_scale = kwrds.pop('scale', None)
+
+        if mag_coords: # convert coordinates and components to magnetic and plot
+            f1, f2 = self.apx.basevectors_qd(lat, lon, HEIGHT, coords = 'geo')
+            f1 = f1 / np.linalg.norm(f1, axis = 0) # normalize
+            f2 = f2 / np.linalg.norm(f2, axis = 0)
+            mlat, mlon = self.apx.geo2apex(lat, lon, HEIGHT)
+            mlt = self.dpl.mlon2mlt(mlon, central_time)
+            east = f1[0] * east + f1[1] * north
+            north = f2[0] * east + f2[1] * north
+            pax.plotpins(np.abs(mlat), mlt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
+        else: # keep geographic
+            lt = lon/15
+            pax.plotpins(np.abs(lat), lt, north*hemisign, east, SCALE=quiver_scale, **kwrds)
+            # pax.quiver(np.abs(lat), lt, north*hemisign, east, scale_units='inches', units='inches', **kwrds) #scale_units='inches', units='inches',
+
+    def _plot_dataset(self, dataset, ds, data_object, central_time, t0, t1, mag_coords, hem, show_global_data, polar_ax, cs_ax, legend_stuff, quiverscales):
         """
         Plot dataset on polar and cubed-sphere axes.
         Includes:
@@ -679,7 +699,7 @@ class LompeInput:
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
             
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, mag_coords, hemisign, scale =quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Be, Bn, lon, lat, width=quiwidth, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=1, alpha=1)#, units='inches') 
 
             # # highlight central point
@@ -704,7 +724,7 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0]
             Vn = data_object.values * data_object.los[1]
 
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, mag_coords, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, color=c, scale=quiverscales['convection'], scale_units='inches', zorder=2, alpha=0.3)#, units='inches') 
 
             if dataset not in added:
@@ -727,14 +747,14 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1]
                 sub = sub[sub.gdlat > 0] if hem == 'north' else sub[sub.gdlat < 0]
-                self._scatter(polar_ax, sub.gdlat, sub.glon, central_time, color=c, s=spol, marker='o')
+                self._scatter(polar_ax, sub.gdlat, sub.glon, central_time, mag_coords, color=c, s=spol, marker='o')
 
             lat = data_object.coords['lat'] #actually gdlat
             lon = data_object.coords['lon'] #actually glon
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
 
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, mag_coords, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
 
             if dataset not in added:
@@ -752,7 +772,7 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1, :]
                 sub = sub[sub.glat >0] if hem=='north' else sub[sub.glat <0]
-                self._scatter(polar_ax, sub.glat, sub.glon, central_time, color=c, s=spol, marker='^')
+                self._scatter(polar_ax, sub.glat, sub.glon, central_time, mag_coords, color=c, s=spol, marker='^')
 
             # Data in grid only
             lat = data_object.coords['lat'] #actually glat
@@ -760,7 +780,7 @@ class LompeInput:
             Ve = data_object.values * data_object.los[0] # m/s
             Vn = data_object.values * data_object.los[1]
             
-            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
+            self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, mag_coords, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
             cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
 
             # Add to legend once
@@ -779,14 +799,14 @@ class LompeInput:
             if show_global_data:
                 sub = ds.loc[t0:t1, :]
                 sub = sub[sub.lat >0] if hem=='north' else sub[sub.lat <0]
-                self._scatter(polar_ax, sub.lat, sub.lon, central_time, color=c, s=spol, marker='^')
+                self._scatter(polar_ax, sub.lat, sub.lon, central_time, mag_coords, color=c, s=spol, marker='^')
 
             lat = data_object.coords['lat']
             lon = data_object.coords['lon']
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, mag_coords, hemisign, scale = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches')#, units='inches')
 
             if dataset not in added:
@@ -804,14 +824,14 @@ class LompeInput:
             if show_global_data:
                 sub = ds[(ds.time >= t0) & (ds.time <= t1)]
                 sub = sub[sub.lat >0] if hem=='north' else sub[sub.lat <0]
-                self._scatter(polar_ax, sub.lat, sub.lon, central_time, color =c, s=spol, marker='o')
+                self._scatter(polar_ax, sub.lat, sub.lon, central_time, mag_coords, color =c, s=spol, marker='o')
 
             lat = data_object.coords['lat']
             lon = data_object.coords['lon']
             Be = data_object.values[0] #*1e9 # T
             Bn = data_object.values[1] #*1e9
 
-            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
+            self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, mag_coords, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=1)#, units='inches') 
             # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches' ) 
@@ -825,7 +845,7 @@ class LompeInput:
             polar_quivers[dataset] = (c, 300, 'nT')
 
 
-    def plot_lompe_input(self, grids, time_bounds, data_objects_per_grid, figheight=9, show_global_data=True, savegif=True, gif_speed=550):
+    def plot_lompe_input(self, swarm_passes, grids, time_bounds, data_objects_per_grid, raw_datasets, plot_settings):
         """
         Visualize Lompe input data along a Swarm satellite trajectory.
 
@@ -865,7 +885,13 @@ class LompeInput:
         
         print("Plotting Lompe input...")
 
-        frame_paths = []
+        # Unpack plotting settings 
+        mag_coords = plot_settings.mag_coords_flag
+        figheight = plot_settings.figh
+        show_global_data = plot_settings.show_all_data_flag
+        gif_speed = plot_settings.gif_speed
+
+        png_frames = []
 
         legend_stuff = {"legend_handles": [], # matplotlib legend entries
                         "added": set(), # track which datasets are already in legend
@@ -873,7 +899,7 @@ class LompeInput:
                         "polar_quivers": {}, # quiver scale info per dataset
                         }
         
-        for grid, ct, t0, t1, data_objects in zip(grids, time_bounds['ct'], time_bounds['t0'], time_bounds['t1'], data_objects_per_grid):
+        for grid, ct, t0, t1, data_objects, swarm_pass in zip(grids, time_bounds['ct'], time_bounds['t0'], time_bounds['t1'], data_objects_per_grid, swarm_passes):
             
             # Hemisphere
             hem = 'north' if grid.projection.lat0 > 0 else 'south' 
@@ -882,19 +908,19 @@ class LompeInput:
             # Initialize figure and axes
 
             fig, axes = self._init_figure(t0, t1, grid, figheight)
-            polax, csax = self._setup_plot_frames(axes, grid, ct, hem)
+            polax, csax = self._setup_plot_frames(axes, swarm_pass, grid, ct, mag_coords, hem)
             
             # --------------- # 
             # Plot Swarm trajectories
             
-            self._plot_swarm_tracks(polax, csax, ct, legend_stuff)
+            self._plot_swarm_tracks(polax, csax, swarm_pass, ct, mag_coords, legend_stuff)
 
             # --------------- # 
             # Plot data distribution 
 
             for dn, data_object in data_objects.items():
-                ds = self.datasets[dn]
-                self._plot_dataset(dn, ds, data_object, ct, t0, t1, hem, show_global_data, polax, csax, legend_stuff, QUIVERSCALES)
+                ds = raw_datasets[dn]
+                self._plot_dataset(dn, ds, data_object, ct, t0, t1, mag_coords, hem, show_global_data, polax, csax, legend_stuff, QUIVERSCALES)
 
             # --------------- # 
             # Draw legend
@@ -957,9 +983,10 @@ class LompeInput:
 
             # Save to PNG
             tmpdir.mkdir(parents=True, exist_ok=True)
-            fn = f'input_sw{self.sat_id[-1]}'
+            sat_id = swarm_pass['one_swarm_pass']['Spacecraft'].values[0]
+            fn = f'input_sw{sat_id}'
             fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
-            frame_paths.append(fn_ct)
+            png_frames.append(fn_ct)
 
             plt.savefig(fn_ct, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
             plt.close(fig)
@@ -967,7 +994,7 @@ class LompeInput:
         print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
 
         # Save GIF
-        if savegif:
+        if plot_settings.generate_gifs:
 
             t00 = time_bounds['t0'][0]
             t11 = time_bounds['t1'][-1]
@@ -975,12 +1002,12 @@ class LompeInput:
             output = fn_time
 
             with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
-                for fn in frame_paths:
+                for fn in png_frames:
                     writer.append_data(imageio.imread(fn))
 
             print(f"GIF saved in outputs directory as: {output}") 
 
-        return frame_paths # TODO fix this: returns PIL images for display in GUI
+        return png_frames # TODO fix this: returns PIL images for display in GUI
 
 def show_error_popup(msg):
     root = tk._default_root

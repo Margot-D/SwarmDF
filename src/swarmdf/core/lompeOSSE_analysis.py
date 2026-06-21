@@ -34,12 +34,17 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
     """
     """
 
-    print("\n Running LompeOSSE validation...")
+    print("Running LompeOSSE validation...")
 
     osse_models = []
     gamera_outputs = []
 
+    total_frames = len(models)
+    i = 1
     for entry in models:
+        
+        print(f'Frame {i}/{total_frames} \n')
+
         model = entry["model"]
         ct = entry["ct"]
         l1 = entry["l1"]
@@ -63,34 +68,39 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
         t2 = tt.perf_counter()
         print("LompeOSSE", t2 - t1)
 
-        osse_Emodel = osse_object.make_OSSE_model(time_offset = time_offset) #TODO what is the point of adding time offset here rather thsn in the class directly? 
+        osse_model = osse_object.make_OSSE_model(time_offset = time_offset) #TODO what is the point of adding time offset here rather thsn in the class directly? 
 
         t3 = tt.perf_counter()
         print("make_osse_model", t3 - t2)
         
         # Run inversion
-        osse_Emodel.run_inversion(l1 = l1, l2 = l2)
+        osse_model.run_inversion(l1 = l1, l2 = l2)
         
         # Save osse model for use in plotting function
-        osse_models.append({"osse_model": copy.deepcopy(osse_Emodel),
+        osse_models.append({"osse_model": copy.deepcopy(osse_model),
                             "t0": entry["t0"],
                             "t1": entry["t1"],
                             "ct": ct,
                             "apex": entry["apex"],
                             "time_offset": osse_object.time_offset})
 
+        osse_model.clear_model()
+        i += 1
+
+    print('Done. Returning LompeOSSE inversion results and Gamera outputs.')
+
     return osse_models, gamera_outputs
 
 
-def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True, gif_speed=550):
+def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings):
     """ 
     input: osse models
     output: lompe plot
     explain that the plot of the origianl gamera electrodynamics is considered as ground truth. The lompeOSSE plot can be compared to that ground truth
     """
 
-    lompeosse_frame_paths = []
-    gamera_frame_paths = []
+    lompeosse_png_frames = []
+    gamera_png_frames = []
 
     for entry, entry2  in zip(osse_models, gamera_outputs):
 
@@ -116,7 +126,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True
         lompeosse_fn = f'lompeOSSE'
         fn = tmpdir / f"{lompeosse_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         savekw = {"fname": fn, "dpi": 400, "bbox_inches":"tight", "pad_inches":0.2}
-        lompeosse_frame_paths.append(fn)
+        lompeosse_png_frames.append(fn)
 
         # Lompe plot
         suptitle = f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -127,7 +137,9 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True
                                                     "ground_mag": np.linspace(-500, 500, 50) * 1e-9 / 3,
                                                     "hall":       np.linspace(0, 20, 32),
                                                     "pedersen":   np.linspace(0, 20, 32)},
-                                        suptitle=suptitle, figheight=figheight, savekw=savekw)
+                                        suptitle=suptitle, 
+                                        figheight=plot_settings.figh, 
+                                        savekw=savekw)
 
 
         # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
@@ -207,11 +219,11 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True
         # FIGURE (reproduce lompeplot)
         ar = gridE.shape[1] / gridE.shape[0] # aspect ratio
         nrows, ncols = 2, 3
-        subplot_height = figheight / nrows
+        subplot_height = plot_settings.figh / nrows
         subplot_width = subplot_height * ar
         figwidth = subplot_width * ncols
 
-        fig_gamera, axes = plt.subplots(nrows, ncols, figsize=(figwidth, figheight))
+        fig_gamera, axes = plt.subplots(nrows, ncols, figsize=(figwidth, plot_settings.figh))
         
         for ax in axes.flatten():
             lompe.visualization.format_ax(ax, osse_model, apex = apx)
@@ -303,7 +315,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True
         gamera_fn = f'Gamera'
         fn = tmpdir / f"{gamera_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         fig_gamera.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
-        gamera_frame_paths.append(fn)
+        gamera_png_frames.append(fn)
 
         # if savegif:
         #     # Convert figure to PIL
@@ -317,22 +329,22 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, figheight=9, savegif=True
 
     print(f"LompeOSSE output figures for each time step saved in temporary folder: {tmpdir}")
 
-    # Save GIF
-    if savegif:
+    # Generate GIF
+    if plot_settings.generate_gifs:
 
         t00 = osse_models[0]["t0"]
         t11 = osse_models[-1]["t1"]
         output_gam = output_dir / f"{gamera_fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
         output_lomp = output_dir / f"{lompeosse_fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
 
-        with imageio.get_writer(output_lomp, mode="I", duration=gif_speed, loop=0) as writer:
-            for frame in lompeosse_frame_paths:
+        with imageio.get_writer(output_lomp, mode="I", duration=plot_settings.gif_speed, loop=0) as writer:
+            for frame in lompeosse_png_frames:
                 writer.append_data(imageio.imread(frame))
 
-        with imageio.get_writer(output_gam, mode="I", duration=gif_speed, loop=0) as writer:
-            for frame in gamera_frame_paths:
+        with imageio.get_writer(output_gam, mode="I", duration=plot_settings.gif_speed, loop=0) as writer:
+            for frame in gamera_png_frames:
                 writer.append_data(imageio.imread(frame))
 
         print(f"GIF saved in outputs directory: {output_lomp} and {output_gam}") # TODO fix path to indicate the user directory 
 
-    return lompeosse_frame_paths, gamera_frame_paths #frames_pil_lompeosse, frames_pil_gamera 
+    return lompeosse_png_frames, gamera_png_frames

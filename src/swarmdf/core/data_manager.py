@@ -7,6 +7,7 @@ and reconstruction of ionospheric electrodynamics.
 """
 
 import pandas as pd
+import numpy as np
 import os
 from pathlib import Path
 from lompe.data_tools import swarm, supermag, superdarn, dmsp_ssies, ampere, dataloader
@@ -30,11 +31,11 @@ class DataManager:
      If True, uses built-in sample datasets for the example event (2014-12-15).
     """
         
-    def __init__(self, start_time, end_time, selected_sources, demo=False):
+    def __init__(self, start_time, end_time, selected_sources, use_sample_data=False):
 
         package_root = Path(__file__).resolve().parents[3]
 
-        if demo: 
+        if use_sample_data: # demo 
             self.data_path = str(package_root / "data" / "sample_datasets") + "/"
             print(f"Using sample datasets for example event {start_time} -- {end_time}")
         else:
@@ -75,7 +76,6 @@ class DataManager:
                 if source == 'swarm_mag':
                     swarm.download_swarm_mag(event_date, tempfile_path=self.data_path)
                     
-                # TODO work on this
                 if source == 'swarm_efi':
                     swarm.download_swarm_efi(event_date, tempfile_path=self.data_path)
 
@@ -142,9 +142,21 @@ class DataManager:
                     if all_nan_cols:
                         print(f"⚠️ {key}: columns with only NaNs: {all_nan_cols}")
 
+                if key in ['dmsp_ssies17', 'dmsp_ssies18', 'supermag']:
+                    df.index = df.index.tz_localize(None)
+
                 # DMSP only: filter points close to magnetic pole to avoid weird interpolated data
                 if key in ['dmsp_ssies17', 'dmsp_ssies18']:
-                    df = df[(df.gdlat >= 0) | ((df.gdlat < 0) & (df.gdlat > -72))]
+                    df=df
+                    # df = df[(df.gdlat >= 0) | ((df.gdlat < 0) & (df.gdlat > -72))] # filter in latitude
+                    # def lon_range(x):
+                    #     return np.max(x) - np.min(x)
+                    # lonstep = (df.glon % 360).rolling('2min').apply(lon_range)
+                    # oklon = lonstep <= 300
+                    # lon = df.glon % 360
+                    # dlon = np.abs((np.diff(lon) + 180) % 360 - 180)
+                    # oklon = dlon <= 300
+                    # df = df[oklon]
                     
                 datasets[key] = df
 

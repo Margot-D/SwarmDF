@@ -36,23 +36,11 @@ class SwarmDFConfig:
     time_offset: int
     snapshot: int
 
-    # plotting
-    figh: float
-    save_gif_flag: bool
-    gif_speed: int
-
-    # plot options
-    mag_coords_flag: bool
-    show_all_data_flag: bool
-
-    # demo mode
-    demo_flag: bool
-
     @classmethod
     def default(cls):
         return cls(sat_id='Swarm A',
-                   start_time=datetime.datetime(2014, 12, 15, 1, 19),
-                   end_time=datetime.datetime(2014, 12, 15, 1, 20),
+                   start_time=datetime.datetime(2014, 12, 15, 1, 18),
+                   end_time=datetime.datetime(2014, 12, 15, 1, 19),
                    timestep=30.0,
                    datasets2download=['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                    conductance_method='Zhang & Paxton model',
@@ -63,16 +51,14 @@ class SwarmDFConfig:
                    regularization_l2=1.0,
                    run_validation_flag=False,
                    time_offset=0,
-                   snapshot=0,
-                   figh=9.0,
-                   mag_coords_flag=False,
-                   show_all_data_flag=True,
-                   demo_flag=False, 
-                   save_gif_flag=True,
-                   gif_speed=550)
-    
-    @classmethod
-    def demo(cls): 
-        cfg = cls.default()
-        cfg.demo_flag = True
-        return cfg
+                   snapshot=0)
+
+@dataclass
+class SwarmDFPlotSettings:
+    mag_coords_flag: bool = True
+    figh: float = 9.0
+    show_all_data_flag: bool = True
+    gif_speed: int = 550
+    generate_input_plots: bool = True
+    generate_gifs: bool = False
+                   
