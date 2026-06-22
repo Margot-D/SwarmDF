@@ -27,13 +27,22 @@ def build_right_sidebar(gui):
         gui.frame_figsize.grid_columnconfigure((0, 1), weight=1)
 
         # Adjust figure size
-        # TODO add hspace and wspace? keep only figheight like in lompe? 
+        # TODO same line 
         gui.label_figh = customtkinter.CTkLabel(gui.frame_figsize, text="Fig height:")
-        gui.label_figh.grid(row=0, column=0, pady=(0, 3))
+        gui.label_figh.grid(row=0, column=0, padx=(50,0), pady=(35, 0), sticky='w')
         gui.entry_figh = customtkinter.CTkEntry(gui.frame_figsize, width=40)
-        gui.entry_figh.grid(row=1, column=0, padx=5)
+        gui.entry_figh.grid(row=0, column=1, padx=(0,50), pady=(38, 0), sticky='e')
         gui.entry_figh.insert(0, 9)
         CustomTooltip(gui.entry_figh, "Figure height (inches). Adjust if the plot looks stretched or compressed (which can happen depending on grid shape/size).")
+
+
+        # # Gamera time offset
+        # gui.label_Gtimeoff = customtkinter.CTkLabel(gui.frame_validation, text="Time offset (hours):")
+        # gui.label_Gtimeoff.grid(row=3, column=0, padx=(40,0), pady=(35, 0), sticky="w")
+        # gui.entry_Gtimeoff = customtkinter.CTkEntry(gui.frame_validation, width=30)
+        # gui.entry_Gtimeoff.grid(row=3, column=0, padx=(0,25), pady=(38, 0), sticky='e')        
+        # CustomTooltip(gui.label_Gtimeoff, "Rotates the Gamera snapshot in magnetic local time. \n See the LompeOSSE documentation for details.")
+        # gui.entry_Gtimeoff.insert(0, 0) # in hours  
 
         # gui.label_figw = customtkinter.CTkLabel(gui.frame_figsize, text="Fig width:")
         # gui.label_figw.grid(row=0, column=1, pady=(0, 3))
@@ -45,7 +54,8 @@ def build_right_sidebar(gui):
         # Polar plot coordinates (mag vs. geo)
         gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords') #, command=gui.replot_lompe_input
         gui.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(30, 0), sticky="ew")
-        CustomTooltip(gui.checkbox_magcoords, "Switch polar plot (top panel) from geographic to magnetic coordinates")
+        gui.checkbox_magcoords.select()
+        CustomTooltip(gui.checkbox_magcoords, "Switch polar plot (top panel) from magnetic to geographic coordinates")
 
         # Show global data coverage
         gui.checkbox_showdata = customtkinter.CTkCheckBox(gui.tab_plot, text='Show global data coverage')
