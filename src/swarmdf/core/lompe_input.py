@@ -656,6 +656,9 @@ class LompeInputPlotter:
 
         quiver_scale = kwrds.pop('scale', None)
 
+        if np.size(lat) == 0:
+            return
+
         if mag_coords: # convert coordinates and components to magnetic and plot
             f1, f2 = self.apx.basevectors_qd(lat, lon, HEIGHT, coords = 'geo')
             f1 = f1 / np.linalg.norm(f1, axis = 0) # normalize
