@@ -43,20 +43,29 @@ An environment file (swarmdf_environment.yml) is provided to install all depende
 
 Once installed, the commands `swarmdf-gui` and `swarmdf` are available from any terminal within the active Python environment.
 
-For a quick start, run the built-in demo using sample datasets:
-```bash
-swarmdf --demo
-```
-
 ### Graphical user interface (recommended)
 ```bash
 swarmdf-gui
 ```
 
+The GUI can also generate a standalone Python script reproducing the configured SwarmDF workflow. This allows users to inspect, modify, and rerun the analysis outside the GUI.
+
 ### Command-line interface
+For a quick start, run the built-in demo using sample datasets:
+```bash
+swarmdf --demo
+```
+
 Run a full SwarmDF analysis using a configuration file:<br>
 ```bash
 swarmdf --config path/to/config.yaml
+```
+An example configuration files is provided in the examples/ directory.
+
+Optional advanced plotting settings can be provided through a separate configuration file. If omitted, default plotting settings are used.
+
+```bash
+swarmdf --config path/to/config.yaml --plot-config path/to/plot_settings.yaml
 ```
 
 ## Python interface
@@ -69,12 +78,15 @@ SwarmDF can also be used directly from Python, which allows full control over th
 from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
 from swarmdf.pipeline import *
 
-config = SwarmDFConfig.default()
-plot_settings = SwarmDFPlotSettings()
+config = SwarmDFConfig.default()  
+plot_settings = SwarmDFPlotSettings.default() 
 
 results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_sample_data=True)
 ```
-### Access results and plots:
+
+Switch use_sample_data to False and provide your own configuaration and plot settings to run a swarmdf analysis tailored to user
+
+### Plot results:
 
 ```python
 import matplotlib
@@ -97,7 +109,7 @@ if config.run_lompe_flag:
         plt.axis("off")
         plt.show()
 
-
+#TODO add lompeosse when ready
 # if config.run_validation_flag: # use result.plots.validation_frames
 #     # %matplotlib inline
 #     for framea, frameb in zip(results.validation.lompeOSSE_PILframes, results.validation.gamera_PILframes):
@@ -110,6 +122,46 @@ if config.run_lompe_flag:
 #         plt.show()
 ```
 
+### Access results:
+
+For example, individual Lompe model for each timestep can be retrieved as follows:
+
+```python
+lompe_models = results.output.lompe_models
+models = [entry["model"] for entry in lompe_models]
+model0 = models[0] 
+
+# and then for example:
+Bground = model0.B_ground()
+
+ # TODO fix that... maybe save lompe differently in lompe_analyss.py
+#using 
+#  @dataclass
+# class LompeFrame:
+#     model: lompe.Emodel
+#     t0: pd.Timestamp
+#     ct: pd.Timestamp
+#     t1: pd.Timestamp
+#     l1: float
+#     l2: float
+#     apex: apexpy.Apex
+
+#then do 
+# models.append(
+#     LompeResult(
+#         model=copy.deepcopy(model),
+#         t0=t0,
+#         ct=ct,
+#         t1=t1,
+#         l1=l1,
+#         l2=l2,
+#         apex=apx,
+#     )
+# )
+# so the user can do results.lompe_results[0].model
+# does not change anything really...
+```
+
 <!-- ### Configuration
 
 SwarmDF runs are controlled via a YAML configuration file.
@@ -120,7 +172,7 @@ The config file can be located anywhere, you only need to provide its path:
 
 The repository also includes examples to help users get started:
 - Jupyter demo notebook: `SwarmDF_demo.ipynb`<br>
-- Python script: `SwarmDF_example_script.py`
+- Python script: `SwarmDF_example_script.py` which basically takes the user through the swarmdf pipeline
 
 These provide a walkthrough of the full SwarmDF workflow. 
 
