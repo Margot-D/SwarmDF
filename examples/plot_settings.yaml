@@ -1,0 +1,12 @@
+# ===============
+# SwarmDF plot settings
+# ===============
+
+generate_input_plots: true # Set to false to skip input plots (faster execution)
+
+show_all_data_flag: true # Show data outside the analysis grid in the Lompe input polar plot
+mag_coords_flag: true # Display the Lompe input polar plot in magnetic coordinates (false = geographic)
+figh: 9.0 # Adjust figure height (in inches) if the plot looks stretched or compressed (which can happen depending on grid shape/size)
+
+generate_figs: false # Generate animated GIFs
+gif_speed: 550 # Milliseconds between frame.
