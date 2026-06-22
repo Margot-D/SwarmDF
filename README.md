@@ -24,7 +24,7 @@ pip install .
 ### Dependencies 
 
 SwarmDF requires several external Python packages.
-If you already have Lompe installed, you may still need the following dependencies:
+If Lompe is already installed, the following dependencies may still be needed:
 `pip install customtkinter tkcalendar imageio pillow`
 
 <!-- SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:<br>
@@ -84,7 +84,7 @@ plot_settings = SwarmDFPlotSettings.default()
 results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_sample_data=True)
 ```
 
-Switch use_sample_data to False and provide your own configuaration and plot settings to run a swarmdf analysis tailored to user
+To run a custom analysis, set `use_sample_data=False` and configure the desired analysis (and optionally plotting parameters) through `SwarmDFConfig` and `SwarmDFPlotSettings`.
 
 ### Plot results:
 
@@ -124,14 +124,17 @@ if config.run_lompe_flag:
 
 ### Access results:
 
-For example, individual Lompe model for each timestep can be retrieved as follows:
+The pipeline returns a `results` object containing analysis outputs and generated figures.
+
+For example, the individual Lompe models corresponding to each analysis timestep can be accessed as follows:
 
 ```python
 lompe_models = results.output.lompe_models
-models = [entry["model"] for entry in lompe_models]
-model0 = models[0] 
 
-# and then for example:
+models = [entry["model"] for entry in lompe_models]
+model0 = models[0]
+
+# Example: compute the ground magnetic perturbations
 Bground = model0.B_ground()
 
  # TODO fix that... maybe save lompe differently in lompe_analyss.py
@@ -172,10 +175,9 @@ The config file can be located anywhere, you only need to provide its path:
 
 The repository also includes examples to help users get started:
 - Jupyter demo notebook: `SwarmDF_demo.ipynb`<br>
-- Python script: `SwarmDF_example_script.py` which basically takes the user through the swarmdf pipeline
+- Python script: `SwarmDF_example_script.py`.
 
-These provide a walkthrough of the full SwarmDF workflow. 
-
+Both examples provide a step-by-step walkthrough of the complete SwarmDF workflow, from data retrieval and preprocessing to electrodynamic reconstruction and validation.
 
 ## Current status
 
