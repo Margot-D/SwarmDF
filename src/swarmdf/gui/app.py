@@ -247,8 +247,9 @@ class SwarmDFGUI(customtkinter.CTk):
         self.trigger_lompe_analysis()
         
     def update_lompe_input(self):
-        self.config.mag_coords_flag = bool(self.checkbox_magcoords.get())
-        self.config.show_all_data_flag = bool(self.checkbox_showdata.get())
+        self.plot_settings.mag_coords_flag = bool(self.checkbox_magcoords.get())
+        self.plot_settings.show_all_data_flag = bool(self.checkbox_showdata.get())
+        self.plot_settings.figh = float(self.entry_figh.get())
         self.display_swarmdf_input(self.input_results)
 
 ####################
@@ -450,9 +451,11 @@ class SwarmDFGUI(customtkinter.CTk):
         # GIF speed
         speed = self.apply_gif_parameters(update_state=False) # ms/frame
 
-        return SwarmDFPlotSettings(mag_coords_flag=mag,
-                                   figh=figh,
+        return SwarmDFPlotSettings(generate_input_plots=True,
+                                   mag_coords_flag=mag,
                                    show_all_data_flag=show_data,
+                                   figh=figh,
+                                   generate_gifs=True,
                                    gif_speed=speed)
 
 
