@@ -84,7 +84,7 @@ plot_settings = SwarmDFPlotSettings.default()
 results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_sample_data=True)
 ```
 
-To run a custom analysis, set `use_sample_data=False` and configure the desired analysis (and optionally plotting parameters) through `SwarmDFConfig` and `SwarmDFPlotSettings`.
+To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters through `SwarmDFConfig` and `SwarmDFPlotSettings`.
 
 ### Plot results:
 
@@ -108,8 +108,9 @@ if config.run_lompe_flag:
         plt.imshow(Image.open(output_fig))
         plt.axis("off")
         plt.show()
+```
 
-#TODO add lompeosse when ready
+<!-- #TODO add lompeosse when ready
 # if config.run_validation_flag: # use result.plots.validation_frames
 #     # %matplotlib inline
 #     for framea, frameb in zip(results.validation.lompeOSSE_PILframes, results.validation.gamera_PILframes):
@@ -119,25 +120,22 @@ if config.run_lompe_flag:
 #         ax[1].imshow(np.array(frameb))
 #         ax[1].axis("off")
 #         plt.tight_layout()
-#         plt.show()
-```
+#         plt.show() -->
 
 ### Access results:
 
 The pipeline returns a `results` object containing analysis outputs and generated figures.
 
-For example, the individual Lompe models corresponding to each analysis timestep can be accessed as follows:
+For example, the Lompe model corresponding to the first analysis frame can be accessed as follows:
 
 ```python
-lompe_models = results.output.lompe_models
-
-models = [entry["model"] for entry in lompe_models]
-model0 = models[0]
+lompe_model = results.output.lompe_models[0]["model"]
 
 # Example: compute the ground magnetic perturbations
-Bground = model0.B_ground()
+Bground = lompe_model.B_ground()
+```
 
- # TODO fix that... maybe save lompe differently in lompe_analyss.py
+ <!-- # TODO fix that... maybe save lompe differently in lompe_analyss.py
 #using 
 #  @dataclass
 # class LompeFrame:
@@ -162,8 +160,7 @@ Bground = model0.B_ground()
 #     )
 # )
 # so the user can do results.lompe_results[0].model
-# does not change anything really...
-```
+# does not change anything really... -->
 
 <!-- ### Configuration
 
