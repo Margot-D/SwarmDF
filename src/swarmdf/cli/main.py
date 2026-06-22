@@ -73,7 +73,7 @@ def load_plot_settings(path):
         user_cfg = yaml.safe_load(f)
 
     # default plot settings
-    settings = SwarmDFPlotSettings()
+    settings = SwarmDFPlotSettings.default()
 
     # Override default values with user-provided values
     for key, value in user_cfg.items():

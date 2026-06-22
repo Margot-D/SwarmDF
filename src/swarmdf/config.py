@@ -55,10 +55,18 @@ class SwarmDFConfig:
 
 @dataclass
 class SwarmDFPlotSettings:
-    mag_coords_flag: bool = True
-    figh: float = 9.0
-    show_all_data_flag: bool = True
-    gif_speed: int = 550
-    generate_input_plots: bool = True
-    generate_gifs: bool = False
-                   
+    generate_input_plots: bool
+    mag_coords_flag: bool
+    show_all_data_flag: bool
+    figh: float
+    generate_gifs: bool
+    gif_speed: int
+
+    @classmethod
+    def default(cls):
+        return cls(generate_input_plots = True,
+                  mag_coords_flag = True,
+                  show_all_data_flag = True,
+                  figh = 9.0,
+                  generate_gifs = False,
+                  gif_speed = 550)
