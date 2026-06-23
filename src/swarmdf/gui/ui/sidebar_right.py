@@ -43,7 +43,7 @@ def build_right_sidebar(gui):
 
         # Polar plot coordinates (mag vs. geo)
         gui.checkbox_magcoords = customtkinter.CTkCheckBox(gui.tab_plot, text='Polar plot in magnetic coords') #, command=gui.replot_lompe_input
-        gui.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(30, 0), sticky="ew")
+        gui.checkbox_magcoords.grid(row=2, column=0, columnspan=2, padx=15, pady=(15, 0), sticky="ew")
         gui.checkbox_magcoords.select()
         CustomTooltip(gui.checkbox_magcoords, "Switch polar plot (top panel) from magnetic to geographic coordinates")
 
