@@ -550,7 +550,7 @@ class LompeInputPlotter:
 
         axs['polar'] = Polarplot(axs['polar'], minlat=50, plotgrid=True, linewidth=0.8*self.marker_scale, color='grey')
         axs['polar'].writeLTlabels(lat=49, degrees = not mag_coords, **textargs)
-        axs['polar'].coastlines(time=central_time if mag_coords else None, resolution='110m', color='darkgrey', zorder=2, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if mag_coords else None)
+        axs['polar'].coastlines(time=central_time if mag_coords else None, resolution='110m', color='darkgrey', zorder=1, linewidth=1.2*self.marker_scale, north=nh, mag=self.apx if mag_coords else None)
         axs['polar_title'].text(0.5, 0.5, f"Polar projection\nin {coords} coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['polar_title'].transAxes)
 
         # Get LT position for latitude labels
@@ -597,7 +597,7 @@ class LompeInputPlotter:
         sh = True if hem == 'south' else False # view the cubed sphere projection from above/below in NH/SH
         csax0 = CSplot(axs['zoom'], grid, gridtype='geo', view_from_below=sh)
         csax0.add_coastlines(color='darkgrey')
-        csax0.add_spherical_grid(gridtype='geo', color='lightgrey')
+        # csax0.add_spherical_grid(gridtype='geo', color='lightgrey', zorder=5)
         axs['zoom'].spines['bottom'].set_linewidth(5) # bottom of grid frame 
         axs['zoom_title'].text(0.5, 0.5, "Cubed sphere projection\nin geographic coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['zoom_title'].transAxes)
 
@@ -618,7 +618,7 @@ class LompeInputPlotter:
             else: # geographic
                 satlat, satphi = sw.Latitude, (sw.Longitude/15) % 24
 
-            polar_ax.plot(satlat, satphi, color='lightcoral', alpha=0.4, linewidth=1.5, zorder=1) 
+            polar_ax.plot(satlat, satphi, color='lightcoral', alpha=0.4, linewidth=1.5, zorder=2) 
             cs_ax.plot(sw.Longitude, sw.Latitude, color='lightcoral', alpha=0.4, linewidth=1.5) 
 
         # Selected Swarm satellite track (thicker red line) -- current pass only
@@ -628,7 +628,7 @@ class LompeInputPlotter:
         else:
             one_satlat, one_satphi = one_swarm_pass.Latitude, (one_swarm_pass.Longitude/15) % 24
 
-        polar_ax.plot(one_satlat, one_satphi, color='coral', linewidth=2, zorder=1)
+        polar_ax.plot(one_satlat, one_satphi, color='coral', linewidth=2, zorder=2)
         cs_ax.plot(one_swarm_pass.Longitude, one_swarm_pass.Latitude, color='coral', linewidth=2) 
 
         # Legend
@@ -758,7 +758,7 @@ class LompeInputPlotter:
             Vn = data_object.values * data_object.los[1]
 
             self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, mag_coords, hemisign, scale=quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
+            cs_ax.quiver(Ve, Vn, lon, lat, width=quiwidth, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches', zorder=3)#, units='inches')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label=label))
@@ -784,7 +784,7 @@ class LompeInputPlotter:
             Vn = data_object.values * data_object.los[1]
             
             self._plotpins(polar_ax, lat, lon, Ve, Vn, central_time, mag_coords, hemisign, scale = quiverscales['convection'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #TODO , unit='m/s'
-            cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches')#, units='inches')
+            cs_ax.quiver(Ve, Vn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['convection'], scale_units='inches', zorder=3)#, units='inches')
 
             # Add to legend once
             if dataset not in added:
@@ -810,7 +810,7 @@ class LompeInputPlotter:
             Bn = data_object.values[1] #*1e9
 
             self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, mag_coords, hemisign, scale = quiverscales['ground_mag'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c) #, unit = 'nT')
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches')#, units='inches')
+            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, headwidth=3, color=c, scale=quiverscales['ground_mag'], scale_units='inches', zorder=3)#, units='inches')
 
             if dataset not in added:
                 legend_handles.append(Line2D([0], [0], marker='^', color=c, lw=0, markersize=8, label='SuperMAG'))
@@ -835,7 +835,7 @@ class LompeInputPlotter:
             Bn = data_object.values[1] #*1e9
 
             self._plotpins(polar_ax, lat, lon, Be, Bn, central_time, mag_coords, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
-            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=1)#, units='inches') 
+            cs_ax.quiver(Be, Bn, lon, lat, width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches', zorder=3)#, units='inches') 
             # self._plotpins(polar_ax, lat[1], lon[1], Be[1], Bn[1], central_time, hemisign, scale=quiverscales['space_mag_fac'], markersize=spol, markercolor=c, linewidths=lwpol, colors=c)
             # cs_ax.quiver(Be[1], Bn[1], lon[1], lat[1], width=0.002, color=c, scale=quiverscales['space_mag_fac'], scale_units='inches' ) 
             # print('my quiver magnitude', np.sqrt(Be[1]**2 + Bn[1]**2) )
@@ -847,6 +847,98 @@ class LompeInputPlotter:
             cs_quivers[dataset] = (c, quiverscales['space_mag_fac']*1e9, 'nT', "Space mag")
             polar_quivers[dataset] = (c, 300, 'nT')
 
+
+    def make_input_plot(self, swarm_pass, grid, ct, t0, t1, data_objects, raw_datasets, plot_settings): #, legend_stuff
+
+        legend_stuff = {"legend_handles": [], # matplotlib legend entries
+                        "added": set(), # track which datasets are already in legend
+                        "cs_quivers": {}, # quiver scale info per dataset
+                        "polar_quivers": {}, # quiver scale info per dataset
+                        }
+        
+        # Unpack plotting settings 
+        mag_coords = plot_settings.mag_coords_flag
+        figheight = plot_settings.figh
+        show_global_data = plot_settings.show_all_data_flag
+
+        # Hemisphere
+        hem = 'north' if grid.projection.lat0 > 0 else 'south' 
+    
+        # --------------- # 
+        # Initialize figure and axes
+
+        fig, axes = self._init_figure(t0, t1, grid, figheight)
+        polax, csax = self._setup_plot_frames(axes, swarm_pass, grid, ct, mag_coords, hem)
+        
+        # --------------- # 
+        # Plot Swarm trajectories
+        
+        self._plot_swarm_tracks(polax, csax, swarm_pass, ct, mag_coords, legend_stuff)
+
+        # --------------- # 
+        # Plot data distribution 
+
+        for dn, data_object in data_objects.items():
+            ds = raw_datasets[dn]
+            self._plot_dataset(dn, ds, data_object, ct, t0, t1, mag_coords, hem, show_global_data, polax, csax, legend_stuff, QUIVERSCALES)
+
+        # --------------- # 
+        # Draw legend
+
+        ############
+        # Handles
+        ncol = 8 if self.ar > 1.3 else 5
+        fig.legend(handles=legend_stuff['legend_handles'], loc="lower center", bbox_to_anchor=(0.5, 0.005), markerfirst=True, ncol=ncol, columnspacing=.5, fontsize=15*self.font_scale)    
+
+        ############
+        # Vectors 
+
+        # # polar axis
+        # arrowpolax = axes["polar_scale"]
+        # arrowpolax.set_xlim(0, 1) 
+        # arrowpolax.set_ylim(0, 1) 
+        # arrowpolax.set_axis_off()
+
+        # cs axis
+        arrowcsax = axes["zoom_scale"]
+        arrowcsax.set_xlim(0, 1) 
+        arrowcsax.set_ylim(0, 1) 
+        arrowcsax.set_axis_off()
+
+        xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
+        xarrow = 0.2 - xshift
+        text_offset = np.clip(0.18 - 0.08*(self.ar - 1), 0.10, 0.18)
+        xtext = xarrow + text_offset
+
+        # arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+        arrowcsax.quiver(xarrow, 0.62, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
+
+        # measurement types and scales
+        groups = defaultdict(list)
+        
+        for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
+            groups[label].append((value, unit))
+        labels = list(groups.items())
+
+        if len(labels) == 1:
+            y_positions = [0.62]
+        elif len(labels) == 2:
+            y_positions = [0.70, 0.54]
+        else:
+            y_positions = np.linspace(0.88, 0.44, len(labels))
+
+        for (label, items), y in zip(labels, y_positions):
+            value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
+            # arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}", 
+            #                 transform=arrowpolax.transAxes,
+            #                 fontsize=14*self.font_scale,
+            #                 va='center')
+            arrowcsax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
+                            transform=arrowcsax.transAxes,
+                            fontsize=14*self.font_scale,
+                            va='center')
+            
+        return fig, axes
 
     def plot_lompe_input(self, swarm_passes, grids, time_bounds, data_objects_per_grid, raw_datasets, plot_settings):
         """
@@ -876,9 +968,8 @@ class LompeInputPlotter:
 
         Returns
         -------
-        frames_pil : list
-            List of PIL images corresponding to each frame, useful for GUI display.
-            #TODO change that! create gif in gui 
+        png_frames : list
+            List of PNG images corresponding to each frame
             
         Notes
         -----
@@ -888,101 +979,11 @@ class LompeInputPlotter:
         
         print("Plotting Lompe input...")
 
-        # Unpack plotting settings 
-        mag_coords = plot_settings.mag_coords_flag
-        figheight = plot_settings.figh
-        show_global_data = plot_settings.show_all_data_flag
-        gif_speed = plot_settings.gif_speed
-
         png_frames = []
-
-        legend_stuff = {"legend_handles": [], # matplotlib legend entries
-                        "added": set(), # track which datasets are already in legend
-                        "cs_quivers": {}, # quiver scale info per dataset
-                        "polar_quivers": {}, # quiver scale info per dataset
-                        }
         
-        for grid, ct, t0, t1, data_objects, swarm_pass in zip(grids, time_bounds['ct'], time_bounds['t0'], time_bounds['t1'], data_objects_per_grid, swarm_passes):
-            
-            # Hemisphere
-            hem = 'north' if grid.projection.lat0 > 0 else 'south' 
+        for swarm_pass, grid, ct, t0, t1, data_objects in zip(swarm_passes, grids, time_bounds['ct'], time_bounds['t0'], time_bounds['t1'], data_objects_per_grid):
 
-            # --------------- # 
-            # Initialize figure and axes
-
-            fig, axes = self._init_figure(t0, t1, grid, figheight)
-            polax, csax = self._setup_plot_frames(axes, swarm_pass, grid, ct, mag_coords, hem)
-            
-            # --------------- # 
-            # Plot Swarm trajectories
-            
-            self._plot_swarm_tracks(polax, csax, swarm_pass, ct, mag_coords, legend_stuff)
-
-            # --------------- # 
-            # Plot data distribution 
-
-            for dn, data_object in data_objects.items():
-                ds = raw_datasets[dn]
-                self._plot_dataset(dn, ds, data_object, ct, t0, t1, mag_coords, hem, show_global_data, polax, csax, legend_stuff, QUIVERSCALES)
-
-            # --------------- # 
-            # Draw legend
-
-            ############
-            # Handles
-            ncol = 8 if self.ar > 1.3 else 5
-            fig.legend(handles=legend_stuff['legend_handles'], loc="lower center", bbox_to_anchor=(0.5, 0.005), markerfirst=True, ncol=ncol, columnspacing=.5, fontsize=15*self.font_scale)    
-
-            ############
-            # Vectors 
-
-            # # polar axis
-            # arrowpolax = axes["polar_scale"]
-            # arrowpolax.set_xlim(0, 1) 
-            # arrowpolax.set_ylim(0, 1) 
-            # arrowpolax.set_axis_off()
-
-            # cs axis
-            arrowcsax = axes["zoom_scale"]
-            arrowcsax.set_xlim(0, 1) 
-            arrowcsax.set_ylim(0, 1) 
-            arrowcsax.set_axis_off()
-
-            xshift = np.clip(0.1*(1/self.ar - 1), 0, 0.1)
-            xarrow = 0.2 - xshift
-            text_offset = np.clip(0.18 - 0.08*(self.ar - 1), 0.10, 0.18)
-            xtext = xarrow + text_offset
-
-            # arrowpolax.quiver(xarrow, 0.57, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
-            arrowcsax.quiver(xarrow, 0.62, 1, 0, scale=2, scale_units='inches', color='black', width=0.005) # draw physically-meaningful arrow
-
-            # measurement types and scales
-            groups = defaultdict(list)
-            
-            for dataset, (color, value, unit, label) in legend_stuff['cs_quivers'].items():
-                groups[label].append((value, unit))
-            labels = list(groups.items())
-
-            if len(labels) == 1:
-                y_positions = [0.62]
-            elif len(labels) == 2:
-                y_positions = [0.70, 0.54]
-            else:
-                y_positions = np.linspace(0.88, 0.44, len(labels))
-
-            for (label, items), y in zip(labels, y_positions):
-                value, unit = items[0] # one per group (ok when same datatype measurements use same scale)
-                # arrowpolax.text(xtext, y, f"{label}: {value//2:.0f} {unit}", 
-                #                 transform=arrowpolax.transAxes,
-                #                 fontsize=14*self.font_scale,
-                #                 va='center')
-                arrowcsax.text(xtext, y, f"{label}: {value//2:.0f} {unit}",
-                               transform=arrowcsax.transAxes,
-                               fontsize=14*self.font_scale,
-                               va='center')
-
-            # --------------- # 
-            # Save output
+            fig, axes = self.make_input_plot(swarm_pass, grid, ct, t0, t1, data_objects, raw_datasets, plot_settings) #, legend_stuff
 
             # Save to PNG
             tmpdir.mkdir(parents=True, exist_ok=True)
@@ -1004,13 +1005,13 @@ class LompeInputPlotter:
             fn_time = output_dir / f"{fn}_{t00:%Y%m%d_%H%M%S}-{t11:%Y%m%d_%H%M%S}.gif"
             output = fn_time
 
-            with imageio.get_writer(output, mode="I", duration=gif_speed, loop=0) as writer:
+            with imageio.get_writer(output, mode="I", duration=plot_settings.gif_speed, loop=0) as writer:
                 for fn in png_frames:
                     writer.append_data(imageio.imread(fn))
 
             print(f"GIF saved in outputs directory as: {output}") 
 
-        return png_frames # TODO fix this: returns PIL images for display in GUI
+        return png_frames
 
 def show_error_popup(msg):
     root = tk._default_root
