@@ -108,7 +108,7 @@ def main():
     if args.plot_config:
         plot_settings = load_plot_settings(args.plot_config)
     else:
-        plot_settings = SwarmDFPlotSettings()
+        plot_settings = SwarmDFPlotSettings.default()
 
     if args.no_input_plots:
         plot_settings.generate_input_plots = False
