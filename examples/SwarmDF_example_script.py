@@ -45,7 +45,7 @@ config = SwarmDFConfig(sat_id='Swarm C',
                        snapshot=0)
 
 plot_settings = SwarmDFPlotSettings(figh=9.0,
-                                    mag_coords_flag=False, # TODO fix 
+                                    mag_coords_flag=True,
                                     show_all_data_flag=True,
                                     gif_speed=550,
                                     generate_input_plots=True, 
@@ -114,4 +114,3 @@ if config.run_validation_flag and config.run_lompe_flag is not None:
 # lompe_models = swarmdf_output.lompe_models
 # models = [entry["model"] for entry in lompe_models]
 # model0 = models[0] 
-
