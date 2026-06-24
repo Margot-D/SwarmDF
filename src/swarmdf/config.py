@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import datetime
+from dataclasses import field
 
 @dataclass
 class SwarmDFConfig:
@@ -25,16 +26,16 @@ class SwarmDFConfig:
     grid_params: dict
 
     # lompe
-    run_lompe_flag: bool
-    conductance_method: str
-    conductance_params: dict
-    regularization_l1: float
-    regularization_l2: float
+    run_lompe_flag: bool = True
+    conductance_method: str = 'Zhang & Paxton model'
+    conductance_params: dict = field(default_factory=lambda: {'kp': 4, 'f107': 100.0, 'background': 2.0})
+    regularization_l1: float = 1.0
+    regularization_l2: float = 1.0
 
     # lompeOSSE/validation
-    run_validation_flag: bool
-    time_offset: int
-    snapshot: int
+    run_validation_flag: bool = False
+    time_offset: int = 0
+    snapshot: int = 0
 
     @classmethod
     def default(cls):
@@ -55,12 +56,12 @@ class SwarmDFConfig:
 
 @dataclass
 class SwarmDFPlotSettings:
-    generate_input_plots: bool
     mag_coords_flag: bool
     show_all_data_flag: bool
-    figh: float
-    generate_gifs: bool
-    gif_speed: int
+    figh: float = 9.0
+    generate_input_plots: bool = True
+    generate_gifs: bool = False
+    gif_speed: int = 550
 
     @classmethod
     def default(cls):
