@@ -516,11 +516,11 @@ class LompeInputPlotter:
         axs = {"polar_title": fig.add_subplot(gs[0, 0]),
                "polar":       fig.add_subplot(gs[1, 0]),
                "polar_scale": fig.add_subplot(gs[2, 0]),
-               "zoom_title":  fig.add_subplot(gs[0, 1]),
-               "zoom":        fig.add_subplot(gs[1, 1]),
-               "zoom_scale":  fig.add_subplot(gs[2, 1])}
+               "cs_title":  fig.add_subplot(gs[0, 1]),
+               "cs":        fig.add_subplot(gs[1, 1]),
+               "cs_scale":  fig.add_subplot(gs[2, 1])}
 
-        for ax in [axs["polar_title"], axs["polar_scale"], axs["zoom_title"], axs["zoom_scale"]]:
+        for ax in [axs["polar_title"], axs["polar_scale"], axs["cs_title"], axs["cs_scale"]]:
             ax.set_axis_off()
 
         # top = np.clip(1.026 - 0.088*self.ar - 0.015*max(0, self.ar-1), 0.84, 0.97)
@@ -595,11 +595,11 @@ class LompeInputPlotter:
         # CUBED SPHERE (grid outline)
 
         sh = True if hem == 'south' else False # view the cubed sphere projection from above/below in NH/SH
-        csax0 = CSplot(axs['zoom'], grid, gridtype='geo', view_from_below=sh)
+        csax0 = CSplot(axs['cs'], grid, gridtype='geo', view_from_below=sh)
         csax0.add_coastlines(color='darkgrey')
         # csax0.add_spherical_grid(gridtype='geo', color='lightgrey', zorder=5)
-        axs['zoom'].spines['bottom'].set_linewidth(5) # bottom of grid frame 
-        axs['zoom_title'].text(0.5, 0.5, "Cubed sphere projection\nin geographic coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['zoom_title'].transAxes)
+        axs['cs'].spines['bottom'].set_linewidth(5) # bottom of grid frame 
+        axs['cs_title'].text(0.5, 0.5, "Cubed sphere projection\nin geographic coordinates", ha="center", va="center", fontsize=15*self.font_scale, transform=axs['cs_title'].transAxes)
 
         return axs['polar'], csax0
 
@@ -900,7 +900,7 @@ class LompeInputPlotter:
         # arrowpolax.set_axis_off()
 
         # cs axis
-        arrowcsax = axes["zoom_scale"]
+        arrowcsax = axes["cs_scale"]
         arrowcsax.set_xlim(0, 1) 
         arrowcsax.set_ylim(0, 1) 
         arrowcsax.set_axis_off()
@@ -983,7 +983,7 @@ class LompeInputPlotter:
         
         for swarm_pass, grid, ct, t0, t1, data_objects in zip(swarm_passes, grids, time_bounds['ct'], time_bounds['t0'], time_bounds['t1'], data_objects_per_grid):
 
-            fig, axes = self.make_input_plot(swarm_pass, grid, ct, t0, t1, data_objects, raw_datasets, plot_settings) #, legend_stuff
+            fig, _ = self.make_input_plot(swarm_pass, grid, ct, t0, t1, data_objects, raw_datasets, plot_settings) #, legend_stuff
 
             # Save to PNG
             tmpdir.mkdir(parents=True, exist_ok=True)
