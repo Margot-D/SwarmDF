@@ -1,20 +1,26 @@
-✔ What data  
+<!-- ✔ What data  
 ✔ Where data comes from
-✔ how to collect data --> automated, easy access 
+✔ how to collect data -> automated, easy access 
 ✔ How to download (login info, API)
 ✔ Formats?
 ✔ potential warnings about availability, etc...
-✔ sample datasets
+✔ sample datasets -->
 
 # Data documentation
 
 SwarmDF enables easy access to a variety of ionospheric and thermospheric datasets through automatic data retrieval and preprocessing. The user only needs to provide a start and end time; the SwarmDF data manager handles the downloading, preprocessing, and loading of the required daily data files for all supported datasets. This allows users to focus on scientific analysis rather than data acquisition and formatting.
 
-The simplest way to download data is through the graphical user interface. Simply select an analysis interval, a Swarm satellite, and the datasets of interests. 
+## Dowload data
 
-Outside the GUI, just do:
+The simplest way to download data is through the graphical user interface. Simply select an analysis interval, a Swarm satellite, and the datasets of interest. 
+
+Outside the GUI, simply use:
 
 ```python
+start_time=datetime.datetime(2014, 12, 15, 1, 7),
+end_time=datetime.datetime(2014, 12, 15, 2, 12)
+datasets2download=['swarm_mag', 'superdarn', 'supermag'] # 'swarm_mag', 'swarm_efi', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'
+
 datahandler = DataManager(start_time, end_time, datasets2download)
 datasets = datahandler.datasets
 ```
@@ -30,9 +36,11 @@ datasets = datahandler.datasets
 | Iridium AMPERE | Space magnetic perturbations | AMPERE project |
 | DMSP SSIES | Convection | DMSP SSIES instrument |
 
-
 The sections below provide a brief description of each supported dataset, its data source, and important considerations for its use within SwarmDF.
 
+⚠️ In progress... 
+
+<!-- 
 ### Swarm 
 
 Description: Swarm blabla + add link to mission website 
@@ -68,6 +76,6 @@ Data used by SwarmDF:
 
 ## Iridium/AMPERE
 
-## DMSP/SSIES
+## DMSP/SSIES -->
 
 <!-- potentially show user how to add their own datafile and how to make it a lompe data object -->
