@@ -17,7 +17,7 @@ The simplest way to download data is through the graphical user interface. Simpl
 Outside the GUI, simply use:
 
 ```python
-start_time=datetime.datetime(2014, 12, 15, 1, 7),
+start_time=datetime.datetime(2014, 12, 15, 1, 7)
 end_time=datetime.datetime(2014, 12, 15, 2, 12)
 datasets2download=['swarm_mag', 'superdarn', 'supermag'] # 'swarm_mag', 'swarm_efi', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'
 
