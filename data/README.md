@@ -33,7 +33,7 @@ datasets = datahandler.datasets
 
 The sections below provide a brief description of each supported dataset, its data source, and important considerations for its use within SwarmDF.
 
-## Swarm 
+### Swarm 
 
 Description: Swarm blabla + add link to mission website 
 
@@ -43,18 +43,18 @@ Data used by SwarmDF:
 - EFI - Cross-track ion drift velocity
 - FAC? 
 
-## SuperDARN
+### SuperDARN
 
 SuperDARN is a global network of high-frequency radars that measures the line-of-sight velocity of ionospheric plasma. These observations provide information about large-scale ionospheric convection.
 
-### Data source: 
+#### Data source: 
 ... 
 
-### Data used by SwarmDF:
+#### Data used by SwarmDF:
 - Line-of-sight plasma velocity
 SuperDARN observations are ingested as convection measurements and constrain the electric field and plasma drift in the Lompe inversion.
 
-### Important caveats:
+#### Important caveats:
 - Measures only the velocity component along the radar beam.
 - Coverage is limited and strongly depends on radar location.
 - Data gaps are common.
