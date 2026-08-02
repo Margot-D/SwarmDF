@@ -343,7 +343,7 @@ class SwarmDFGUI(customtkinter.CTk):
         end_time   = self.entry_end_time.get_datetime()
         
         # time step (between frames)
-        timestepp = float(self.entry_timestep.get())
+        timestepp = int(self.entry_timestep.get())
         unit = self.var_timestep_unit.get()
 
         if unit == "min":
