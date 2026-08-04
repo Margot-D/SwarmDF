@@ -105,7 +105,7 @@ class DataManager:
 
         # File paths for all supported datasets
         paths = {'swarm_mag': os.path.join(self.data_path, f'{event_date}_swarm_mag.h5'),
-                'swarm_efi': os.path.join(self.data_path, f'{event_date}_swarm_efi_tct.h5'), #TODO fix
+                'swarm_efi': os.path.join(self.data_path, f'{event_date}_swarm_efi_tct.h5'),
                 'superdarn': os.path.join(self.data_path, f'{event_date}_superdarn_grdmap.h5'),
                 'supermag': os.path.join(self.data_path, f'{event_date}_supermag.h5'),
                 'iridium_ampere': os.path.join(self.data_path, f'{event_date}_iridium.h5'), 
@@ -135,19 +135,22 @@ class DataManager:
                 df = pd.read_hdf(filepath)
 
                 # Basic sanity checks
-                if df.empty:
-                    print(f"⚠️ {key}: dataset is empty")
-                else:
+                if df.empty: # the file contains no rows
+                    print(f"⚠️ {key} dataset is empty")
+                else: 
+                    print(f"{key} dataset successfully loaded")
+
+                    # some variables are entirely NaN
                     all_nan_cols = [c for c in df.columns if df[c].isna().all()]
                     if all_nan_cols:
-                        print(f"⚠️ {key}: columns with only NaNs: {all_nan_cols}")
+                        print(f"⚠️ {key} dataset contains columns with only NaNs: {all_nan_cols}")
 
                 if key in ['dmsp_ssies17', 'dmsp_ssies18', 'supermag']:
                     df.index = df.index.tz_localize(None)
 
                 # DMSP only: filter points close to magnetic pole to avoid weird interpolated data
                 if key in ['dmsp_ssies17', 'dmsp_ssies18']:
-                    df=df
+                    df=df #TODO fix (issue at the high latitudes)
                     # df = df[(df.gdlat >= 0) | ((df.gdlat < 0) & (df.gdlat > -72))] # filter in latitude
                     # def lon_range(x):
                     #     return np.max(x) - np.min(x)
@@ -160,7 +163,7 @@ class DataManager:
                     
                 datasets[key] = df
 
-                print(f"{key} dataset loaded.")
+                # print(f"{key} dataset loaded.")
 
             except Exception as e:
                 print(f"Failed to load {key} data: {e}")
