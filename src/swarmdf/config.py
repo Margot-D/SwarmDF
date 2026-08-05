@@ -17,7 +17,7 @@ class SwarmDFConfig:
     # time interval
     start_time: datetime
     end_time: datetime
-    timestep: float
+    timestep: int
 
     # datasets to retrieve
     datasets2download: list
@@ -42,7 +42,7 @@ class SwarmDFConfig:
         return cls(sat_id='Swarm A',
                    start_time=datetime.datetime(2014, 12, 15, 1, 18),
                    end_time=datetime.datetime(2014, 12, 15, 1, 19),
-                   timestep=30.0,
+                   timestep=30,
                    datasets2download=['swarm_mag', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                    conductance_method='Zhang & Paxton model',
                    conductance_params={'kp': 4, 'f107': 100.0, 'background': 2.0},

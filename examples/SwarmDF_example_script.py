@@ -32,7 +32,7 @@ is_demo = False # set to True to use example configuration and sample datasets
 config = SwarmDFConfig(sat_id='Swarm C',
                        start_time=datetime.datetime(2014, 12, 15, 1, 15),
                        end_time=datetime.datetime(2014, 12, 15, 1, 20),
-                       timestep=30.0,
+                       timestep=30,
                        datasets2download=['swarm_mag', 'swarm_efi', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                        conductance_method='Hardy model',
                        conductance_params={'kp': 4, 'f107': 100.0, 'background': 2.0},

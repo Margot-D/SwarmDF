@@ -9,7 +9,7 @@ sat_id: "Swarm A"
 start_time: "2014-12-15 01:18:00"
 end_time: "2014-12-15 01:19:00"
 
-timestep: 30.0 # [s]
+timestep: 30 # [s] (int)
 
 datasets2download:
   - swarm_mag
