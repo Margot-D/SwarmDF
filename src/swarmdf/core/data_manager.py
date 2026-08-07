@@ -44,6 +44,8 @@ class DataManager:
 
         # List of dates covering the full time interval
         self.event_dates = pd.date_range(start=start_time, end=end_time, freq="D")
+        if self.event_dates.empty:
+            print("⚠️ No dates found in the selected time interval. Please check the start and end times.")
         self.event_dates = [d.strftime("%Y-%m-%d") for d in self.event_dates]
 
         self.datasets = {}
