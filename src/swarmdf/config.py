@@ -17,13 +17,13 @@ class SwarmDFConfig:
     # time interval
     start_time: datetime
     end_time: datetime
-    timestep: int
 
     # datasets to retrieve
     datasets2download: list
 
     # analysis grid
-    grid_params: dict
+    grid_params: dict = field(default_factory=lambda: {'L': 2000.0, 'W': 1500.0, 'Lres': 200.0, 'Wres': 200.0, 'wshift': 0.0})
+    timestep: int = 120
 
     # lompe
     run_lompe_flag: bool = True
