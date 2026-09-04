@@ -15,24 +15,35 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 
 ## Package installation
 
+### System prerequisites
+
+SwarmDF requires Python 3.10 or newer. 
+SwarmDF also depends on ApexPy, which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
+
+For the most reliable installation, we recommend installing the C and Fortran compilers before installing SwarmDF:
+
+```bash
+conda install conda-forge::compilers`
+```
+
+This works with Conda on macOS, Linux, and Windows.
+
+### Install SwarmDF
+
 ```bash
 git clone https://github.com/Margot-D/SwarmDF.git
-cd SwarmDF
+cd SwarmDF 
+
+conda create -n swarmdf python=3.11
+conda activate swarmdf
+
 pip install .
 ```
 
-### Dependencies 
+The `pip install .` command installs SwarmDF and all of its required Python dependencies automatically.
 
-SwarmDF requires several external Python packages.
-If Lompe is already installed, the following dependencies may still be needed:
-`pip install customtkinter tkcalendar imageio pillow`
+SwarmDF can be installed in any compatible Python environment. However, using a dedicated environment is recommended to avoid dependency conflicts with other packages.
 
-<!-- SwarmDF also integrates LompeOSSE (under development) as a built-in validation tool:<br>
-```bash
-git clone https://github.com/Margot-D/lompe_osse.git (not functional yet)
-cd lompe_osse
-pip install .
-``` -->
 
 <!-- ### Environment setup (recommended)
 
