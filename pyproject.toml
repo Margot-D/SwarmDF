@@ -4,13 +4,41 @@ version = "0.0.0"
 description = "Data Fusion toolbox for analysing high-latitude ionosphere electrodynamics along a Swarm satellite trajectory."
 authors = [{ name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
-dependencies = []
+dependencies = [
+    "apexpy",
+    "cloudpickle",
+    "customtkinter",
+    "imageio",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "Pillow",
+    "PyYAML",
+    "tkcalendar",
+    "tqdm",
+    "joblib",
+    "supermag-api",
+    "requests",
+    "bs4",
+    "tables",
+    "dipole @ git+https://github.com/klaundal/dipole.git",
+    "lompe @ git+https://github.com/klaundal/lompe.git",
+    #"lompeosse @ git+https://github.com/Margot-D/lompe_osse.git",
+    "polplot @ git+https://github.com/klaundal/polplot.git",
+    "secsy @ git+https://github.com/klaundal/secsy.git",
+]
 
 [build-system]
 requires = ["setuptools", "setuptools_scm[toml]"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+swarmdf = ["data/sample_datasets/*"]
 
 [project.scripts]
 swarmdf = "swarmdf.cli.main:main"
