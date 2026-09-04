@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import os
 from pathlib import Path
+from importlib.resources import files
+
 from lompe.data_tools import swarm, supermag, superdarn, dmsp_ssies, ampere, dataloader
 
 # TODO how to deal with user id? does the user have to log into each database? 
@@ -31,15 +33,20 @@ class DataManager:
      If True, uses built-in sample datasets for the example event (2014-12-15).
     """
         
-    def __init__(self, start_time, end_time, selected_sources, use_sample_data=False):
+    def __init__(self, start_time, end_time, selected_sources, use_sample_data=False, data_parent=None):
 
-        package_root = Path(__file__).resolve().parents[3]
+        sample_data_path = files("swarmdf") / "data" / "sample_datasets"
+
+        if data_parent is not None:
+            data_root = Path(data_parent) / "SwarmDF" / "data"
+        else:
+            data_root = Path.home() / "SwarmDF" / "data" # TODO add option in gui for user to choose where?
 
         if use_sample_data: # demo 
-            self.data_path = str(package_root / "data" / "sample_datasets") + "/"
+            self.data_path = str(sample_data_path) + "/"
             print(f"Using sample datasets for example event {start_time} -- {end_time}")
         else:
-            self.data_path = str(package_root / "data") + "/"
+            self.data_path = str(data_root) + "/"
             print("Downloading/retrieving data...")
 
         # List of dates covering the full time interval
@@ -70,7 +77,7 @@ class DataManager:
     def fetch_data(self, event_date, selected_sources):
         """ Check if data files for selected sources already exist in the user data folder; download them if needed"""
 
-        required_sources = {''}  # always needed
+        required_sources = {'swarm_mag'}  # always needed
         sources_to_fetch = set(selected_sources) | required_sources
 
         for source in sources_to_fetch:
@@ -116,7 +123,7 @@ class DataManager:
                 }
 
         datasets = {}
-        required_sources = {''}
+        required_sources = {'swarm_mag'} # TODO in the future we might want to be able to use the toolbox outside Swarm
         sources_to_load = set(selected_sources) | required_sources
 
         if not selected_sources:
@@ -169,5 +176,14 @@ class DataManager:
 
             except Exception as e:
                 print(f"Failed to load {key} data: {e}")
-                
+
+        # Check that all required datasets were loaded
+        missing_required = required_sources - datasets.keys() # if 'swarm_mag' not in datasets:
+        if missing_required:
+            raise ValueError(f"Required dataset {sorted(missing_required)} could not be loaded. Cannot continue with SwarmDF.")
+        
+        # All datasets are empty
+        elif all(df.empty for df in datasets.values()):
+            raise ValueError("All loaded datasets are empty. Cannot continue with SwarmDF.")
+        
         return datasets

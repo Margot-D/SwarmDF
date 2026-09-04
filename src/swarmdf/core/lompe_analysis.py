@@ -19,8 +19,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Path for saving output files
-package_root = Path(__file__).resolve().parents[3]
-output_dir = package_root / "outputs"
+output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO switch to real temporary folder?
 
 def run_lompe(grids, time_bounds, data_objects_per_grid, SHs, SPs, l1=1, l2=1): #TODO remove default values?

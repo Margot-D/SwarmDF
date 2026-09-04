@@ -143,8 +143,11 @@ if config.run_validation_flag and config.run_lompe_flag is not None:
 '''
 
     # Export generated python file
-    package_root = Path(__file__).resolve().parents[1]
-    data_path = str(package_root) + "/"
+    # package_root = Path(__file__).resolve().parents[1]
+    # data_path = str(package_root) + "/"
+    data_root = Path.home() / "SwarmDF" # TODO add option for user to choose where?
+    data_path = str(data_root) + "/"
+
     if not fn.endswith(".py"):
         fn += ".py"
     filename = data_path + fn # TODO ok place to save this code? maybe the example folder is best?

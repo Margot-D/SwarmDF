@@ -36,8 +36,7 @@ RE = 6371.2 # Earth radius [km]
 HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throughout
 
 # Path for saving output files
-package_root = Path(__file__).resolve().parents[3]
-output_dir = package_root / "outputs"
+output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
@@ -296,7 +295,8 @@ class LompeInputBuilder:
         Returns
         -------
         grid : CSgrid
-            Grid object to be used in Lompe (in xi, eta coordinates)
+            Grid object to be used in Lompe (in xi, eta coordinates);
+            corresponds to grid_J in Lompe.
         """
 
         position = (sc_lon, sc_lat) # grid center
@@ -332,7 +332,7 @@ class LompeInputBuilder:
 
         data_per_grid = []
 
-        total_frames = len(grids)
+        total_frames = len(grids) #TODO delete that and i stuff? 
         i = 1
         for grid, t0, t1 in zip(grids, time_bounds['t0'], time_bounds['t1']):
             
@@ -764,7 +764,7 @@ class LompeInputPlotter:
                 legend_handles.append(Line2D([0], [0], marker='o', color=c, lw=0, markersize=8, label=label))
                 added.add(dataset)
 
-            # cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection")
+            cs_quivers[dataset] = (c, quiverscales['convection'], 'm/s', "Convection")
             
         # SuperDARN
         elif (dataset == 'superdarn'): 

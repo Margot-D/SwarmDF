@@ -26,8 +26,7 @@ matplotlib.use("Agg")
 # TODO check radius stuff in get_B with Kalle
 
 # Path for saving output files
-package_root = Path(__file__).resolve().parents[3]
-output_dir = package_root / "outputs"
+output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 
 def run_lompeOSSE(models, time_offset=0, snapshot=0):
