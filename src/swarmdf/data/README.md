@@ -50,6 +50,7 @@ Source: ESA Swarm Level-2 products (link)
 Data used by SwarmDF:
 - EFI - Cross-track ion drift velocity
 - FAC? 
+- MAG (give exact data products) 
 
 ### SuperDARN
 
