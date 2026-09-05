@@ -18,7 +18,7 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 ### System prerequisites
 
 SwarmDF requires Python 3.10 or newer. 
-SwarmDF also depends on ApexPy, which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
+SwarmDF also depends on ApexPy (a Python wrapper for Apex coordinates), which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
 
 For the most reliable installation, we recommend installing the C and Fortran compilers before installing SwarmDF, for example using Conda:
 
