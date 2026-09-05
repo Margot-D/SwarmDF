@@ -20,13 +20,13 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 SwarmDF requires Python 3.10 or newer. 
 SwarmDF also depends on ApexPy, which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
 
-For the most reliable installation, we recommend installing the C and Fortran compilers before installing SwarmDF:
+For the most reliable installation, we recommend installing the C and Fortran compilers before installing SwarmDF, for example using Conda:
 
 ```bash
-conda install conda-forge::compilers`
+conda install conda-forge::compilers
 ```
 
-This works with Conda on macOS, Linux, and Windows.
+<!--This works with Conda on macOS, Linux, and Windows.-->
 
 ### Install SwarmDF
 
@@ -43,12 +43,6 @@ pip install .
 The `pip install .` command installs SwarmDF and all of its required Python dependencies automatically.
 
 SwarmDF can be installed in any compatible Python environment. However, using a dedicated environment is recommended to avoid dependency conflicts with other packages.
-
-
-<!-- ### Environment setup (recommended)
-
-An environment file (swarmdf_environment.yml) is provided to install all dependencies automatically, including Lompe and LompeOSSE:
-`conda env create -f swarmdf_environment.yml` -->
 
 ## Getting started 
 
@@ -142,7 +136,7 @@ For example, the Lompe model corresponding to the first analysis frame can be ac
 ```python
 lompe_model = results.output.lompe_models[0]["model"]
 
-# Example: compute the ground magnetic perturbations
+# Example: Lompe-derived ground magnetic perturbations
 Bground = lompe_model.B_ground()
 ```
 
@@ -196,7 +190,7 @@ Data retrieval and preprocessing \
 Multi-instrument data integration \
 Electrodynamics reconstruction (Lompe) \
 Demo script and notebook (/example folder) \
-Graphical user interface (/gui folder)
+Graphical user interface (app.py in /gui folder)
 
 ### In progress
 Validation tool (LompeOSSE) \
