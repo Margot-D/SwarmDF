@@ -143,9 +143,16 @@ class SwarmDFGUI(customtkinter.CTk):
                 self.wait_for_lompe_then_validate()
 
         except Exception as e:
-            print(e)
             messagebox.showerror("SwarmDF failed", str(e)) # TODO for debugging only
             print("SwarmDF failed, the following exception occured:", e) 
+
+        finally:
+            self.set_buttons_state("normal")
+            self.stop_pb(self.progress_input)
+            self.stop_pb(self.progress_output)
+            # self.stop_pb(self.progress_validation) #TODO need to add this back? maybe with a "if the button exists" or smthing
+
+
 
 # -------------------------------------------------------
 # -------------------------------------------------------
