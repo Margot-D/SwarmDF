@@ -6,8 +6,8 @@ and reconstruction of ionospheric electrodynamics.
 
 """
 
+from tkinter import messagebox
 import pandas as pd
-import numpy as np
 import os
 from pathlib import Path
 from importlib.resources import files
@@ -77,14 +77,38 @@ class DataManager:
     def fetch_data(self, event_date, selected_sources):
         """ Check if data files for selected sources already exist in the user data folder; download them if needed"""
 
-        required_sources = {'swarm_mag'}  # always needed
-        sources_to_fetch = set(selected_sources) | required_sources
+        # Swarm MAG is always required and must be downloaded first
+        result = swarm.download_swarm_mag(event_date, tempfile_path=self.data_path)
 
-        for source in sources_to_fetch:
+        # Set swarm_mag_downloaded to True if result is anything other than None; otherwise set it to False
+        swarm_mag_downloaded = result is not None
+
+        # If swarm_mag_downloaded is False, give the option to user to continue with downloading other selected sources
+        if not swarm_mag_downloaded:
+            print("⚠️ Failed to download Swarm MAG data. SwarmDF will not be able to run without it.")
+
+            other_sources = set(selected_sources) - {"swarm_mag"}
+
+            if not other_sources:
+                raise RuntimeError("Required Swarm MAG dataset could not be downloaded. Cannot continue with SwarmDF.")
+    
+            messagebox.showwarning("Swarm MAG download failed",
+                                   "The Swarm MAG dataset could not be downloaded. SwarmDF will not be able to run without it. \n\n"
+                                   "Please check the terminal to choose whether to continue with the other selected datasets.")
+
+            answer = input("Continue downloading the other selected datasets? [y/n]: ").strip().lower()
+
+            # if answer if no:
+            if answer not in ("y", "yes"):
+                raise RuntimeError("Required Swarm MAG dataset could not be downloaded. Cannot continue with SwarmDF.")
+            
+            # if answer is yes:
+            print("Downloading the other selected datasets...")
+    
+        # Download the other selected sources
+        for source in selected_sources:
             try: 
-                if source == 'swarm_mag':
-                    swarm.download_swarm_mag(event_date, tempfile_path=self.data_path)
-                    
+ 
                 if source == 'swarm_efi':
                     swarm.download_swarm_efi(event_date, tempfile_path=self.data_path)
 
@@ -104,6 +128,7 @@ class DataManager:
 
             except Exception as e:
                 print(f"Failed to download {source}:", e)
+
 
     def load_data(self, event_date, selected_sources):
         """ Load available datasets for a given date and return them as a dictionary of DataFrames."""
@@ -181,7 +206,8 @@ class DataManager:
         missing_required = required_sources - datasets.keys() # if 'swarm_mag' not in datasets:
         if missing_required:
             raise ValueError(f"Required dataset {sorted(missing_required)} could not be loaded. Cannot continue with SwarmDF.")
-        
+            #TODO add proper stop (avoid app spinning)
+
         # All datasets are empty
         elif all(df.empty for df in datasets.values()):
             raise ValueError("All loaded datasets are empty. Cannot continue with SwarmDF.")
