@@ -28,6 +28,7 @@ matplotlib.use("Agg")
 # Path for saving output files
 output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
+# tmpdir.mkdir(parents=True, exist_ok=True)
 
 def run_lompeOSSE(models, time_offset=0, snapshot=0):
     """

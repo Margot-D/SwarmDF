@@ -42,6 +42,9 @@ class DataManager:
         else:
             data_root = Path.home() / "SwarmDF" / "data" # TODO add option in gui for user to choose where?
 
+        # Create folder
+        data_root.mkdir(parents=True, exist_ok=True)
+
         if use_sample_data: # demo 
             self.data_path = str(sample_data_path) + "/"
             print(f"Using sample datasets for example event {start_time} -- {end_time}")

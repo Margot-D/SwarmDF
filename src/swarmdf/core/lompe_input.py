@@ -38,6 +38,7 @@ HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throug
 # Path for saving output files
 output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
+# tmpdir.mkdir(parents=True, exist_ok=True)
 
 # Vector scales (all SI units) #TODO use the same quiverscales when plotting lompe stuff in lompe_analysis.py 
 QUIVERSCALES = {'ground_mag':       200 * 1e-9 , # ground magnetic field scale [T]
@@ -1021,7 +1022,7 @@ def show_error_popup(msg):
         root = tk.Tk()
         root.withdraw()
         created_root = True
-    messagebox.showerror("Error", msg)
+    messagebox.showerror("Error", msg, icon='warning')
 
     if created_root:
         root.destroy()
