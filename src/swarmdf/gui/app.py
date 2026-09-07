@@ -143,7 +143,7 @@ class SwarmDFGUI(customtkinter.CTk):
                 self.wait_for_lompe_then_validate()
 
         except Exception as e:
-            messagebox.showerror("SwarmDF failed", str(e)) # TODO for debugging only
+            messagebox.showerror("Error", f"SwarmDF failed: {str(e)}", icon='error') # TODO for debugging only
             print("SwarmDF failed, the following exception occured:", e) 
 
         finally:
@@ -272,7 +272,7 @@ class SwarmDFGUI(customtkinter.CTk):
             value = widget.get()
 
             if value == "Satellite ID":
-                messagebox.showerror("Invalid input", "⚠️ Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.")
+                messagebox.showerror("Invalid input", "Please select a valid Satellite ID (Swarm A, B, or C) and press Run SwarmDF again.", icon='warning')
                 return False
             
             return True
@@ -286,17 +286,17 @@ class SwarmDFGUI(customtkinter.CTk):
             end = end_widget.get_datetime()
 
             if not start or not end:
-                messagebox.showerror("Invalid input", "⚠️ Please enter valid start and end times.")
+                messagebox.showerror("Invalid input", "Please enter valid start and end times.", icon='warning')
                 return False
 
             if start >= end:
-                messagebox.showerror("Invalid input", "⚠️ Start time must be earlier than end time.")
+                messagebox.showerror("Invalid input", "Start time must be earlier than end time.", icon='warning')
                 return False
 
             min_seconds = 5 # TODO what should be the minimum time? frame_length + 1s at least, but should it be a few minutes? it should be at least 5 sec (swarm measurement frequency)
 
             if (end - start).total_seconds() < min_seconds:
-                messagebox.showerror("Invalid input", f"⚠️ Time interval must be at least " f"{min_seconds} seconds.")
+                messagebox.showerror("Invalid input", f"Time interval must be at least " f"{min_seconds} seconds.")
                 return False
 
             return True
@@ -381,7 +381,7 @@ class SwarmDFGUI(customtkinter.CTk):
         if len(datasets2download) == 0: 
             if self.checkbox_runlompe.get():
                 self.checkbox_runlompe.deselect()
-                messagebox.showwarning("Lompe unavailable", "No valid datasets available for Lompe inversion.")
+                messagebox.showwarning("Warning", "No valid datasets available for Lompe inversion.")
 
         # conductance
         kp_value = int(self.entry_kp.get()) 
@@ -496,7 +496,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
             except Exception as e:
                 print("Lompe run failed:", e)
-                # messagebox.showerror("Lompe run failed", str(e))
+                messagebox.showerror("Error", f"Lompe run failed {str(e)}") #TODO OK?
+
+            finally:
+                self.set_buttons_state("normal")
                 self.stop_pb(self.progress_output)
 
         threading.Thread(target=lompe_worker, daemon=True).start()
@@ -525,7 +528,12 @@ class SwarmDFGUI(customtkinter.CTk):
                 self.after(0, lambda: self.display_lompeosse_validation(validation_results))
 
             except Exception as e:
-                self.after(0, lambda: messagebox.showerror("LompeOSSE failed", str(e)))
+                print("LompeOSSE run failed:", e)
+                messagebox.showerror("Error", f"LompeOSSE failed: {str(e)}")
+
+            finally: #TODO check
+                self.set_buttons_state("normal")
+                self.stop_pb(self.progress_validation)
 
         threading.Thread(target=lompeOSSE_worker, daemon=True).start()
     
