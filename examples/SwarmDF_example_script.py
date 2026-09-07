@@ -20,9 +20,6 @@ from swarmdf import *
 
 matplotlib.rcParams['figure.dpi'] = 300
 
-## Uncomment if weird kernel crash
-# matplotlib.use("TkAgg")
-
 ######################
 # Input settings
 ######################  
@@ -49,7 +46,7 @@ plot_settings = SwarmDFPlotSettings(figh=9.0,
                                     show_all_data_flag=True,
                                     gif_speed=550,
                                     generate_input_plots=True, 
-                                    generate_gifs=False)
+                                    generate_gifs=True)
 
 
 ######################
@@ -65,14 +62,7 @@ datasets = get_data(config, is_demo)
 swarmdf_input = compute_swarmdf_input(datasets, config)
 
 if plot_settings.generate_input_plots:
-    input_figs = render_swarmdf_input(swarmdf_input, plot_settings)
-
-    %matplotlib inline
-    for input_fig in input_figs:
-        plt.figure(figsize=(8, 6))
-        plt.imshow(Image.open(input_fig))
-        plt.axis("off")
-        plt.show()
+    render_swarmdf_input(swarmdf_input, plot_settings)
 
 ######################
 # Run Lompe analysis (along satellite trajectory)
@@ -81,14 +71,7 @@ if plot_settings.generate_input_plots:
 if config.run_lompe_flag:
 
     swarmdf_output = compute_swarmdf_output(swarmdf_input, config)
-
-    output_figs = render_swarmdf_output(swarmdf_output, plot_settings)   
-
-    for output_fig in output_figs:
-        plt.figure(figsize=(8, 6))
-        plt.imshow(Image.open(output_fig))
-        plt.axis("off")
-        plt.show()
+    render_swarmdf_output(swarmdf_output, plot_settings)   
 
 ######################
 # LompeOSSE analysis (validation)
@@ -97,17 +80,7 @@ if config.run_lompe_flag:
 if config.run_validation_flag and config.run_lompe_flag is not None:
 
     swarmdf_validation = compute_swarmdf_validation(swarmdf_output, config)
-
     lompeosse_figs, gamera_figs = render_swarmdf_validation(swarmdf_validation, plot_settings)
-
-    for lompeosse_fig, gamera_fig in zip(lompeosse_figs, gamera_figs):
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-        ax[0].imshow(Image.open(lompeosse_fig))
-        ax[0].axis("off")
-        ax[1].imshow(Image.open(gamera_fig))
-        ax[1].axis("off")
-        plt.tight_layout()
-        plt.show()
     
 
 # # Access individual Lompe model
