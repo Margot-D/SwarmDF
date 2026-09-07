@@ -459,7 +459,7 @@ class DateTimeEntry(customtkinter.CTkFrame):
                 if val != ph:
                     other.entries[idx].delete(0, "end")
                     other.entries[idx].insert(0, val)
-                    other.entries[idx].configure(text_color="white")
+                    other.entries[idx].configure(text_color=("black","white"))
 
             entry.bind("<KeyRelease>", lambda e, i=i: mirror(i) if e.keysym not in ("Left", "Right", "Up", "Down") else None)
 
