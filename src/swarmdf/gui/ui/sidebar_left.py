@@ -6,7 +6,6 @@ FONT_TITLE = ("DejaVu Sans", 22, "bold")
 FONT_BIGB = ("DejaVu Sans", 20, "bold") 
 FONT_BIGGERB = ("DejaVu Sans", 16, "bold")
 FONT_NORMAL = ("DejaVu Sans", 14)
-FONT_SMALLER = ("DejaVu Sans", 12)
 
 def build_left_sidebar(gui):
 

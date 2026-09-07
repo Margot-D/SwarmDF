@@ -1,5 +1,7 @@
 import customtkinter
 
+FONT_TOOLTIP = ("DejaVu Sans", 12)
+
 class CustomTooltip:
     """
     Custom tooltip widget for CustomTkinter.
@@ -33,7 +35,7 @@ class CustomTooltip:
                                                     fg_color="grey90", # background
                                                     text_color="black",
                                                     corner_radius=5,
-                                                    font=customtkinter.CTkFont(size=11))
+                                                    font=FONT_TOOLTIP)
 
         self.place_tooltip()
 

@@ -6,7 +6,8 @@ import webbrowser
 from datetime import datetime, date
 from PIL import Image
 
-FONT_BIGGERB = ("DejaVu Sans", 16, "bold")
+FONT_BIGB = ("DejaVu Sans", 16, "bold")
+FONT_BIGGERB = ("DejaVu Sans", 15, "bold")
 FONT_NORMAL = ("DejaVu Sans", 14)
 
 def build_input_panels(gui):
@@ -180,7 +181,7 @@ def build_input_panels(gui):
     gui.frame_gridparam.grid(row=1, column=1, padx=(20, 0), pady=(10, 20), sticky="nsew")
     gui.frame_gridparam.grid_columnconfigure((0,1), weight=1)
 
-    gui.label_gridparam = customtkinter.CTkLabel(gui.frame_gridparam, text="Grid parameters", font=FONT_BIGGERB)
+    gui.label_gridparam = customtkinter.CTkLabel(gui.frame_gridparam, text="Grid parameters", font=FONT_BIGB)
     gui.label_gridparam.grid(row=0, column=0, columnspan=2, pady=(0, 10))
 
     gui.label_L = customtkinter.CTkLabel(gui.frame_gridparam, text="Along-track \n dimension (km):", anchor='center', font=FONT_NORMAL)
