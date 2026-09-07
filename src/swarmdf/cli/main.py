@@ -100,8 +100,10 @@ def main():
 
     if args.demo:
         config = SwarmDFConfig.default()
+
     elif args.config:
         config = load_config(args.config)
+
     else:
         raise ValueError("You must provide --config or --demo")
 
@@ -109,6 +111,9 @@ def main():
         plot_settings = load_plot_settings(args.plot_config)
     else:
         plot_settings = SwarmDFPlotSettings.default()
+
+    if args.demo:
+        plot_settings.generate_gifs = True
 
     if args.no_input_plots:
         plot_settings.generate_input_plots = False
