@@ -35,18 +35,15 @@ class DataManager:
         
     def __init__(self, start_time, end_time, selected_sources, use_sample_data=False, data_parent=None):
 
-        sample_data_path = files("swarmdf") / "data" / "sample_datasets"
-
         if data_parent is not None:
             data_root = Path(data_parent) / "SwarmDF" / "data"
         else:
             data_root = Path.home() / "SwarmDF" / "data" # TODO add option in gui for user to choose where?
 
-        # Create folder
         data_root.mkdir(parents=True, exist_ok=True)
 
         if use_sample_data: # demo 
-            self.data_path = str(sample_data_path) + "/"
+            self.data_path = str(files("swarmdf") / "data" / "sample_datasets") + "/"
             print(f"Using sample datasets for example event {start_time} -- {end_time}")
         else:
             self.data_path = str(data_root) + "/"
