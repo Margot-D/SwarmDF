@@ -4,6 +4,10 @@ from tkcalendar import Calendar
 from swarmdf.gui.ui.helpers.tooltip import CustomTooltip
 import webbrowser
 from datetime import datetime, date
+from PIL import Image
+
+FONT_BIGGERB = ("DejaVu Sans", 16, "bold")
+FONT_NORMAL = ("DejaVu Sans", 14)
 
 def build_input_panels(gui):
         
@@ -12,12 +16,16 @@ def build_input_panels(gui):
 
     gui.tabview = customtkinter.CTkTabview(gui, corner_radius=10)
     gui.tabview.grid(row=0, column=1, padx=(20, 0), pady=(3, 0), sticky="nsew")
+
     tab1 = "Main input"
     tab2 = "Datasets"
     tab3 = "Conductances"
     gui.tabview.add(tab1)
     gui.tabview.add(tab2)
     gui.tabview.add(tab3)
+
+    gui.tabview._segmented_button.configure(font=FONT_BIGGERB)
+
     gui.tabview.tab(tab1).grid_columnconfigure(0, weight=1)
     gui.tabview.tab(tab2).grid_columnconfigure((0,1), weight=2)
     gui.tabview.tab(tab3).grid_columnconfigure(0, weight=2)
@@ -30,7 +38,7 @@ def build_input_panels(gui):
     # TAB 1: Main input
     
     # Satellite ID
-    gui.optmenu_satellite = customtkinter.CTkOptionMenu(gui.tabview.tab(tab1), dynamic_resizing=False, values=["Swarm A", "Swarm B", "Swarm C"])
+    gui.optmenu_satellite = customtkinter.CTkOptionMenu(gui.tabview.tab(tab1), dynamic_resizing=False, values=["Swarm A", "Swarm B", "Swarm C"], font=FONT_NORMAL)
     gui.optmenu_satellite.grid(row=0, column=0, padx=(10,10), pady=(30, 10))
     gui.optmenu_satellite.set("Satellite ID")
 
@@ -46,7 +54,7 @@ def build_input_panels(gui):
     gui.entry_start_time.link_datetime_entries(gui.entry_end_time)
 
     # Time step
-    gui.label_timestep = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Time steps:   ⓘ")
+    gui.label_timestep = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Time steps:   ⓘ", font=FONT_NORMAL)
     gui.label_timestep.grid(row=3, column=0, padx=20, pady=40, sticky="w")
     gui.entry_timestep = customtkinter.CTkEntry(gui.tabview.tab(tab1), width=50)
     gui.entry_timestep.grid(row=3, column=0, pady=20)        
@@ -64,7 +72,8 @@ def build_input_panels(gui):
                             command=lambda: apply_example_date(gui),
                             width=40, height=8,
                             fg_color="#888888", hover_color="#AAAAAA",
-                            font=customtkinter.CTkFont(size=13)).grid(row=5, column=0, pady=(25, 10))
+                            font=FONT_NORMAL
+                            ).grid(row=5, column=0, pady=(25, 10))
 
     # Reset date to placeholders
     customtkinter.CTkButton(gui.tabview.tab(tab1),
@@ -72,44 +81,45 @@ def build_input_panels(gui):
                             command=lambda: reset_dates(gui), 
                             width=40, height=8,
                             fg_color="#888888", hover_color="#AAAAAA", 
-                            font=customtkinter.CTkFont(size=13)).grid(row=6, column=0, pady=(0, 15))
+                            font=FONT_NORMAL
+                            ).grid(row=6, column=0, pady=(0, 15))
 
     # Link to Swarm aurora website
-    gui.link_find_conjunction = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Find conjunction with Swarm-Aurora", text_color="green", cursor="hand2")
+    gui.link_find_conjunction = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Find conjunction with Swarm-Aurora", text_color="green", cursor="hand2", font=FONT_NORMAL)
     gui.link_find_conjunction.grid(row=7, column=0, padx=35, pady=(5, 0), sticky='n')
     gui.link_find_conjunction.bind("<Button-1>", lambda e: webbrowser.open("https://swarm-aurora.com/"))
 
     # TAB 2: Datasets 
 
-    gui.checkbox_swarm_mag = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm mag')
+    gui.checkbox_swarm_mag = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm MAG', font=FONT_NORMAL)
     gui.checkbox_swarm_mag.grid(row=3, column=0, pady=(60, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_swarm_mag, "Space magnetic field")
 
-    gui.checkbox_swarm_efi = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm ion flow')
+    gui.checkbox_swarm_efi = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm ion flow', font=FONT_NORMAL)
     gui.checkbox_swarm_efi.grid(row=3, column=1, pady=(60, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_swarm_efi, "Cross-track ion drift")
 
-    # gui.checkbox_swarm_efield = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm elec')
+    # gui.checkbox_swarm_efield = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Swarm elec', font=FONT_NORMAL)
     # gui.checkbox_swarm_efield.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
     # CustomTooltip(gui.checkbox_swarm_efield, "...")
 
-    gui.checkbox_supermag = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='SuperMAG')
+    gui.checkbox_supermag = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='SuperMAG', font=FONT_NORMAL)
     gui.checkbox_supermag.grid(row=4, column=1, pady=(20, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_supermag, "Ground magnetometer")
 
-    gui.checkbox_superdarn = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='SuperDARN')
+    gui.checkbox_superdarn = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='SuperDARN', font=FONT_NORMAL)
     gui.checkbox_superdarn.grid(row=4, column=0, pady=(20, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_superdarn, "Convection velocities")
 
-    gui.checkbox_iridium_ampere = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Iridium/AMPERE')
+    gui.checkbox_iridium_ampere = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='Iridium/AMPERE', font=FONT_NORMAL)
     gui.checkbox_iridium_ampere.grid(row=6, column=0, pady=(20, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_iridium_ampere, "Space magnetic perturbations")
 
-    gui.checkbox_dmsp_ssies17 = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='DMSP/SSIES 17')
+    gui.checkbox_dmsp_ssies17 = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='DMSP/SSIES 17', font=FONT_NORMAL)
     gui.checkbox_dmsp_ssies17.grid(row=5, column=0, pady=(20, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_dmsp_ssies17, "Ion drift")
 
-    gui.checkbox_dmsp_ssies18 = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='DMSP/SSIES 18')
+    gui.checkbox_dmsp_ssies18 = customtkinter.CTkCheckBox(master=gui.tabview.tab(tab2), text='DMSP/SSIES 18', font=FONT_NORMAL)
     gui.checkbox_dmsp_ssies18.grid(row=5, column=1, pady=(20, 20), padx=10, sticky="n")
     CustomTooltip(gui.checkbox_dmsp_ssies18, "Ion drift")
 
@@ -126,21 +136,21 @@ def build_input_panels(gui):
     gui.checkbox_dmsp_ssies18.select()
     
     # Link to data documentation TODO fix link!
-    gui.link_data_docu = customtkinter.CTkLabel(gui.tabview.tab(tab2), text="Data documentation", text_color="green", cursor="hand2")
+    gui.link_data_docu = customtkinter.CTkLabel(gui.tabview.tab(tab2), text="Data documentation", text_color="green", cursor="hand2", font=FONT_NORMAL)
     gui.link_data_docu.grid(row=9, column=0, columnspan=2, padx=35, pady=(25, 0), sticky='nsew') #pady=(25, 5)
     gui.link_data_docu.bind("<Button-1>", lambda e: webbrowser.open(""))
 
     # TAB 3: Conductance method
 
-    gui.label_conductance = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Conductance estimates:", wraplength=150)
+    gui.label_conductance = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Conductance estimates:", wraplength=170, font=FONT_NORMAL)
     gui.label_conductance.grid(row=1, column=0, columnspan=3, padx=10, pady=(30, 5), sticky="n")    
-    gui.optmenu_conductance = customtkinter.CTkOptionMenu(gui.tabview.tab(tab3), dynamic_resizing=True, values=["Hardy model", "Zhang & Paxton model"])
+    gui.optmenu_conductance = customtkinter.CTkOptionMenu(gui.tabview.tab(tab3), dynamic_resizing=True, values=["Hardy model", "Zhang & Paxton model"], font=FONT_NORMAL)
     gui.optmenu_conductance.grid(row=2, column=0, columnspan=3, padx=10, pady=(5, 20))
     gui.optmenu_conductance.set("Zhang & Paxton model")
     CustomTooltip(gui.label_conductance, "Estimates of ionospheric conductances are a key input to the Lompe inversion. \n Select the model representing the auroral precipitation contribution.")
 
     # Kp index (useful for Hardy model)
-    gui.label_kp = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Kp:")
+    gui.label_kp = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Kp:", font=FONT_NORMAL)
     gui.label_kp.grid(row=6, column=0, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_kp = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_kp.grid(row=7, column=0, padx=(25, 5), pady=(0, 20), sticky="n")
@@ -148,7 +158,7 @@ def build_input_panels(gui):
     CustomTooltip(gui.entry_kp, "Indicator of disturbances in the Earth's magnetic field")
 
     # F10.7 solar flux (useful for EUV conductance)
-    gui.label_f107 = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="F10.7 (s.f.u):")
+    gui.label_f107 = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="F10.7 (s.f.u):", font=FONT_NORMAL)
     gui.label_f107.grid(row=6, column=1, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_f107 = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_f107.grid(row=7, column=1, padx=(25, 5), pady=(0, 20), sticky="n")
@@ -156,7 +166,7 @@ def build_input_panels(gui):
     CustomTooltip(gui.entry_f107, "Solar radio flux at 10.7 cm (solar activity indicator)")
 
     # Background/starlight (useful for EUV conductance)
-    gui.label_background = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Background:") # add info/explnanation for all these parameters
+    gui.label_background = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Background:", font=FONT_NORMAL) # add info/explnanation for all these parameters
     gui.label_background.grid(row=6, column=2, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_background = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_background.grid(row=7, column=2, padx=(25, 5), pady=(0, 20), sticky="n")
@@ -170,11 +180,11 @@ def build_input_panels(gui):
     gui.frame_gridparam.grid(row=1, column=1, padx=(20, 0), pady=(10, 20), sticky="nsew")
     gui.frame_gridparam.grid_columnconfigure((0,1), weight=1)
 
-    gui.label_gridparam = customtkinter.CTkLabel(gui.frame_gridparam, text="Grid parameters", font=customtkinter.CTkFont(size=14, weight="bold"))
+    gui.label_gridparam = customtkinter.CTkLabel(gui.frame_gridparam, text="Grid parameters", font=FONT_BIGGERB)
     gui.label_gridparam.grid(row=0, column=0, columnspan=2, pady=(0, 10))
 
-    gui.label_L = customtkinter.CTkLabel(gui.frame_gridparam, text="Along-track \n dimension (km):", anchor='center')
-    gui.label_W = customtkinter.CTkLabel(gui.frame_gridparam, text="Cross-track \n dimension (km):", anchor='center')
+    gui.label_L = customtkinter.CTkLabel(gui.frame_gridparam, text="Along-track \n dimension (km):", anchor='center', font=FONT_NORMAL)
+    gui.label_W = customtkinter.CTkLabel(gui.frame_gridparam, text="Cross-track \n dimension (km):", anchor='center', font=FONT_NORMAL)
     gui.label_L.grid(row=2, column=0, padx=10, pady=10, sticky="n")
     gui.label_W.grid(row=2, column=1, padx=10, pady=10, sticky="n")
 
@@ -183,8 +193,8 @@ def build_input_panels(gui):
     gui.entry_L.grid(row=3, column=0, padx=10, pady=3)
     gui.entry_W.grid(row=3, column=1, padx=10, pady=3)
 
-    gui.label_Lres = customtkinter.CTkLabel(gui.frame_gridparam, text="Along-track \n resolution (km):", anchor='center')
-    gui.label_Wres = customtkinter.CTkLabel(gui.frame_gridparam, text="Cross-track \n resolution (km):", anchor='center')
+    gui.label_Lres = customtkinter.CTkLabel(gui.frame_gridparam, text="Along-track \n resolution (km):", anchor='center', font=FONT_NORMAL)
+    gui.label_Wres = customtkinter.CTkLabel(gui.frame_gridparam, text="Cross-track \n resolution (km):", anchor='center', font=FONT_NORMAL)
     gui.label_Lres.grid(row=4, column=0, padx=10, pady=(30,10), sticky="n")
     gui.label_Wres.grid(row=4, column=1, padx=10, pady=(30,10), sticky="n")
 
@@ -198,7 +208,7 @@ def build_input_panels(gui):
     gui.entry_Lres.insert(0, "80")
     gui.entry_Wres.insert(0, "80")
 
-    gui.label_wshift = customtkinter.CTkLabel(gui.frame_gridparam, text="Shift center (km):", anchor='center')
+    gui.label_wshift = customtkinter.CTkLabel(gui.frame_gridparam, text="Shift center (km):", anchor='center', font=FONT_NORMAL)
     gui.label_wshift.grid(row=6, column=0, padx=(10,0), pady=30, sticky='e')
     gui.entry_wshift = customtkinter.CTkEntry(gui.frame_gridparam, width=55)
     gui.entry_wshift.grid(row=6, column=1, padx=(7,0), pady=15, sticky='w')
@@ -229,7 +239,7 @@ class DateTimeEntry(customtkinter.CTkFrame):
         # -------- # 
 
         # Label
-        lab = customtkinter.CTkLabel(self, text=label)
+        lab = customtkinter.CTkLabel(self, text=label, font=FONT_NORMAL)
         lab.grid(row=0, column=0, columnspan=13, pady=(0, 5), sticky="w")
         CustomTooltip(lab, "User-defined time interval is used to define grid centers; \n actual data intervals are determined dynamically per grid.")
 
@@ -261,7 +271,9 @@ class DateTimeEntry(customtkinter.CTkFrame):
                 sep.grid(row=1, column=i * 2 + 1, padx=(0,0))
 
         # Calendar button
-        self.button_calendar = customtkinter.CTkButton(self, text="📅", width=20, command=self.open_calendar)
+        # self.button_calendar = customtkinter.CTkButton(self, text="📅", width=20, command=self.open_calendar)
+        calendar_image = customtkinter.CTkImage(Image.open("ui/helpers/calendar.png"), size=(18,18))
+        self.button_calendar = customtkinter.CTkButton(self, text="", image=calendar_image, width=20, command=self.open_calendar)
         self.button_calendar.grid(row=1, column=12, padx=(7, 0))
         CustomTooltip(self.button_calendar, "Pick the date from the calendar. Type YYYY to jump directly to that year.")
 
@@ -394,7 +406,7 @@ class DateTimeEntry(customtkinter.CTkFrame):
                 self.entries[i].configure(text_color="white")
             top.destroy()
 
-        customtkinter.CTkButton(top, text="OK", command=set_date).pack(pady=(0, 10))
+        customtkinter.CTkButton(top, text="OK", font=FONT_NORMAL, command=set_date).pack(pady=(0, 10))
 
     # -------- # 
     # Helpers

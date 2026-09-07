@@ -1,6 +1,9 @@
 import customtkinter
 from swarmdf.gui.ui.helpers.icons import Icons
 
+FONT_BIGGERB = ("DejaVu Sans", 16, "bold")
+FONT_NORMAL = ("DejaVu Sans", 14)
+
 def build_plot_panels(gui):
 
     gui.plot_container = customtkinter.CTkFrame(gui, fg_color="transparent")
@@ -22,10 +25,10 @@ def build_plot_panels(gui):
     gui.frame_input.grid_rowconfigure((0), weight=0)
     gui.frame_input.grid_rowconfigure((1), weight=1)
 
-    gui.header_input = customtkinter.CTkLabel(gui.frame_input, text="Input to Lompe: analysis region along satellite track and data distribution", font=customtkinter.CTkFont(size=14, weight="bold", underline=0))
+    gui.header_input = customtkinter.CTkLabel(gui.frame_input, text="Input to Lompe: analysis region along satellite track and data distribution", font=FONT_BIGGERB) #customtkinter.CTkFont(size=14, weight="bold", underline=0)
     gui.header_input.grid(row=0, column=0,  pady=(2, 10), sticky="n")
 
-    gui.label_input = customtkinter.CTkLabel(gui.frame_input, text="Waiting for trajectory animation...")
+    gui.label_input = customtkinter.CTkLabel(gui.frame_input, text="Waiting for trajectory animation...", font=FONT_NORMAL)
     gui.label_input.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
 
     # GIF controls and interactive window
@@ -47,17 +50,17 @@ def build_plot_panels(gui):
     gui.frame_output.grid_rowconfigure(1, weight=1) # GIF
     gui.frame_output.grid_rowconfigure(2, weight=0) # controls
 
-    gui.header_output = customtkinter.CTkLabel(gui.frame_output, text="Lompe output: reconstructed electrodynamics", font=customtkinter.CTkFont(size=14, weight="bold", underline=0))
+    gui.header_output = customtkinter.CTkLabel(gui.frame_output, text="Lompe output: reconstructed electrodynamics", font=FONT_BIGGERB)
     gui.header_output.grid(row=0, column=0, pady=(2, 10), sticky="n")
 
-    gui.label_output = customtkinter.CTkLabel(gui.frame_output, text="Waiting for Lompe plot...")
+    gui.label_output = customtkinter.CTkLabel(gui.frame_output, text="Waiting for Lompe plot...", font=FONT_NORMAL)
     gui.label_output.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
 
     # GIF controls and interactive window
     gui.output_ui = create_plot_controls(gui, gui.frame_output, "output")
 
     # Run Lompe (temporary button)
-    gui.button_runlompe_temp = customtkinter.CTkButton(master=gui.frame_output, text="Run Lompe analysis", command=gui.trigger_lompe_analysis, width=170, height=40)
+    gui.button_runlompe_temp = customtkinter.CTkButton(master=gui.frame_output, text="Run Lompe analysis", command=gui.trigger_lompe_analysis, width=170, height=40, font=FONT_NORMAL)
     gui.button_runlompe_temp.grid(row=1, column=0, pady=(0, 20))
     gui.button_runlompe_temp.grid_remove()
 
@@ -114,6 +117,7 @@ def create_plot_controls(gui, parent, kind):
                                             width=30, height=30,
                                             fg_color="transparent",
                                             border_width=0, corner_radius=0,
+                                            font=FONT_NORMAL,
                                             command=getattr(gui, f"interactive_window_{kind}")) 
 
     button_intwdw.pack(side="right", padx=5)
