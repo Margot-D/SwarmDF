@@ -80,7 +80,7 @@ if config.run_lompe_flag:
 if config.run_validation_flag and config.run_lompe_flag is not None:
 
     swarmdf_validation = compute_swarmdf_validation(swarmdf_output, config)
-    lompeosse_figs, gamera_figs = render_swarmdf_validation(swarmdf_validation, plot_settings)
+    render_swarmdf_validation(swarmdf_validation, plot_settings)
     
 
 # # Access individual Lompe model
