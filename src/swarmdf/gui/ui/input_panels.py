@@ -5,6 +5,7 @@ from swarmdf.gui.ui.helpers.tooltip import CustomTooltip
 import webbrowser
 from datetime import datetime, date
 from PIL import Image
+from pathlib import Path
 
 FONT_BIGB = ("DejaVu Sans", 16, "bold")
 FONT_BIGGERB = ("DejaVu Sans", 15, "bold")
@@ -273,7 +274,8 @@ class DateTimeEntry(customtkinter.CTkFrame):
 
         # Calendar button
         # self.button_calendar = customtkinter.CTkButton(self, text="📅", width=20, command=self.open_calendar)
-        calendar_image = customtkinter.CTkImage(Image.open("ui/helpers/calendar.png"), size=(18,18))
+        calendar_path = Path(__file__).resolve().parent / "helpers" / "calendar.png"
+        calendar_image = customtkinter.CTkImage(Image.open(calendar_path), size=(18,18))
         self.button_calendar = customtkinter.CTkButton(self, text="", image=calendar_image, width=20, command=self.open_calendar)
         self.button_calendar.grid(row=1, column=12, padx=(7, 0))
         CustomTooltip(self.button_calendar, "Pick the date from the calendar. Type YYYY to jump directly to that year.")
