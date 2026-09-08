@@ -3,9 +3,11 @@ SwarmDF — Lompe analysis module
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+
 import matplotlib
 matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import apexpy
 import copy
 from pathlib import Path

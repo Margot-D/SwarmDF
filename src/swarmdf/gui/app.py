@@ -136,7 +136,6 @@ class SwarmDFGUI(customtkinter.CTk):
                 self.trigger_lompe_analysis()
             else:
                 self.button_runlompe_temp.grid()
-                self.set_buttons_state("normal")
 
             # LompeOSSE validation (once Lompe is done)
             if self.config.run_validation_flag:
@@ -147,11 +146,11 @@ class SwarmDFGUI(customtkinter.CTk):
             print("SwarmDF failed, the following exception occured:", e) 
 
         finally:
-            self.set_buttons_state("normal")
+            # self.set_buttons_state("normal")
             self.stop_pb(self.progress_input)
-            self.stop_pb(self.progress_output)
+            # self.stop_pb(self.progress_output)
             # self.stop_pb(self.progress_validation) #TODO need to add this back? maybe with a "if the button exists" or smthing
-
+            # TODO check if works a expected when no data is found (are the buttons reset to normal tate? does lompe run and fails?)
 
 
 # -------------------------------------------------------
@@ -469,7 +468,13 @@ class SwarmDFGUI(customtkinter.CTk):
 ####################
 ####################
 ## Functions for triggering lompe and lompeOSSE analyses in GUI
-            
+    
+    def finish_lompe(self):
+        print("finish_lompe thread:", threading.current_thread().name)
+
+        self.set_buttons_state("normal")
+        self.stop_pb(self.progress_output)
+
     def trigger_lompe_analysis(self):
         """
         Runs Lompe when requested
@@ -490,20 +495,20 @@ class SwarmDFGUI(customtkinter.CTk):
         self.set_buttons_state("disabled")
 
         def lompe_worker():
+            print("worker thread:", threading.current_thread().name)
+
             try:
                 self.output_results = compute_swarmdf_output(self.input_results, self.config) 
                 self.after(0, lambda: self.display_swarmdf_output(self.output_results)) # plotting and GUI update must go through after
 
             except Exception as e:
                 print("Lompe run failed:", e)
-                messagebox.showerror("Error", f"Lompe run failed {str(e)}") #TODO OK?
+                # messagebox.showerror("Error", f"Lompe run failed {str(e)}") #TODO OK?
 
             finally:
-                self.set_buttons_state("normal")
-                self.stop_pb(self.progress_output)
+                self.after(0, self.finish_lompe)
 
         threading.Thread(target=lompe_worker, daemon=True).start()
-
 
     def wait_for_lompe_then_validate(self):
         """This allows showing the Lompe output in the main GUI window before running LompeOSSE (which takes time)"""
@@ -512,14 +517,16 @@ class SwarmDFGUI(customtkinter.CTk):
             self.after(100, self.trigger_lompeosse_analysis)
         else:
             self.after(300, self.wait_for_lompe_then_validate)
-            
+
+    def finish_lompeosse(self):
+        self.set_buttons_state("normal")
+        self.stop_pb(self.progress_validation)
 
     def trigger_lompeosse_analysis(self):
         """Runs LompeOSSE when requested"""
 
         open_validation_window(self)
         self.update_idletasks()
-
         self.set_buttons_state("disabled")
         
         def lompeOSSE_worker():
@@ -529,11 +536,10 @@ class SwarmDFGUI(customtkinter.CTk):
 
             except Exception as e:
                 print("LompeOSSE run failed:", e)
-                messagebox.showerror("Error", f"LompeOSSE failed: {str(e)}")
+                # messagebox.showerror("Error", f"LompeOSSE failed: {str(e)}")
 
             finally: #TODO check
-                self.set_buttons_state("normal")
-                self.stop_pb(self.progress_validation)
+                self.after(0, self.finish_lompeosse)
 
         threading.Thread(target=lompeOSSE_worker, daemon=True).start()
     
@@ -591,6 +597,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
 
     def display_swarmdf_output(self, lompe_output):
+        print("display thread:", threading.current_thread().name)
 
         try:
             # Extract PIL images 
@@ -612,7 +619,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.output_ctk_frames = pil_to_ctk_images(self.output_pil_frames, self.label_output)
         self.anim_mgr.register_track(self.output_ctk_frames, self.label_output, self.master_state)
         
-        self.stop_pb(self.progress_output)
+        # self.stop_pb(self.progress_output)
 
         # Place frame controls and interactive window button
         self.output_ui["frame_controls"].place(relx=0.5, rely=0.97, anchor="center")
@@ -621,9 +628,6 @@ class SwarmDFGUI(customtkinter.CTk):
         # Enable buttons for interactive views once Lompe is finished
         self.input_ui["button_interactive"].configure(state="normal")
         self.output_ui["button_interactive"].configure(state="normal")
-
-        if not self.config.run_validation_flag:
-            self.set_buttons_state("normal")
 
 
     def display_lompeosse_validation(self, swarmdf_validation):
@@ -666,7 +670,7 @@ class SwarmDFGUI(customtkinter.CTk):
         # Place frame controls and interactive window button
         self.validation_controls.pack(side="bottom", pady=5)
         self.validation_window.update_idletasks()
-        self.frame_interactive_window_val.place(relx=0.97, rely=0.92, anchor="e")
+        self.frame_interactive_window_val.place(relx=0.98, rely=0.89, anchor="e")
 
         self.set_buttons_state("normal")
 

@@ -6,6 +6,10 @@ Builds and visualizes inputs for Lompe analysis.
 """
 
 import numpy as np
+
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from polplot import Polarplot
@@ -16,8 +20,7 @@ import apexpy
 import dipole # github.com/klaundal/dipole
 import datetime
 
-import matplotlib
-matplotlib.use("Agg")
+
 # matplotlib.rcParams['figure.dpi'] = 300
 
 import logging

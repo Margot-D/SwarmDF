@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
@@ -18,8 +21,6 @@ from lompeosse import LompeOSSE, Gamera_output
 
 import time as tt
 
-import matplotlib
-matplotlib.use("Agg")
 
 # TODO documentation
 # TODO check gamera quantities with Kalle, and the grid used to plot stuff
