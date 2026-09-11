@@ -13,26 +13,40 @@ SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/1
 - Built-in validation tool (LompeOSSE, under development)
 - User-friendly graphical interface
 
-## Package installation
+## Installation
 
 ### System prerequisites
 
-SwarmDF requires Python 3.10 or newer. 
+SwarmDF requires Python 3.11 or newer. 
+
 SwarmDF also depends on ApexPy (a Python wrapper for Apex coordinates), which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
 
-For the most reliable installation, we recommend installing the C and Fortran compilers before installing SwarmDF, for example using Conda:
+For the most reliable installation, we recommend installing the the required compilers before installing SwarmDF.
+
+On macOS and Windows, if you are using Conda, you can install the compilers with: 
+<!-- check if it works on windows! -->
 
 ```bash
 conda install conda-forge::compilers
 ```
 
-<!--This works with Conda on macOS, Linux, and Windows.-->
+On Ubuntu/Debian-based Linux systems:
+
+```bash
+sudo apt install gcc gfortran python3.11-dev
+```
+
+Replace `3.11` with your Python version (e.g. `python3.12-dev` for Python 3.12).
 
 ### Install SwarmDF
 
+#### On macOS and Windows
+
+We recommend installing SwarmDF in a dedicated Conda environment:
+
 ```bash
 git clone https://github.com/Margot-D/SwarmDF.git
-cd SwarmDF 
+cd <path/to/SwarmDF>
 
 conda create -n swarmdf python=3.11
 conda activate swarmdf
@@ -40,9 +54,26 @@ conda activate swarmdf
 pip install .
 ```
 
+#### On Linux 
+
+There is evidence of rendering issues with CustomTkinter (used for the SwarmDF graphical user interface) on some Linux systems when using Conda environments. For the best GUI compatibility, we recommend using a standard Python venv environment instead of a Conda environment on Linux.
+
+On Ubuntu/Debian-based systems:
+
+```bash
+git clone https://github.com/Margot-D/SwarmDF.git
+cd <path/to/SwarmDF>  
+
+python3 -m venv swarmdf
+source swarmdf/bin/activate
+
+pip install .
+```
+
 The `pip install .` command installs SwarmDF and all of its required Python dependencies automatically.
 
 SwarmDF can be installed in any compatible Python environment. However, using a dedicated environment is recommended to avoid dependency conflicts with other packages.
+
 
 ## Getting started 
 
