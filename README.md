@@ -21,7 +21,7 @@ SwarmDF requires Python 3.11 or newer.
 
 SwarmDF also depends on ApexPy (a Python wrapper for Apex coordinates), which uses Fortran code. Depending on your system, installing ApexPy may require a Fortran compiler and runtime.
 
-For the most reliable installation, we recommend installing the the required compilers before installing SwarmDF.
+For the most reliable installation, we recommend installing the required compilers before installing SwarmDF.
 
 On macOS and Windows, if you are using Conda, you can install the compilers with: 
 <!-- check if it works on windows! -->
