@@ -36,7 +36,7 @@ from PIL import Image, ImageOps
 import lompe 
 
 RE = 6371.2 # Earth radius [km] 
-HEIGHT = 110 # ionosphere height [km] # TODO: Check that it is consistent throughout
+HEIGHT = 128.8 # ionosphere height [km] (RE + HEIGHT should be 65000 km to match radius of ionosphere in Gamera)
 
 # Path for saving output files
 output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
@@ -536,7 +536,7 @@ class LompeInputPlotter:
 
         return fig, axs
     
-    def _setup_plot_frames(self, axs, swarm_pass, grid, central_time, mag_coords, hem): #TODO decide if I want to keep magnetic coordinate stuff, if not remove comments
+    def _setup_plot_frames(self, axs, swarm_pass, grid, central_time, mag_coords, hem):
         """Configure polar and cubed-sphere axes. Write labels. Plot coastlines and grid outline."""
         
         year = swarm_pass['one_swarm_pass'].index[0].year
