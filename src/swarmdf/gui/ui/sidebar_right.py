@@ -151,13 +151,22 @@ def build_right_sidebar(gui):
         gui.entry_Gtimeoff.insert(0, 0) # in hours  
 
         # Run validation
-        gui.button_validate = customtkinter.CTkButton(gui.frame_validation, text="Validation", font=FONT_BIGGERB, command=gui.trigger_lompeosse_analysis)
+        gui.button_validate = customtkinter.CTkButton(gui.frame_validation, text="Validation", font=FONT_BIGGERB, command=lambda: open_or_run_lompeosse(gui))
         gui.button_validate.grid(row=4, column=0, pady=(50, 10))       
         CustomTooltip(gui.button_validate, "This will run LompeOSSE \n (validation routine for experiment setup)")
         gui.button_validate.configure(state="disabled")
 
-        # Link to LompeOSSE documentation TODO fix link!
+        # Link to LompeOSSE documentation
         gui.link_lompeosse_docu = customtkinter.CTkLabel(gui.frame_validation, text="LompeOSSE documentation", text_color="green", cursor="hand2", font=FONT_NORMAL)
         gui.link_lompeosse_docu.grid(row=5, column=0, columnspan=2, padx=35, pady=(25, 0), sticky='nsew')
-        gui.link_lompeosse_docu.bind("<Button-1>", lambda e: webbrowser.open(""))
+        gui.link_lompeosse_docu.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Margot-D/lompeOSSE"))
 
+def open_or_run_lompeosse(gui):
+    
+    if (hasattr(gui, "lompeosse_window") and gui.lompeosse_window is not None and gui.lompeosse_window.winfo_exists()):
+        gui.lompeosse_window.lift()
+        gui.lompeosse_window.focus_force()
+
+        return
+
+    gui.trigger_lompeosse_analysis()
