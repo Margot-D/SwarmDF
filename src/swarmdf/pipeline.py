@@ -103,6 +103,6 @@ def compute_swarmdf_validation(swarmdf_output : SwarmDFOutput, config):
 
 def render_swarmdf_validation(swarmdf_validation: SwarmDFValidation, plot_settings):
     
-    lompeosse_pngs, gamera_pngs = plot_lompeOSSE_output(swarmdf_validation.lompeosse_models, swarmdf_validation.gamera_output, plot_settings)
+    lompeosse_pngs, gamera_pngs, validation_pngs = plot_lompeOSSE_output(swarmdf_validation.lompeosse_models, swarmdf_validation.gamera_output, plot_settings)
     
-    return lompeosse_pngs, gamera_pngs
+    return lompeosse_pngs, gamera_pngs, validation_pngs
