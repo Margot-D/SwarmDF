@@ -69,22 +69,14 @@ def build_input_panels(gui):
     gui.optmenu_timestep_unit.grid(row=3, column=0, padx=(180,30), pady=20)
 
     # Set example date         
-    customtkinter.CTkButton(gui.tabview.tab(tab1),
-                            text="Use example event",
-                            command=lambda: apply_example_date(gui),
-                            width=40, height=8,
-                            fg_color="#888888", hover_color="#AAAAAA",
-                            font=FONT_NORMAL
-                            ).grid(row=5, column=0, pady=(25, 10))
+    gui.button_expl_event = customtkinter.CTkButton(gui.tabview.tab(tab1), text="Use example event", command=lambda: apply_example_date(gui),
+                                                    width=40, height=8, fg_color="#888888", hover_color="#AAAAAA", font=FONT_NORMAL)
+    gui.button_expl_event.grid(row=5, column=0, pady=(25, 10))
 
     # Reset date to placeholders
-    customtkinter.CTkButton(gui.tabview.tab(tab1),
-                            text="Reset to placeholders",
-                            command=lambda: reset_dates(gui), 
-                            width=40, height=8,
-                            fg_color="#888888", hover_color="#AAAAAA", 
-                            font=FONT_NORMAL
-                            ).grid(row=6, column=0, pady=(0, 15))
+    gui.button_reset_event = customtkinter.CTkButton(gui.tabview.tab(tab1), text="Reset to placeholders", command=lambda: reset_dates(gui), 
+                                                    width=40, height=8, fg_color="#888888", hover_color="#AAAAAA", font=FONT_NORMAL)
+    gui.button_reset_event.grid(row=6, column=0, pady=(0, 15))
 
     # Link to Swarm aurora website
     gui.link_find_conjunction = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Find conjunction with Swarm-Aurora", text_color="green", cursor="hand2", font=FONT_NORMAL)
@@ -273,7 +265,6 @@ class DateTimeEntry(customtkinter.CTkFrame):
                 sep.grid(row=1, column=i * 2 + 1, padx=(0,0))
 
         # Calendar button
-        # self.button_calendar = customtkinter.CTkButton(self, text="📅", width=20, command=self.open_calendar)
         calendar_path = Path(__file__).resolve().parent / "helpers" / "calendar.png"
         calendar_image = customtkinter.CTkImage(Image.open(calendar_path), size=(18,18))
         self.button_calendar = customtkinter.CTkButton(self, text="", image=calendar_image, width=20, command=self.open_calendar)
