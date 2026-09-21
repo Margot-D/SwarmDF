@@ -25,7 +25,7 @@ dependencies = [
     "tables",
     "dipole @ git+https://github.com/klaundal/dipole.git",
     "lompe @ git+https://github.com/klaundal/lompe.git",
-    #"lompeosse @ git+https://github.com/Margot-D/lompe_osse.git",
+    "lompeosse @ git+https://github.com/Margot-D/lompe_osse.git",
     "polplot @ git+https://github.com/klaundal/polplot.git",
     "secsy @ git+https://github.com/klaundal/secsy.git",
 ]
