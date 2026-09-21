@@ -4,14 +4,16 @@ SwarmDF is a Python tool designed to automate the full workflow for analysing hi
 
 ## Overview
 
-SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along and around a user-defined Swarm trajectory.
+SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along a user-defined Swarm trajectory. SwarmDF incorporate the [LompeOSSE]((https://github.com/Margot-D/lompeOSSE) tool to enable validation of the Lompe reconstruction against synthetic data.
+
+For supported datasets, SwarmDF **automatically** downloads the required data for the selected time interval and then runs the complete analysis pipeline, from data processing through to the Lompe reconstruction and optional validation.
 
 ### Key features:
 - End-to-end automated workflow
-- Multi-instrument data fusion  
-- Electrodynamics reconstruction using [Lompe](https://github.com/klaundal/lompe)  
-- Built-in validation tool (LompeOSSE, under development)
-- User-friendly graphical interface
+- Multi-instrument data fusion
+- Electrodynamics reconstruction using [Lompe](https://github.com/klaundal/lompe) 
+- Built-in validation using [LompeOSSE](https://github.com/Margot-D/lompeOSSE) 
+- User-friendly graphical interface and Python API
 
 ## Installation
 
@@ -110,6 +112,8 @@ SwarmDF can also be used directly from Python, which allows full control over th
 
 ### Run a demo analysis:
 
+The following example runs SwarmDF using the default configuration and sample data:
+
 ```python
 from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
 from swarmdf.pipeline import *
@@ -120,55 +124,40 @@ plot_settings = SwarmDFPlotSettings.default()
 results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_sample_data=True)
 ```
 
-To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters through `SwarmDFConfig` and `SwarmDFPlotSettings`.
-
-### Plot results:
-
-```python
-import matplotlib
-matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-from PIL import Image
-
-# %matplotlib inline
-for input_fig in results.plots.input_frames:
-    plt.figure(figsize=(8, 6))
-    plt.imshow(Image.open(input_fig))
-    plt.axis("off")
-    plt.show()
-
-if config.run_lompe_flag:
-    # %matplotlib inline
-    for output_fig in results.plots.output_frames:
-        plt.figure(figsize=(8, 6))
-        plt.imshow(Image.open(output_fig))
-        plt.axis("off")
-        plt.show()
+The default configuration provides the parameters required for a complete SwarmDF analysis, but does not include LompeOSSE validation of the Lompe reconstruction.
+To enable validation in demo mode, replace the `config` line in the previous script with:
+```
+from dataclasses import replace
+config = replace(SwarmDFConfig.default(), run_validation_flag=True)
 ```
 
-<!-- #TODO add lompeosse when ready
-# if config.run_validation_flag: # use result.plots.validation_frames
-#     # %matplotlib inline
-#     for framea, frameb in zip(results.validation.lompeOSSE_PILframes, results.validation.gamera_PILframes):
-#         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-#         ax[0].imshow(np.array(framea))
-#         ax[0].axis("off")
-#         ax[1].imshow(np.array(frameb))
-#         ax[1].axis("off")
-#         plt.tight_layout()
-#         plt.show() -->
+To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters using `SwarmDFConfig` and `SwarmDFPlotSettings`.
 
 ### Access results:
 
-The pipeline returns a `results` object containing analysis outputs and generated figures.
+The pipeline returns a `results` object containing analysis outputs and generated figure paths.
 
-For example, the Lompe model corresponding to the first analysis frame can be accessed as follows:
+Figures are saved to the default output directory: ~/SwarmDF/outputs
+
+### Access results
+
+The pipeline returns a `SwarmDFResults` object containing the analysis results and paths to the generated plot frames. 
+Individual plot frames are saved to ```text~/SwarmDF/outputs/tmp```. If GIF generation is enabled, the resulting GIFs are saved to ```text~/SwarmDF/outputs```.
+
+The main components are:
+
+* `results.input` — input data and information used to construct the Lompe analysis, including the Swarm passes, analysis grids, analysis times, and processed data objects.
+* `results.output` — Lompe reconstruction results, including the reconstructed Lompe models.
+* `results.validation` — LompeOSSE validation results, including the LompeOSSE models and corresponding Gamera output. This is `None` if validation is disabled.
+* `results.plots` — paths to the generated input, output, and validation plot frames.
+
+For example:
 
 ```python
-lompe_model = results.output.lompe_models[0]["model"]
-
-# Example: Lompe-derived ground magnetic perturbations
-Bground = lompe_model.B_ground()
+results.input.grids
+results.output.lompe_models
+results.validation.lompeosse_models
+results.plots.output_frames
 ```
 
  <!-- # TODO fix that... maybe save lompe differently in lompe_analyss.py
@@ -198,11 +187,6 @@ Bground = lompe_model.B_ground()
 # so the user can do results.lompe_results[0].model
 # does not change anything really... -->
 
-<!-- ### Configuration
-
-SwarmDF runs are controlled via a YAML configuration file.
-The config file can be located anywhere, you only need to provide its path:
-`swarmdf --config path/to/config.yaml` -->
 
 ## Examples
 
@@ -220,11 +204,11 @@ Both examples provide a step-by-step walkthrough of the complete SwarmDF workflo
 Data retrieval and preprocessing \
 Multi-instrument data integration \
 Electrodynamics reconstruction (Lompe) \
+Validation tool (LompeOSSE) \
 Demo script and notebook (/example folder) \
 Graphical user interface (app.py in /gui folder)
 
 ### In progress
-Validation tool (LompeOSSE) \
 Extended documentation \
 Data product descriptions
 
