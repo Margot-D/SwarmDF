@@ -138,13 +138,13 @@ To run a custom analysis, set `use_sample_data=False` and configure the desired 
 ### Access results
 
 The pipeline returns a `SwarmDFResults` object containing the analysis results and paths to the generated plot frames. 
-Individual plot frames are saved to ~/SwarmDF/outputs/tmp. If GIF generation is enabled, the resulting GIFs are saved to ~/SwarmDF/outputs.
+Individual plot frames are saved to ~/SwarmDF/outputs/tmp. If GIF generation is enabled (in `plot_settings`), the resulting GIFs are saved to ~/SwarmDF/outputs.
 
-The main components are:
+The main components of the `SwarmDFResults` object are:
 
 * `results.input` — input data and information used to construct the Lompe analysis, including the Swarm passes, analysis grids, analysis times, and processed data objects.
 * `results.output` — Lompe reconstruction results, including the reconstructed Lompe models.
-* `results.validation` — LompeOSSE validation results, including the LompeOSSE models and corresponding Gamera output. This is `None` if validation is disabled.
+* `results.validation` — LompeOSSE validation results, including the LompeOSSE models and corresponding Gamera output. This is None if validation is disabled.
 * `results.plots` — paths to the generated input, output, and validation plot frames.
 
 For example:
