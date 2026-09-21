@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Data Fusion toolbox for analysing high-latitude ionosphere electrodynamics along a Swarm satellite trajectory."
 authors = [{ name = "Margot Decotte, Karl Laundal", email = "margot.decotte@uib.no" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 dependencies = [
     "apexpy",
