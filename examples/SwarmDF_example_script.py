@@ -11,14 +11,11 @@ and use the example event instead.
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib
-import numpy as np
-from PIL import Image 
+matplotlib.rcParams['figure.dpi'] = 300
 
 from swarmdf.config import SwarmDFConfig, SwarmDFPlotSettings
 from swarmdf.pipeline import *
 from swarmdf import *
-
-matplotlib.rcParams['figure.dpi'] = 300
 
 ######################
 # Input settings
@@ -28,7 +25,7 @@ is_demo = False # set to True to use example configuration and sample datasets
 
 config = SwarmDFConfig(sat_id='Swarm C',
                        start_time=datetime.datetime(2014, 12, 15, 1, 15),
-                       end_time=datetime.datetime(2014, 12, 15, 1, 20),
+                       end_time=datetime.datetime(2014, 12, 15, 1, 20),                      
                        timestep=30,
                        datasets2download=['swarm_mag', 'swarm_efi', 'superdarn', 'supermag', 'iridium_ampere', 'dmsp_ssies17', 'dmsp_ssies18'],
                        conductance_method='Hardy model',
@@ -37,7 +34,7 @@ config = SwarmDFConfig(sat_id='Swarm C',
                        run_lompe_flag=True,
                        regularization_l1=1.0,
                        regularization_l2=1.0,
-                       run_validation_flag=False,
+                       run_validation_flag=True,
                        time_offset=0,
                        snapshot=0)
 
