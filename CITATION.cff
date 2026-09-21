@@ -7,34 +7,35 @@ message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
-version:
-date-released: 
+version: 1.0.0
+date-released: 2026-09-18
 authors:
-  - given-names: 'Margot '
+  - given-names: 'Margot'
     family-names: Decotte
     email: margot.decotte@uib.no
     affiliation: University of Bergen
     orcid: 'https://orcid.org/0000-0001-7455-8734'
-  - given-names: 'Karl M '
+  - given-names: 'Karl M.'
     family-names: Laundal
     email: karl.laundal@uib.no
     affiliation: 'Technical University of Denmark, University of Bergen'
     orcid: 'https://orcid.org/0000-0001-5028-4943'
-  - given-names: 'Fasil T'
+  - given-names: 'Fasil T.'
     family-names: Kebede
     email: fasil.kebede@uib.no
     affiliation: University of Bergen
-    orcid:
+    orcid: 'https://orcid.org/0000-0002-5978-6955'
 repository-code: 'https://github.com/Margot-D/SwarmDF.git'
 abstract: >-
-  SwarmDF is an open-source Python toolbox for analysing high-latitude 
-  ionospheric electrodynamics using Swarm satellite observations and 
-  complementary ionospheric-thermospheric datasets.
-  It provides an end-to-end automated workflow for data retrieval, 
-  electrodynamic reconstruction along a Swarm satellite trajectory 
-  using Lompe, and validation through the integrated LompeOSSE module. 
-  By combining multi-instrument observations, SwarmDF enables well-constrained
-  studies of high-latitude ionospheric electrodynamics.
-  The toolbox provides automated access to various ionospheric-thermospheric 
-  datasets, facilitating accessible and reproducible analyses. 
+  The Swarm Data Fusion (SwarmDF) toolbox is an open-source Python toolbox for
+  analysing the local electrodynamics of the high-latitude ionosphere by combining measurements
+  from ESA's Swarm satellites with complementary ionospheric and thermospheric datasets. Given a
+  Swarm satellite ID, a regional grid, and a time interval, the toolbox automatically retrieves and
+  combines observations from SuperDARN, SuperMAG, Iridium/AMPERE, and Swarm electromagnetic field 
+  measurements. SwarmDF uses the local mapping of polar ionospheric electrodynamics (Lompe) technique 
+  to reconstruct two-dimensional maps of key electrodynamic parameters along a Swarm satellite trajectory. 
+  SwarmDF integrates the LompeOSSE Python module, enabling validation of the Lompe reconstruction against 
+  synthetic data generated from Gamera simulations. Featuring an end-to-end automated workflow and a 
+  user-friendly graphical interface, SwarmDF simplifies data handling and experiment setup for high-latitude 
+  ionospheric electrodynamic studies using Swarm observations.
 license: MIT
