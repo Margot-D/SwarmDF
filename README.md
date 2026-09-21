@@ -4,7 +4,7 @@ SwarmDF is a Python tool designed to automate the full workflow for analysing hi
 
 ## Overview
 
-SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along a user-defined Swarm trajectory. SwarmDF incorporate the [LompeOSSE]((https://github.com/Margot-D/lompeOSSE) tool to enable validation of the Lompe reconstruction against synthetic data.
+SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along a user-defined Swarm trajectory. SwarmDF incorporate the [LompeOSSE](https://github.com/Margot-D/lompeOSSE) tool to enable validation of the Lompe reconstruction against synthetic data.
 
 For supported datasets, SwarmDF **automatically** downloads the required data for the selected time interval and then runs the complete analysis pipeline, from data processing through to the Lompe reconstruction and optional validation.
 
