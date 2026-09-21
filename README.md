@@ -4,7 +4,7 @@ SwarmDF is a Python tool designed to automate the full workflow for analysing hi
 
 ## Overview
 
-SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along a user-defined Swarm trajectory. SwarmDF incorporate the [LompeOSSE](https://github.com/Margot-D/lompeOSSE) tool to enable validation of the Lompe reconstruction against synthetic data.
+SwarmDF uses the [Lompe technique](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JA030356) to combine measurements from Swarm satellites with complementary datasets (SuperMAG, SuperDARN, Iridium/AMPERE, DMSP/SSIES) and reconstruct two-dimensional maps of ionospheric electrodynamics along a user-defined Swarm trajectory. SwarmDF incorporates the [LompeOSSE](https://github.com/Margot-D/lompeOSSE) tool to enable validation of the Lompe reconstruction against synthetic data.
 
 For supported datasets, SwarmDF **automatically** downloads the required data for the selected time interval and then runs the complete analysis pipeline, from data processing through to the Lompe reconstruction and optional validation.
 
@@ -96,14 +96,14 @@ swarmdf --demo
 
 Run a full SwarmDF analysis using a configuration file:<br>
 ```bash
-swarmdf --config path/to/config.yaml
+swarmdf --config <path/to/config.yaml>
 ```
-An example configuration files is provided in the examples/ directory.
+An example configuration files is provided in the examples directory.
 
 Optional advanced plotting settings can be provided through a separate configuration file. If omitted, default plotting settings are used.
 
 ```bash
-swarmdf --config path/to/config.yaml --plot-config path/to/plot_settings.yaml
+swarmdf --config <path/to/config.yaml> --plot-config <path/to/plot_settings.yaml>
 ```
 
 ## Python interface
@@ -126,23 +126,19 @@ results = run_swarmdf_pipeline(config=config, plot_settings=plot_settings, use_s
 
 The default configuration provides the parameters required for a complete SwarmDF analysis, but does not include LompeOSSE validation of the Lompe reconstruction.
 To enable validation in demo mode, replace the `config` line in the previous script with:
-```
+
+```python
 from dataclasses import replace
 config = replace(SwarmDFConfig.default(), run_validation_flag=True)
 ```
 
-To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters using `SwarmDFConfig` and `SwarmDFPlotSettings`.
+To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters using `SwarmDFConfig` and `SwarmDFPlotSettings` (see, for example, `SwarmDF_example_script.py` in the example directory).
 
-### Access results:
-
-The pipeline returns a `results` object containing analysis outputs and generated figure paths.
-
-Figures are saved to the default output directory: ~/SwarmDF/outputs
 
 ### Access results
 
 The pipeline returns a `SwarmDFResults` object containing the analysis results and paths to the generated plot frames. 
-Individual plot frames are saved to ```text~/SwarmDF/outputs/tmp```. If GIF generation is enabled, the resulting GIFs are saved to ```text~/SwarmDF/outputs```.
+Individual plot frames are saved to ~/SwarmDF/outputs/tmp. If GIF generation is enabled, the resulting GIFs are saved to ~/SwarmDF/outputs.
 
 The main components are:
 
