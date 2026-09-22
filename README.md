@@ -134,7 +134,6 @@ config = replace(SwarmDFConfig.default(), run_validation_flag=True)
 
 To run a custom analysis, set `use_sample_data=False` and configure the desired analysis and plotting parameters using `SwarmDFConfig` and `SwarmDFPlotSettings` (see, for example, `SwarmDF_example_script.py` in the example directory).
 
-
 ### Access results
 
 The pipeline returns a `SwarmDFResults` object containing the analysis results and paths to the generated plot frames. 
@@ -208,3 +207,6 @@ Graphical user interface (app.py in /gui folder)
 Extended documentation \
 Data product descriptions
 
+## Funding
+
+The development of SwarmDF is funded by the Swarm DISC Project Office.
