@@ -134,19 +134,21 @@ def build_right_sidebar(gui):
         gui.header_frame_validation = customtkinter.CTkLabel(gui.frame_validation, text="Output \n validation", font=FONT_BIGB)
         gui.header_frame_validation.grid(row=0, column=0, pady=(5, 5))
 
-        # Gamera snapshot
-        gui.label_Gsnapshot = customtkinter.CTkLabel(gui.frame_validation, text="Gamera snapshot number:", font=FONT_NORMAL)
-        gui.label_Gsnapshot.grid(row=1, column=0, padx=(27,0), pady=(35, 0), sticky="w")
-        gui.entry_Gsnapshot = customtkinter.CTkEntry(gui.frame_validation, width=30)
-        gui.entry_Gsnapshot.grid(row=1, column=0, padx=(0,25), pady=(38, 0), sticky='e')        
+        # Gamera snapshot 
+        available_steps = ["0", "2", "3", "12", "13", "14", "16", "19", "20", "21", "22"] # available time steps in provided Gamera dataset
+        gui.label_Gsnapshot = customtkinter.CTkLabel(gui.frame_validation, text="Gamera snapshot: ", font=FONT_NORMAL)
+        gui.label_Gsnapshot.grid(row=1, column=0, padx=(45,0), pady=(35,0), sticky="w")
+        gui.optmenu_Gsnapshot = customtkinter.CTkOptionMenu(gui.frame_validation, values=[str(step) for step in available_steps], width=60)
+        gui.optmenu_Gsnapshot.grid(row=1, column=0, padx=(0, 25), pady=(38,0), sticky='e')
         CustomTooltip(gui.label_Gsnapshot, "Gamera simulation snapshot index. \n Each index represents a different physical state. \n See the LompeOSSE documentation for details. ")
-        gui.entry_Gsnapshot.insert(0, 0)        
+        CustomTooltip(gui.optmenu_Gsnapshot, "Indices available in the provided Gamera dataset")
+        gui.optmenu_Gsnapshot.set("0")
 
         # Gamera time offset
         gui.label_Gtimeoff = customtkinter.CTkLabel(gui.frame_validation, text="Time offset (hours):", font=FONT_NORMAL)
-        gui.label_Gtimeoff.grid(row=3, column=0, padx=(40,0), pady=(35, 0), sticky="w")
+        gui.label_Gtimeoff.grid(row=3, column=0, padx=(45,0), pady=(35,0), sticky="w")
         gui.entry_Gtimeoff = customtkinter.CTkEntry(gui.frame_validation, width=30)
-        gui.entry_Gtimeoff.grid(row=3, column=0, padx=(0,25), pady=(38, 0), sticky='e')        
+        gui.entry_Gtimeoff.grid(row=3, column=0, padx=(0,25), pady=(38,0), sticky='e')        
         CustomTooltip(gui.label_Gtimeoff, "Rotates the Gamera snapshot in magnetic local time. \n See the LompeOSSE documentation for details.")
         gui.entry_Gtimeoff.insert(0, 0) # in hours  
 
