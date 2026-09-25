@@ -36,7 +36,7 @@ def build_left_sidebar(gui):
     CustomTooltip(gui.entry_filename, "Filename for generated script (default: SwarmDF_script.py")
 
     # Run SwarmDF
-    gui.button_runSwarmDF = customtkinter.CTkButton(gui.left_sidebar, command=gui.run_swarmdf, text='Run SwarmDF', width=160, height=80, font=FONT_BIGB)
+    gui.button_runSwarmDF = customtkinter.CTkButton(gui.left_sidebar, command=gui.start_swarmdf, text='Run SwarmDF', width=160, height=80, font=FONT_BIGB)
     gui.button_runSwarmDF.grid(row=7, column=0, padx=20, pady=(100,10))
 
     # Demo mode
