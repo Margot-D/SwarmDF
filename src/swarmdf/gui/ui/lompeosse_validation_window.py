@@ -1,4 +1,5 @@
 import customtkinter
+from tkinter import messagebox
 
 FONT_BIGGERB = ("DejaVu Sans", 16, "bold")
 FONT_NORMAL = ("DejaVu Sans", 14)
@@ -7,7 +8,7 @@ def open_lompeosse_window(gui):
 
     gui.lompeosse_window = customtkinter.CTkToplevel(gui)
     gui.lompeosse_window.title("LompeOSSE output")
-    gui.lompeosse_window.geometry(f"{1200}x{550}")
+    gui.lompeosse_window.geometry(f"{1200}x{630}")
     
     gui.plot_container = customtkinter.CTkFrame(gui.lompeosse_window, width=450 + 450/1.5, height=300)
     gui.plot_container.pack(fill="both", expand=True, padx=10, pady=10)
@@ -71,7 +72,6 @@ def open_lompeosse_window(gui):
 
     gui.lompeosse_controls.pack(anchor="center") # pack subframe into controls_row frame
 
-
     # Interactive plots
     gui.frame_bttn_int_wdw_lompeosse = customtkinter.CTkFrame(gui.controls_row, fg_color="transparent") #"#FFFFFF"
     gui.frame_bttn_int_wdw_lompeosse.place(relx=0.98, rely=0.55, anchor="e") # place subframe into controls_row frame
@@ -94,8 +94,7 @@ def open_lompeosse_window(gui):
 
     gui.button_validation_metrics.pack(pady=2) # pack in bottom_panel_lompeosse panel
 
-    gui.bottom_panel_lompeosse.pack_forget() # hide bottom panel initially
-
+    gui.lompeosse_window.protocol("WM_DELETE_WINDOW", lambda: close_lompeosse_window(gui))
 
 def open_validation_window(gui):
 
@@ -161,6 +160,28 @@ def open_validation_window(gui):
     gui.display_validation()
 
     gui.validation_window.protocol("WM_DELETE_WINDOW", lambda: close_validation_window(gui))
+
+def close_lompeosse_window(gui):
+    """Ask for confirmation before closing a running LompeOSSE analysis"""
+
+    if gui.lompeosse_running:
+        answer = messagebox.askyesno("Cancel LompeOSSE",
+                                     "LompeOSSE is still running.\n\n"
+                                     "Do you want to cancel the analysis and close the window?",
+                                     parent=gui.lompeosse_window)
+
+        if not answer:
+            return
+
+        # Request cancellation here
+        gui.lompeosse_cancel_event.set()
+
+        gui.status_label.configure(text="Cancelling LompeOSSE... This may take some time")
+
+        # Keep the window open until the worker has stopped
+        return
+    
+    gui.lompeosse_window.destroy()
 
 def close_validation_window(gui):
 

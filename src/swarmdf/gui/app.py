@@ -659,15 +659,14 @@ class SwarmDFGUI(customtkinter.CTk):
         buttons = [self.button_playpause_lompeosse]
         self.update_play_pause_icons(buttons, self.validation_state["playing"])
 
-        # Place controls, interactive window button and validation metrics button
-        self.bottom_panel_lompeosse.pack(side="bottom", fill="x", pady=2)
-        self.plot_container.pack_configure(fill="both",
-                                        expand=True
-                                    )
-        self.lompeosse_window.update_idletasks()
+        # Hide the progress/status widgets
+        self.progress_lompeosse.pack_forget()
+        self.status_label.pack_forget()
 
-        # Update lompeosse window label
-        self.status_label.configure(text="")
+        # Place controls, interactive window button and validation metrics button
+        self.bottom_panel_lompeosse.pack(side="bottom", fill="x", pady=10)
+        self.bottom_panel_lompeosse.update_idletasks()
+        self.lompeosse_window.update_idletasks()
 
         # Play animation
         self.anim_mgr.play_generic(state=self.validation_state)   
