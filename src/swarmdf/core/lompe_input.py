@@ -999,7 +999,7 @@ class LompeInputPlotter:
             plt.savefig(fn_ct, dpi=400, pad_inches=0.2)  # NO bbox_inches='tight'
             plt.close(fig)
 
-        print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved in: {tmpdir}")
+        print(f"Figures with Swarm tracks, analysis grid, and data distribution for each time step saved to: {tmpdir}")
 
         # Save GIF
         if plot_settings.generate_gifs:
@@ -1013,7 +1013,7 @@ class LompeInputPlotter:
                 for fn in png_frames:
                     writer.append_data(imageio.imread(fn))
 
-            print(f"GIF saved in outputs directory as: {output}") 
+            print(f"GIF saved to: {output}") 
 
         return png_frames
 

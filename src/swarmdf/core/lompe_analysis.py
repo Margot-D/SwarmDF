@@ -116,7 +116,7 @@ def plot_lompe_output(models, sat_id, plot_settings):
 
         plt.close(fig)
 
-    print(f"Lompe output figures for each time step saved in temporary folder: {tmpdir}")
+    print(f"Lompe output figures for each time step saved to: {tmpdir}")
 
     # Generate GIF
     if plot_settings.generate_gifs:
@@ -130,7 +130,7 @@ def plot_lompe_output(models, sat_id, plot_settings):
             for frame in png_frames:
                 writer.append_data(imageio.imread(frame))
 
-        print(f"GIF saved in outputs directory: {output}")
+        print(f"GIF saved to: {output}")
 
     return png_frames
 
