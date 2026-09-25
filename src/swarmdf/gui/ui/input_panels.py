@@ -58,10 +58,11 @@ def build_input_panels(gui):
     # Time step
     gui.label_timestep = customtkinter.CTkLabel(gui.tabview.tab(tab1), text="Time steps:   ⓘ", font=FONT_NORMAL)
     gui.label_timestep.grid(row=3, column=0, padx=20, pady=40, sticky="w")
-    gui.entry_timestep = customtkinter.CTkEntry(gui.tabview.tab(tab1), width=50)
-    gui.entry_timestep.grid(row=3, column=0, pady=20)        
-    gui.entry_timestep.insert(0, 30)
     CustomTooltip(gui.label_timestep, "Time between frames. \n Use the dropdown to select seconds, minutes, or hours. \n Min value: 10 sec")
+    gui.entry_timestep = customtkinter.CTkEntry(gui.tabview.tab(tab1), width=50)
+    gui.entry_timestep.grid(row=3, column=0, pady=20)     
+    gui.default_timestep = 30 # in [s]
+    gui.entry_timestep.insert(0, gui.default_timestep)
 
     # Time step unit
     gui.var_timestep_unit = customtkinter.StringVar(value="s")
@@ -140,32 +141,35 @@ def build_input_panels(gui):
     gui.label_conductance.grid(row=1, column=0, columnspan=3, padx=10, pady=(30, 5), sticky="n")    
     gui.optmenu_conductance = customtkinter.CTkOptionMenu(gui.tabview.tab(tab3), dynamic_resizing=True, values=["Hardy model", "Zhang & Paxton model"], font=FONT_NORMAL)
     gui.optmenu_conductance.grid(row=2, column=0, columnspan=3, padx=10, pady=(5, 20))
-    gui.optmenu_conductance.set("Zhang & Paxton model")
     CustomTooltip(gui.label_conductance, "Estimates of ionospheric conductances are a key input to the Lompe inversion. \n Select the model representing the auroral precipitation contribution.")
+    gui.optmenu_conductance.set("Zhang & Paxton model")
 
     # Kp index (useful for Hardy model)
     gui.label_kp = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Kp:", font=FONT_NORMAL)
     gui.label_kp.grid(row=6, column=0, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_kp = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_kp.grid(row=7, column=0, padx=(25, 5), pady=(0, 20), sticky="n")
-    gui.entry_kp.insert(0, 4)
     CustomTooltip(gui.entry_kp, "Indicator of disturbances in the Earth's magnetic field")
+    gui.default_kp = 4
+    gui.entry_kp.insert(0, gui.default_kp)
 
     # F10.7 solar flux (useful for EUV conductance)
     gui.label_f107 = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="F10.7 (s.f.u):", font=FONT_NORMAL)
     gui.label_f107.grid(row=6, column=1, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_f107 = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_f107.grid(row=7, column=1, padx=(25, 5), pady=(0, 20), sticky="n")
-    gui.entry_f107.insert(0, 100)
     CustomTooltip(gui.entry_f107, "Solar radio flux at 10.7 cm (solar activity indicator)")
+    gui.default_f107 = 100 # in [s.f.u]
+    gui.entry_f107.insert(0, gui.default_f107)
 
     # Background/starlight (useful for EUV conductance)
     gui.label_background = customtkinter.CTkLabel(gui.tabview.tab(tab3), text="Background:", font=FONT_NORMAL) # add info/explnanation for all these parameters
     gui.label_background.grid(row=6, column=2, padx=(25, 5), pady=(20, 5), sticky="n")
     gui.entry_background = customtkinter.CTkEntry(gui.tabview.tab(tab3), width=60)
     gui.entry_background.grid(row=7, column=2, padx=(25, 5), pady=(0, 20), sticky="n")
-    gui.entry_background.insert(0, 2)
-    CustomTooltip(gui.entry_background, "Background conductance - somthg about starlight? fix")
+    CustomTooltip(gui.entry_background, "Constant background conductance to add [S], typically small")
+    gui.default_background = 0
+    gui.entry_background.insert(0, gui.default_background)
 
     #############
     # Bottom panel - grid parameters
@@ -197,17 +201,22 @@ def build_input_panels(gui):
     gui.entry_Lres.grid(row=5, column=0, padx=10, pady=3)
     gui.entry_Wres.grid(row=5, column=1, padx= 10, pady=3)
 
-    gui.entry_L.insert(0, "2000")
-    gui.entry_W.insert(0, "1500")
-    gui.entry_Lres.insert(0, "80")
-    gui.entry_Wres.insert(0, "80")
+    gui.default_L = 2000 # in [km]
+    gui.default_W = 1500 # in [km]
+    gui.default_Lres = 80 # in [km]
+    gui.default_Wres = 80 # in [km]
+    gui.entry_L.insert(0, gui.default_L)
+    gui.entry_W.insert(0, gui.default_W)
+    gui.entry_Lres.insert(0, gui.default_Lres)
+    gui.entry_Wres.insert(0, gui.default_Wres)
 
     gui.label_wshift = customtkinter.CTkLabel(gui.frame_gridparam, text="Shift center (km):", anchor='center', font=FONT_NORMAL)
     gui.label_wshift.grid(row=6, column=0, padx=(10,0), pady=30, sticky='e')
+    CustomTooltip(gui.label_wshift, "Shift the grid center horizontally (cross-track) to align the Swarm track \n (positive = left, negative = right)")
     gui.entry_wshift = customtkinter.CTkEntry(gui.frame_gridparam, width=55)
     gui.entry_wshift.grid(row=6, column=1, padx=(7,0), pady=15, sticky='w')
-    gui.entry_wshift.insert(0, 0)
-    CustomTooltip(gui.entry_wshift, "Shift the grid center horizontally (cross-track) to align the Swarm track \n (positive = left, negative = right)")
+    gui.default_wshift = 0 # in [km]
+    gui.entry_wshift.insert(0, gui.default_wshift)
 
 
 def apply_example_date(gui):

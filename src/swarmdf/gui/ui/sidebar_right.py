@@ -70,8 +70,8 @@ def build_right_sidebar(gui):
         gui.label_gifspeed.grid(row=1, column=0, pady=(15, 0), sticky="ew")
         gui.entry_gifspeed = customtkinter.CTkEntry(gui.tab_gif, width=50)
         gui.entry_gifspeed.grid(row=2, column=0, pady=(7, 0))
-        gui.default_speed = 550  # ms
-        gui.entry_gifspeed.insert(0, gui.default_speed)
+        gui.default_gif_speed = 550  # ms/frame
+        gui.entry_gifspeed.insert(0, gui.default_gif_speed)
         CustomTooltip(gui.label_gifspeed, text="Time in milliseconds between each frame.\nLower = faster animation (0 stops the GIF).")
 
         # Apply new speed
@@ -138,19 +138,20 @@ def build_right_sidebar(gui):
         available_steps = ["0", "2", "3", "12", "13", "14", "16", "19", "20", "21", "22"] # available time steps in provided Gamera dataset
         gui.label_Gsnapshot = customtkinter.CTkLabel(gui.frame_validation, text="Gamera snapshot: ", font=FONT_NORMAL)
         gui.label_Gsnapshot.grid(row=1, column=0, padx=(45,0), pady=(35,0), sticky="w")
+        CustomTooltip(gui.label_Gsnapshot, "Gamera simulation snapshot index. \n Each index represents a different physical state. \n See the LompeOSSE documentation for details. ")
         gui.optmenu_Gsnapshot = customtkinter.CTkOptionMenu(gui.frame_validation, values=[str(step) for step in available_steps], width=60)
         gui.optmenu_Gsnapshot.grid(row=1, column=0, padx=(0, 25), pady=(38,0), sticky='e')
-        CustomTooltip(gui.label_Gsnapshot, "Gamera simulation snapshot index. \n Each index represents a different physical state. \n See the LompeOSSE documentation for details. ")
         CustomTooltip(gui.optmenu_Gsnapshot, "Indices available in the provided Gamera dataset")
         gui.optmenu_Gsnapshot.set("0")
 
         # Gamera time offset
         gui.label_Gtimeoff = customtkinter.CTkLabel(gui.frame_validation, text="Time offset (hours):", font=FONT_NORMAL)
         gui.label_Gtimeoff.grid(row=3, column=0, padx=(45,0), pady=(35,0), sticky="w")
+        CustomTooltip(gui.label_Gtimeoff, "Rotates the Gamera snapshot in magnetic local time. \n See the LompeOSSE documentation for details.")
         gui.entry_Gtimeoff = customtkinter.CTkEntry(gui.frame_validation, width=30)
         gui.entry_Gtimeoff.grid(row=3, column=0, padx=(0,25), pady=(38,0), sticky='e')        
-        CustomTooltip(gui.label_Gtimeoff, "Rotates the Gamera snapshot in magnetic local time. \n See the LompeOSSE documentation for details.")
-        gui.entry_Gtimeoff.insert(0, 0) # in hours  
+        gui.default_Gtimeoff = 0 # in [hours] 
+        gui.entry_Gtimeoff.insert(0, gui.default_Gtimeoff)  
 
         # Run validation
         gui.button_validate = customtkinter.CTkButton(gui.frame_validation, text="Validation", font=FONT_BIGGERB, command=lambda: open_or_run_lompeosse(gui))
