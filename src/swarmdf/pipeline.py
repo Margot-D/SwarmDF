@@ -95,9 +95,9 @@ def render_swarmdf_output(swarmdf_output: SwarmDFOutput, plot_settings):
     
     return output_pngs
 
-def compute_swarmdf_validation(swarmdf_output : SwarmDFOutput, config):
+def compute_swarmdf_validation(swarmdf_output : SwarmDFOutput, config, cancel_event=None):
 
-    lompeosse_models, gamera_output = run_lompeOSSE(swarmdf_output.lompe_models, config.time_offset, config.snapshot)
+    lompeosse_models, gamera_output = run_lompeOSSE(swarmdf_output.lompe_models, config.time_offset, config.snapshot, cancel_event=cancel_event)
         
     return SwarmDFValidation(lompeosse_models, gamera_output)
 

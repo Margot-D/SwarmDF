@@ -27,7 +27,11 @@ output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to c
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 # tmpdir.mkdir(parents=True, exist_ok=True)
 
-def run_lompeOSSE(models, time_offset=0, snapshot=0):
+class LompeOSSECancelled(Exception):
+    """Raised when the user cancels the LompeOSSE analysis"""
+    pass
+
+def run_lompeOSSE(models, time_offset=0, snapshot=0, cancel_event=None):
     """
     """
 
@@ -39,7 +43,11 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
     total_frames = len(models)
     i = 1
     for entry in models:
-        
+
+        # cancellation check  
+        if cancel_event is not None and cancel_event.is_set():
+            raise LompeOSSECancelled
+
         print(f'Frame {i}/{total_frames} \n')
 
         model = entry["model"]
@@ -50,13 +58,20 @@ def run_lompeOSSE(models, time_offset=0, snapshot=0):
         hemi = 'NORTH' if model.grid_E.lat.all() > 0 else 'SOUTH'
 
         # Extract Gamera data
-
         gamera_output = GameraData(ct, timestep = snapshot, hemisphere = hemi)
         gamera_outputs.append({"gamera_output": copy.deepcopy(gamera_output)})
 
+        # cancellation check  
+        if cancel_event is not None and cancel_event.is_set():
+            raise LompeOSSECancelled
+        
         # Derive synthetic (OSSE) model
         osse_object = LompeOSSE(model, gamera_output)
-        osse_model = osse_object.make_OSSE_model(time_offset = time_offset) #TODO what is the point of adding time offset here rather thsn in the class directly? 
+        osse_model = osse_object.make_OSSE_model(time_offset = time_offset) 
+
+        # cancellation check  
+        if cancel_event is not None and cancel_event.is_set():
+            raise LompeOSSECancelled
         
         # Run inversion
         osse_model.run_inversion(l1 = l1, l2 = l2)
@@ -108,7 +123,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings):
 
         # Save to PNG
         lompeosse_fn = f'lompeosse'
-        fn = tmpdir / f"{lompeosse_fn}_{ct:%Y%m%d_%H%M%S}.png"        
+        fn = tmpdir / f"{lompeosse_fn}_{ct:%Y%m%d_%H%M%S}.png" # TODO ct or ntime?
         lompeosse_png_frames.append(fn)
 
         savekw = {"fname": fn, "dpi": 400}
@@ -124,9 +139,6 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings):
                                         suptitle=suptitle, 
                                         figheight=plot_settings.figh, 
                                         savekw=savekw)
-
-
-        # TODO do we need this time to take time offset into account? ask Kalle how the time offset thing is relevant at all here...
 
         plt.close(fig_lompeosse)
 
@@ -151,20 +163,20 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings):
         # Validation metrics
         #################
 
+        print("Calculating validation metrics...")
+
         # Save to PNG 
         validation_fn = f'validation_metrics'
         fn = tmpdir / f"{validation_fn}_{ct:%Y%m%d_%H%M%S}.png"        
         validation_png_frames.append(fn)
 
         savekw = {"fname": fn, "dpi": 400, "bbox_inches": "tight", "pad_inches": 0.2}
-        fig_validation, _ = validate(osse_model, gamera_output, ct, primary='potential', overlay='fac', savekw=savekw)
-
-        # TODO put that in validate function directly
-        # fig_validation.savefig(fn, dpi=400, bbox_inches="tight", pad_inches=0.2)
+        suptitle = f'Validation of lompe reconstruction'
+        fig_validation, _ = validate(osse_model, gamera_output, ct, primary='potential', overlay='fac', suptitle=suptitle, savekw=savekw)
 
         plt.close(fig_validation)
 
-    print(f"LompeOSSE output and validation figures for each time step saved in temporary folder: {tmpdir}")
+    print(f"LompeOSSE output and validation figures for each time step saved to the temporary folder: {tmpdir}")
 
     # Generate GIFs
     if plot_settings.generate_gifs:
@@ -187,6 +199,9 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings):
             for frame in validation_png_frames:
                 writer.append_data(imageio.imread(frame))
 
-        print(f"GIF saved in outputs directory: {output_lomp}, {output_gam} and {validation_metrics}") # TODO fix path to indicate the user directory 
+        print(f"GIFs saved:\n"
+              f"  LompeOSSE: {output_lomp}\n"
+              f"  Gamera: {output_gam}\n"
+              f"  Validation metrics: {validation_metrics}")
 
     return lompeosse_png_frames, gamera_png_frames, validation_png_frames
