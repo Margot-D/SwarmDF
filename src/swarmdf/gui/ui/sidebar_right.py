@@ -101,7 +101,9 @@ def build_right_sidebar(gui):
                                                 number_of_steps=70)
         gui.slider_l1.grid(row=1, column=1, columnspan=1, padx=5, pady=(40,0), sticky="ew")
 
-        gui.value_l1 = customtkinter.CTkLabel(gui.frame_regul, text=f"{gui.slider_l1.get():.1f}", font=FONT_NORMAL)
+        gui.slider_l1.set(0)
+
+        gui.value_l1 = customtkinter.CTkLabel(gui.frame_regul, text=f"{10 ** gui.slider_l1.get():.2f}", font=FONT_NORMAL)
         gui.value_l1.grid(row=1, column=2, padx=(5,10), pady=(35,0), sticky="w")
 
         # L2 parameter
@@ -112,11 +114,10 @@ def build_right_sidebar(gui):
                                                 number_of_steps=70)
         gui.slider_l2.grid(row=2, column=1, columnspan=1, padx=5, pady=(20,0), sticky="ew")
 
-        gui.value_l2 = customtkinter.CTkLabel(gui.frame_regul, text=f"{gui.slider_l2.get():.1f}", font=FONT_NORMAL)
-        gui.value_l2.grid(row=2, column=2, padx=(5,10), pady=(15,0), sticky="w")
-
-        gui.slider_l1.set(0)
         gui.slider_l2.set(0)
+
+        gui.value_l2 = customtkinter.CTkLabel(gui.frame_regul, text=f"{10 ** gui.slider_l2.get():.2f}", font=FONT_NORMAL)
+        gui.value_l2.grid(row=2, column=2, padx=(5,10), pady=(15,0), sticky="w")
 
         # Rerun Lompe
         gui.button_runlompe = customtkinter.CTkButton(master=gui.frame_regul, text="Run Lompe", font=FONT_BIGGERB, command=gui.apply_new_regularization)
