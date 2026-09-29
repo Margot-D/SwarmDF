@@ -509,21 +509,24 @@ class SwarmDFGUI(customtkinter.CTk):
         self.set_buttons_state("disabled")
 
         self.lompeosse_running = True
-        self.lompeosse_cancel_event = threading.Event()
+        self.lompeosse_cancel_event = threading.Event() # Event used to signal cancellation to the worker thread
         
         def lompeOSSE_worker():
             try:
                 validation_results = compute_swarmdf_validation(self.output_results, self.config, cancel_event=self.lompeosse_cancel_event)
 
+                # Check whether cancellation was requested before starting the rendering
                 if self.lompeosse_cancel_event.is_set():
                     raise LompeOSSECancelled
 
                 rendered_results = render_swarmdf_validation(validation_results, self.plot_settings, cancel_event=self.lompeosse_cancel_event)
 
+                # Check again whether cancellation was requested after rendering
                 if self.lompeosse_cancel_event.is_set():
                     raise LompeOSSECancelled
 
-                self.after(0, lambda: self.display_lompeosse(rendered_results)) # Plotting and GUI updates must run on the Tkinter main thread
+                # Actual plotting and GUI updates must run on the Tkinter main thread
+                self.after(0, lambda: self.display_lompeosse(rendered_results)) 
                 self.after(0, self.finish_lompeosse, False)
 
             except LompeOSSECancelled:
@@ -624,7 +627,7 @@ class SwarmDFGUI(customtkinter.CTk):
         self.output_ui["button_interactive"].configure(state="normal")
 
     # def display_lompeosse(self, swarmdf_validation):
-    def display_lompeosse(self, rendered_results):
+    def display_lompeosse(self, validation_rendered_results):
 
         """Render and display LompeOSSE analysis results in the GUI"""
 
@@ -634,11 +637,7 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Render input results and load the generated images
-            # lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = render_swarmdf_validation(swarmdf_validation, self.plot_settings, cancel_event=self.lompeosse_cancel_event)
-
-            lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = rendered_results
-
-
+            lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = validation_rendered_results
             self.lompeosse_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in lompeosse_png_frames]
             self.gamera_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in gamera_png_frames]
 
