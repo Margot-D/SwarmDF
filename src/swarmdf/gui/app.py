@@ -514,11 +514,16 @@ class SwarmDFGUI(customtkinter.CTk):
         def lompeOSSE_worker():
             try:
                 validation_results = compute_swarmdf_validation(self.output_results, self.config, cancel_event=self.lompeosse_cancel_event)
-                # self.after(0, lambda: self.display_lompeosse(validation_results)) # Plotting and GUI updates must run on the Tkinter main thread
 
-                # Display the result if the analysis completed normally
-                self.after(0, lambda: self.display_lompeosse(validation_results)) # Plotting and GUI updates must run on the Tkinter main thread
+                if self.lompeosse_cancel_event.is_set():
+                    raise LompeOSSECancelled
 
+                rendered_results = render_swarmdf_validation(validation_results, self.plot_settings, cancel_event=self.lompeosse_cancel_event)
+
+                if self.lompeosse_cancel_event.is_set():
+                    raise LompeOSSECancelled
+
+                self.after(0, lambda: self.display_lompeosse(rendered_results)) # Plotting and GUI updates must run on the Tkinter main thread
                 self.after(0, self.finish_lompeosse, False)
 
             except LompeOSSECancelled:
@@ -533,9 +538,6 @@ class SwarmDFGUI(customtkinter.CTk):
 
                 # Close the window after an error
                 self.after(0, self.finish_lompeosse, True)
-
-            # finally:
-            #     self.after(0, self.finish_lompeosse)
 
         threading.Thread(target=lompeOSSE_worker, daemon=True).start()
 
@@ -621,7 +623,9 @@ class SwarmDFGUI(customtkinter.CTk):
         self.input_ui["button_interactive"].configure(state="normal")
         self.output_ui["button_interactive"].configure(state="normal")
 
-    def display_lompeosse(self, swarmdf_validation):
+    # def display_lompeosse(self, swarmdf_validation):
+    def display_lompeosse(self, rendered_results):
+
         """Render and display LompeOSSE analysis results in the GUI"""
 
         # Stop any existing input animation and create a new animation state
@@ -630,7 +634,11 @@ class SwarmDFGUI(customtkinter.CTk):
 
         try:
             # Render input results and load the generated images
-            lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = render_swarmdf_validation(swarmdf_validation, self.plot_settings)
+            # lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = render_swarmdf_validation(swarmdf_validation, self.plot_settings, cancel_event=self.lompeosse_cancel_event)
+
+            lompeosse_png_frames, gamera_png_frames, self.validation_png_frames = rendered_results
+
+
             self.lompeosse_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in lompeosse_png_frames]
             self.gamera_pil_frames = [ImageOps.expand(Image.open(fn), border=15, fill="white") for fn in gamera_png_frames]
 
