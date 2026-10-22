@@ -20,7 +20,7 @@ from .lompe_input import QUIVERSCALES
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# Path for saving output files
+# Directory for output files
 output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO switch to real temporary folder?
 # tmpdir.mkdir(parents=True, exist_ok=True)
@@ -35,13 +35,9 @@ def run_lompe(grids, time_bounds, data_objects_per_grid, SHs, SPs, l1=1, l2=1): 
         Dictionary containing Lompe models (TODO ok?) and associated metadata for subsequent analysis and visualization
     """
 
-    epoch = time_bounds['ct'][0].year
-    time = yearfrac_to_datetime([epoch])
-    apx = apexpy.Apex(time[0].year)
-
     models = []
 
-    print(f"Running Lompe analysis (l1={l1:.2f}, l2={l2:.2f})...") #TODO remove regul parameters from print?
+    print(f"Running Lompe inversion...")
 
     total_frames = len(grids)
     i = 1
@@ -62,10 +58,9 @@ def run_lompe(grids, time_bounds, data_objects_per_grid, SHs, SPs, l1=1, l2=1): 
         models.append({"model": copy.deepcopy(model),
                         "t0": t0,
                         "ct": ct,
-                        "l1": l1, # useful for LompeOSSE run 
-                        "l2": l2, # useful for LompeOSSE run 
                         "t1": t1,
-                        "apex": apx})
+                        "l1": l1, 
+                        "l2": l2})
         
         model.clear_model()
         i += 1
@@ -93,7 +88,7 @@ def plot_lompe_output(models, sat_id, plot_settings):
         t0 = entry["t0"]
         t1 = entry["t1"]
         ct = entry["ct"]
-        apx = entry["apex"]
+        apx = apexpy.Apex(ct, user_model.refh)
 
         # Save to PNG
         fn = f'lompe_sw{sat_id[-1]}'
