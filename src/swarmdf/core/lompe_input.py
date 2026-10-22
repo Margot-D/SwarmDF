@@ -38,7 +38,7 @@ import lompe
 RE = 6371.2 # Earth radius [km] 
 HEIGHT = 128.8 # ionosphere height [km] (RE + HEIGHT should be 65000 km to match radius of ionosphere in Gamera)
 
-# Path for saving output files
+# Directory for output files 
 output_dir = Path.home() / "SwarmDF" / "outputs" # TODO add option for user to choose where?
 tmpdir = output_dir / "tmp" #TODO fix to real temporary folder?
 # tmpdir.mkdir(parents=True, exist_ok=True)
@@ -992,7 +992,7 @@ class LompeInputPlotter:
             # Save to PNG
             tmpdir.mkdir(parents=True, exist_ok=True)
             sat_id = swarm_pass['one_swarm_pass']['Spacecraft'].values[0]
-            fn = f'input_sw{sat_id}'
+            fn = f'input2lompe_sw{sat_id}'
             fn_ct = tmpdir / f"{fn}_{ct:%Y%m%d_%H%M%S}.png"
             png_frames.append(fn_ct)
 
