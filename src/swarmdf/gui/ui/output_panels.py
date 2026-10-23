@@ -28,7 +28,7 @@ def build_plot_panels(gui):
     gui.header_input = customtkinter.CTkLabel(gui.frame_input, text="Input to Lompe: analysis region along satellite track and data distribution", font=FONT_BIGGERB) #customtkinter.CTkFont(size=14, weight="bold", underline=0)
     gui.header_input.grid(row=0, column=0,  pady=(2, 10), sticky="n")
 
-    gui.label_input = customtkinter.CTkLabel(gui.frame_input, text="Waiting for trajectory animation...", font=FONT_NORMAL)
+    gui.label_input = customtkinter.CTkLabel(gui.frame_input, text="Waiting for animation...", font=FONT_NORMAL)
     gui.label_input.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
 
     # GIF controls and interactive window
@@ -53,7 +53,7 @@ def build_plot_panels(gui):
     gui.header_output = customtkinter.CTkLabel(gui.frame_output, text="Lompe output: reconstructed electrodynamics", font=FONT_BIGGERB)
     gui.header_output.grid(row=0, column=0, pady=(2, 10), sticky="n")
 
-    gui.label_output = customtkinter.CTkLabel(gui.frame_output, text="Waiting for Lompe plot...", font=FONT_NORMAL)
+    gui.label_output = customtkinter.CTkLabel(gui.frame_output, text="Waiting for animation...", font=FONT_NORMAL)
     gui.label_output.grid(row=1, column=0, pady=(0, 30), sticky='nsew')
 
     # GIF controls and interactive window
