@@ -189,7 +189,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings, cancel_eve
         gamera_output = entry2['gamera_output']
 
         # Save to PNG 
-        gamera_fn = f'Gamera'
+        gamera_fn = f'gamera'
         fn = tmpdir / f"{gamera_fn}_{gtime:%Y%m%d_%H%M%S}.png" 
         gamera_png_frames.append(fn)
 
@@ -213,7 +213,7 @@ def plot_lompeOSSE_output(osse_models, gamera_outputs, plot_settings, cancel_eve
         validation_png_frames.append(fn)
 
         savekw = {"fname": fn, "dpi": 400, "bbox_inches": "tight", "pad_inches": 0.2}
-        suptitle = f'Validation of lompe reconstruction'
+        suptitle = f'Lompe reconstruction accuracy'
         fig_validation, _ = validate(osse_model, gamera_output, primary='potential', overlay='fac', suptitle=suptitle, savekw=savekw)
 
         plt.close(fig_validation)
