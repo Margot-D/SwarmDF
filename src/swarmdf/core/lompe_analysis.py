@@ -97,7 +97,7 @@ def plot_lompe_output(models, sat_id, plot_settings):
         savekw = {"fname": fn_ct, "dpi": 400}
 
         # Lompe plot
-        suptitle = f"{t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}"
+        suptitle = f"Lompe reconstruction of ionospheric electrodynamics \n {t0.strftime('%Y-%m-%d %H:%M:%S')} - {t1.strftime('%Y-%m-%d %H:%M:%S')}"
         fig = lompe.lompeplot(user_model, 
                               include_data=True, time=ct, apex=apx,
                               colorscales={"fac": np.linspace(-2, 2, 40) * 1e-6 * 2,
