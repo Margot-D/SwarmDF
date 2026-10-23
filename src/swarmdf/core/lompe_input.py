@@ -511,7 +511,7 @@ class LompeInputPlotter:
         self.marker_scale = np.clip((figwidth / 12)**1.8, 0.35, 1.5)
 
         fig = plt.figure(figsize = figsize, constrained_layout=False) #(22,12) 12,9
-        fig.suptitle(f"{t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
+        fig.suptitle(f"Analysis grid and datasets \n {t0.strftime('%Y-%m-%d %H:%M:%S')}  -  {t1.strftime('%Y-%m-%d %H:%M:%S')}",
                         fontsize=22*self.font_scale, color="black", y=0.98) #y=0.98
         
         title_h = np.clip(0.11 + 0.03*(self.ar < 1), 0.09, 0.14) #0.16
